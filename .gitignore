@@ -1,8 +1,8 @@
 # Dependencies
 node_modules/
 
-# Database (gerado automaticamente em runtime)
-db/encontro.json
+# Database (versionado com dados de produção)
+# db/encontro.json
 
 # Environment
 .env
