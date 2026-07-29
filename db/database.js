@@ -132,7 +132,7 @@ function queryAll(sql, params) {
     }
     return Object.values(map);
   }
-  if (lower.startsWith('select') && lower.includes('from tasks') && lower.includes('where category = ?')) {
+  if (lower.startsWith('select') && lower.includes('from tasks') && /where category\s*=\s*\?/.test(lower)) {
     const cat = params[0];
     return data.tasks.filter(t => t.category === cat).sort((a, b) => parseFloat(a.item_number) - parseFloat(b.item_number));
   }
