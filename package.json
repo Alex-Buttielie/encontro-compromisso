@@ -1,0 +1,24 @@
+{
+  "name": "encontro-compromisso",
+  "version": "1.0.0",
+  "description": "Sistema de organização e gestão do Encontro Compromisso - Projeto JUMIRE",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "pdfkit": "^0.15.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "keywords": ["encontro", "compromisso-trin", "jumire", "coordenador"],
+  "author": "",
+  "license": "ISC"
+}
