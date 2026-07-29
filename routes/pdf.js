@@ -130,7 +130,8 @@ function priorityLabel(p) {
 }
 
 function getEncounter() {
-  return db.prepare('SELECT * FROM encounters ORDER BY id DESC LIMIT 1').get() || {};
+  const encs = db.getAll('encounters');
+  return encs.length > 0 ? encs[encs.length - 1] : {};
 }
 
 function fmtDate(d) {
@@ -152,11 +153,12 @@ function generateFullReport() {
   const encInfo = enc.name ? `${enc.name} - ${fmtDate(enc.start_date)} a ${fmtDate(enc.end_date)}` : '';
   reportHeader(doc, 'Relatorio Geral de Preparacao', `Gerado em ${new Date().toLocaleString('pt-BR')}${encInfo ? ' | ' + encInfo : ''}`);
 
+  const allTasks = db.getAll('tasks');
   const stats = {
-    total: (db.prepare('SELECT COUNT(*) as count FROM tasks').get() || {}).count || 0,
-    done: (db.prepare("SELECT COUNT(*) as count FROM tasks WHERE status='concluido'").get() || {}).count || 0,
-    in_progress: (db.prepare("SELECT COUNT(*) as count FROM tasks WHERE status='em_andamento'").get() || {}).count || 0,
-    pending: (db.prepare("SELECT COUNT(*) as count FROM tasks WHERE status='pendente'").get() || {}).count || 0,
+    total: allTasks.length,
+    done: allTasks.filter(t => t.status === 'concluido').length,
+    in_progress: allTasks.filter(t => t.status === 'em_andamento').length,
+    pending: allTasks.filter(t => t.status === 'pendente').length,
   };
 
   let y = 145;
@@ -180,11 +182,11 @@ function generateFullReport() {
   y += 25;
 
   // Tasks by category
-  const categories = db.prepare('SELECT DISTINCT category FROM tasks ORDER BY category').all();
+  const categories = [...new Set(allTasks.map(t => t.category))].sort();
   for (const cat of categories) {
     if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
-    y = sectionTitle(doc, cat.category, y, COLORS.primary);
-    const items = db.prepare('SELECT * FROM tasks WHERE category=? ORDER BY CAST(item_number AS REAL), item_number').all(cat.category);
+    y = sectionTitle(doc, cat, y, COLORS.primary);
+    const items = allTasks.filter(t => t.category === cat).sort((a, b) => parseFloat(a.item_number) - parseFloat(b.item_number));
     const catDone = items.filter(t => t.status === 'concluido').length;
     const catPct = items.length > 0 ? Math.round((catDone / items.length) * 100) : 0;
     doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica').text(`${catDone}/${items.length} (${catPct}%)`, 500, y - 14, { width: 60, align: 'right' });
@@ -272,7 +274,7 @@ function generateCategoryReport(category) {
   reportHeader(doc, `Relatorio: ${category}`, `Gerado em ${new Date().toLocaleString('pt-BR')}`);
 
   let y = 145;
-  const items = db.prepare('SELECT * FROM tasks WHERE category=? ORDER BY CAST(item_number AS REAL), item_number').all(category);
+  const items = db.getAll('tasks').filter(t => t.category === category).sort((a, b) => parseFloat(a.item_number) - parseFloat(b.item_number));
   const total = items.length;
   const done = items.filter(t => t.status === 'concluido').length;
   const inProgress = items.filter(t => t.status === 'em_andamento').length;
@@ -325,12 +327,15 @@ function generateTeamReport() {
   reportHeader(doc, 'Relatorio por Equipes', `Gerado em ${new Date().toLocaleString('pt-BR')}`);
 
   let y = 145;
-  const teams = db.prepare(`
-    SELECT t.name, t.description, t.id,
-      (SELECT COUNT(*) FROM tasks WHERE responsible_team = t.name) as total_tasks,
-      (SELECT COUNT(*) FROM tasks WHERE responsible_team = t.name AND status='concluido') as done_tasks
-    FROM teams t ORDER BY t.name
-  `).all();
+  const allTasksForTeams = db.getAll('tasks');
+  const teams = db.getAll('teams').sort((a, b) => a.name.localeCompare(b.name)).map(t => {
+    const teamTasks = allTasksForTeams.filter(tk => tk.responsible_team === t.name);
+    return {
+      name: t.name, description: t.description, id: t.id,
+      total_tasks: teamTasks.length,
+      done_tasks: teamTasks.filter(tk => tk.status === 'concluido').length
+    };
+  });
 
   // Overall summary
   const totalTasks = teams.reduce((s, t) => s + t.total_tasks, 0);
@@ -1425,7 +1430,8 @@ function generatePreparationReport() {
   const buffers = [];
   doc.on('data', buffers.push.bind(buffers));
 
-  const enc = db.prepare('SELECT * FROM encounters ORDER BY id DESC LIMIT 1').get();
+  const encArr = db.getAll('encounters');
+  const enc = encArr.length > 0 ? encArr[encArr.length - 1] : null;
   const encName = enc ? enc.name : 'Encontro Compromisso Trin';
   const encStart = enc ? enc.start_date : '';
   const encEnd = enc ? enc.end_date : '';
@@ -1462,7 +1468,11 @@ function generatePreparationReport() {
   doc.addPage();
   reportHeader(doc, 'Sumario Executivo da Preparacao', `Gerado em ${todayStr} | ${daysToEnc}`);
 
-  const tasks = db.prepare('SELECT * FROM tasks ORDER BY category, CAST(item_number AS REAL), item_number').all();
+  const tasks = db.getAll('tasks').sort((a, b) => {
+    const catCmp = (a.category || '').localeCompare(b.category || '');
+    if (catCmp !== 0) return catCmp;
+    return parseFloat(a.item_number) - parseFloat(b.item_number);
+  });
   const stats = {
     total: tasks.length,
     done: tasks.filter(t => t.status === 'concluido').length,
@@ -1471,17 +1481,18 @@ function generatePreparationReport() {
   };
   const pct = stats.total > 0 ? Math.round((stats.done / stats.total) * 100) : 0;
 
-  const fin = db.prepare(`SELECT type, SUM(amount) as total FROM finance_items GROUP BY type`).all();
-  const finIncome = fin.find(f => f.type === 'receita')?.total || 0;
-  const finExpenses = fin.find(f => f.type === 'despesa')?.total || 0;
+  const allFin = db.getAll('finance');
+  const finIncome = allFin.filter(f => f.type === 'receita').reduce((s, f) => s + (f.amount || 0), 0);
+  const finExpenses = allFin.filter(f => f.type === 'despesa').reduce((s, f) => s + (f.amount || 0), 0);
   const finBalance = finIncome - finExpenses;
 
-  const participants = db.prepare('SELECT COUNT(*) as c, SUM(CASE WHEN paid=1 THEN 1 ELSE 0 END) as paid FROM participants').get() || { c: 0, paid: 0 };
-  const teams = db.prepare('SELECT COUNT(*) as c FROM teams').get() || { c: 0 };
-  const fornecedores = db.prepare('SELECT COUNT(*) as c FROM fornecedores').get() || { c: 0 };
-  const escolinhas = db.prepare('SELECT COUNT(*) as c FROM escolinhas').get() || { c: 0 };
-  const avisos = db.prepare('SELECT COUNT(*) as c FROM avisos').get() || { c: 0 };
-  const lembretes = db.prepare("SELECT COUNT(*) as c FROM lembretes WHERE status != 'concluido'").get() || { c: 0 };
+  const allParticipants = db.getAll('participants');
+  const participants = { c: allParticipants.length, paid: allParticipants.filter(p => p.paid).length };
+  const teams = { c: db.getAll('teams').length };
+  const fornecedores = { c: db.getAll('fornecedores').length };
+  const escolinhas = { c: db.getAll('escolinhas').length };
+  const avisos = { c: db.getAll('avisos').length };
+  const lembretes = { c: db.getAll('lembretes').filter(l => l.status !== 'concluido').length };
 
   let y = 150;
   // Cards de progresso
@@ -1578,15 +1589,15 @@ function generatePreparationReport() {
   reportHeader(doc, 'Progresso por Categoria', 'Status detalhado de cada area de preparacao');
   y = 150;
 
-  const categories = db.prepare('SELECT DISTINCT category FROM tasks ORDER BY category').all();
+  const categories = [...new Set(tasks.map(t => t.category))].sort();
   for (const cat of categories) {
     if (y > 720) { doc.addPage(); y = 50; }
-    const catItems = tasks.filter(t => t.category === cat.category);
+    const catItems = tasks.filter(t => t.category === cat);
     const catDone = catItems.filter(t => t.status === 'concluido').length;
     const catPct = catItems.length > 0 ? Math.round((catDone / catItems.length) * 100) : 0;
     const catColor = catPct === 100 ? COLORS.green : catPct >= 50 ? COLORS.orange : COLORS.red;
 
-    doc.fillColor(COLORS.secondary).fontSize(11).font('Helvetica-Bold').text(cat.category, 50, y);
+    doc.fillColor(COLORS.secondary).fontSize(11).font('Helvetica-Bold').text(cat, 50, y);
     doc.fillColor(catColor).fontSize(10).text(`${catDone}/${catItems.length} (${catPct}%)`, 450, y, { width: 110, align: 'right' });
     y += 16;
     doc.fillColor(COLORS.light).rect(50, y, 510, 6).fill();
@@ -1610,10 +1621,10 @@ function generatePreparationReport() {
   reportHeader(doc, 'Equipes e Membros', 'Composicao completa das equipes de trabalho');
   y = 150;
 
-  const allTeams = db.prepare(`
-    SELECT t.*, (SELECT COUNT(*) FROM team_members WHERE team_id = t.id) as member_count
-    FROM teams t ORDER BY t.name
-  `).all();
+  const allTeams = db.getAll('teams').sort((a, b) => a.name.localeCompare(b.name)).map(t => {
+    const teamMembers = db.getAll('team_members').filter(m => Number(m.team_id) === Number(t.id));
+    return { ...t, member_count: teamMembers.length };
+  });
   for (const team of allTeams) {
     if (y > 700) { doc.addPage(); y = 50; }
     doc.fillColor(COLORS.primary).fontSize(11).font('Helvetica-Bold').text(team.name, 50, y);
@@ -1623,7 +1634,7 @@ function generatePreparationReport() {
       doc.fillColor(COLORS.dark).fontSize(8).font('Helvetica').text(team.description, 50, y, { width: 510 });
       y += 14;
     }
-    const members = db.prepare('SELECT * FROM team_members WHERE team_id = ? ORDER BY name').all(team.id);
+    const members = db.getAll('team_members').filter(m => Number(m.team_id) === Number(team.id)).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     if (members.length > 0) {
       const colW = 250;
       members.forEach((m, i) => {
@@ -1669,10 +1680,18 @@ function generatePreparationReport() {
   y += 65;
 
   // Por categoria
-  const finByCat = db.prepare(`
-    SELECT category, type, SUM(amount) as total
-    FROM finance_items GROUP BY category, type ORDER BY category, type
-  `).all();
+  const finByCat = [];
+  const finItems = db.getAll('finance');
+  const finCatMap = {};
+  for (const f of finItems) {
+    const key = `${f.category}|${f.type}`;
+    if (!finCatMap[key]) finCatMap[key] = { category: f.category, type: f.type, total: 0 };
+    finCatMap[key].total += (f.amount || 0);
+  }
+  Object.values(finCatMap).sort((a, b) => {
+    const c = (a.category || '').localeCompare(b.category || '');
+    return c !== 0 ? c : (a.type || '').localeCompare(b.type || '');
+  }).forEach(v => finByCat.push(v));
   const finCats = {};
   for (const f of finByCat) {
     if (!finCats[f.category]) finCats[f.category] = { receita: 0, despesa: 0 };
@@ -1701,10 +1720,10 @@ function generatePreparationReport() {
   reportHeader(doc, 'Materias-Primas (Inscritos)', 'Lista completa de inscricoes e status de pagamento');
   y = 150;
 
-  const allParticipants = db.prepare('SELECT * FROM participants ORDER BY name').all();
-  const paidCount = allParticipants.filter(p => p.paid).length;
-  const pendingCount = allParticipants.length - paidCount;
-  doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica-Bold').text(`Total: ${allParticipants.length} | Pagos: ${paidCount} | Pendentes: ${pendingCount}`, 50, y);
+  const prepParticipants = db.getAll('participants').sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  const paidCount = prepParticipants.filter(p => p.paid).length;
+  const pendingCount = prepParticipants.length - paidCount;
+  doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica-Bold').text(`Total: ${prepParticipants.length} | Pagos: ${paidCount} | Pendentes: ${pendingCount}`, 50, y);
   y += 20;
 
   doc.fillColor(COLORS.secondary).fontSize(8).font('Helvetica-Bold').text('Nome', 50, y, { width: 180 });
@@ -1712,7 +1731,7 @@ function generatePreparationReport() {
   doc.text('Grupo', 400, y, { width: 60 });
   doc.text('Pagto', 470, y, { width: 80, align: 'right' });
   y += 14;
-  for (const p of allParticipants) {
+  for (const p of prepParticipants) {
     if (y > 760) { doc.addPage(); y = 50; }
     doc.fillColor(y % 2 === 0 ? COLORS.light : '#fff').rect(50, y - 2, 510, 14).fill();
     doc.fillColor(COLORS.dark).fontSize(8).font('Helvetica').text(p.name || 'Sem nome', 52, y, { width: 180 });
@@ -1727,7 +1746,7 @@ function generatePreparationReport() {
   reportHeader(doc, 'Fornecedores e Contatos', 'Lista completa de fornecedores e prestadores');
   y = 150;
 
-  const allForn = db.prepare('SELECT * FROM fornecedores ORDER BY name').all();
+  const allForn = db.getAll('fornecedores').sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   doc.fillColor(COLORS.secondary).fontSize(8).font('Helvetica-Bold').text('Nome', 50, y, { width: 150 });
   doc.text('Categoria', 210, y, { width: 100 });
   doc.text('Contato', 320, y, { width: 100 });
@@ -1750,7 +1769,11 @@ function generatePreparationReport() {
   reportHeader(doc, 'Escolinhas e Encontros de Preparacao', 'Cronograma de formacao antes do Encontro');
   y = 150;
 
-  const allEsc = db.prepare('SELECT * FROM escolinhas ORDER BY date, time').all();
+  const allEsc = db.getAll('escolinhas').sort((a, b) => {
+    const dCmp = (a.date || '').localeCompare(b.date || '');
+    if (dCmp !== 0) return dCmp;
+    return (a.time || '').localeCompare(b.time || '');
+  });
   if (allEsc.length === 0) {
     doc.fillColor(COLORS.gray).fontSize(10).font('Helvetica-Oblique').text('Nenhuma escolinha cadastrada.', 50, y);
   } else {
@@ -1783,7 +1806,13 @@ function generatePreparationReport() {
   reportHeader(doc, 'Mural de Avisos', 'Comunicados e informacoes importantes');
   y = 150;
 
-  const allAvisos = db.prepare('SELECT * FROM avisos ORDER BY pinned DESC, priority DESC, created_at DESC').all();
+  const allAvisos = db.getAll('avisos').sort((a, b) => {
+    const pCmp = (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0);
+    if (pCmp !== 0) return pCmp;
+    const prCmp = (b.priority || '').localeCompare(a.priority || '');
+    if (prCmp !== 0) return prCmp;
+    return (b.created_at || '').localeCompare(a.created_at || '');
+  });
   if (allAvisos.length === 0) {
     doc.fillColor(COLORS.gray).fontSize(10).font('Helvetica-Oblique').text('Nenhum aviso cadastrado.', 50, y);
   } else {
