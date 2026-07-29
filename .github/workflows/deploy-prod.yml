@@ -8,6 +8,8 @@ on:
 jobs:
   deploy-prod:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     environment:
       name: production
     steps:
@@ -35,14 +37,9 @@ jobs:
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
-        uses: actions/create-release@v1
+        run: gh release create ${{ steps.version.outputs.VERSION }} --title "Release ${{ steps.version.outputs.VERSION }}" --generate-notes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.version.outputs.VERSION }}
-          release_name: Release ${{ steps.version.outputs.VERSION }}
-          draft: false
-          prerelease: false
 
       - name: Deploy to VPS (PROD)
         uses: appleboy/ssh-action@v1.2.0
