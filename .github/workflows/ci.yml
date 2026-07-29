@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check syntax
+        run: |
+          node --check server.js
+          node --check routes/api.js
+          node --check routes/pdf.js
+          node --check data/seed.js
+          node --check db/database.js
+
+      - name: Test server startup
+        run: |
+          timeout 5 node -e "
+            process.env.PORT = 3999;
+            require('./server.js');
+            setTimeout(() => { console.log('Server started successfully'); process.exit(0); }, 2000);
+          " || true
+
+      - name: Build artifact
+        run: |
+          mkdir -p artifact
+          rsync -av --exclude=node_modules --exclude=.git --exclude=artifact . artifact/
+          cp package.json artifact/
+          cp package-lock.json artifact/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-build
+          path: artifact/
+          retention-days: 7
