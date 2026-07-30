@@ -212,14 +212,24 @@ async function renderDashboard() {
 }
 
 // ============ CHECKLIST ============
+let currentPhaseTab = 'pre';
+
 async function renderChecklist() {
   tasksCache = await api('/tasks');
   const main = document.getElementById('main-content');
-  const moTasks = tasksCache.filter(isMOTask);
-  const teamSpecificTasks = tasksCache.filter(t => !isMOTask(t));
+  const preCount = tasksCache.filter(t => (t.phase || 'pre') === 'pre').length;
+  const duringCount = tasksCache.filter(t => t.phase === 'during').length;
   main.innerHTML = `
-    <h1 class="page-title">Checklist de Preparação</h1>
-    <p class="page-subtitle">Tudo desta tela antecede o encontro. Checklist geral dos MO's e responsabilidades específicas por equipe.</p>
+    <h1 class="page-title">Checklist do Encontro</h1>
+    <p class="page-subtitle">Tarefas divididas por fase: preparação antes do Encontro e execução durante o Encontro.</p>
+    <div class="phase-tabs" style="display:flex;gap:0;margin-bottom:16px;border-bottom:2px solid var(--border)">
+      <button class="phase-tab ${currentPhaseTab==='pre'?'active':''}" onclick="switchPhaseTab('pre')" style="padding:10px 20px;border:none;background:none;cursor:pointer;font-size:14px;font-weight:600;border-bottom:3px solid ${currentPhaseTab==='pre'?'var(--primary)':'transparent'};color:${currentPhaseTab==='pre'?'var(--primary)':'var(--text-light)'};margin-bottom:-2px">
+        📋 Pré-Encontro <span class="badge" style="margin-left:6px">${preCount}</span>
+      </button>
+      <button class="phase-tab ${currentPhaseTab==='during'?'active':''}" onclick="switchPhaseTab('during')" style="padding:10px 20px;border:none;background:none;cursor:pointer;font-size:14px;font-weight:600;border-bottom:3px solid ${currentPhaseTab==='during'?'var(--primary)':'transparent'};color:${currentPhaseTab==='during'?'var(--primary)':'var(--text-light)'};margin-bottom:-2px">
+        🏗️ Durante o Encontro <span class="badge" style="margin-left:6px">${duringCount}</span>
+      </button>
+    </div>
     <div class="filters">
       <input type="text" class="search-box" id="task-search" placeholder="Buscar tarefa..." oninput="filterTasks()">
       <div class="filter-group">
@@ -239,24 +249,22 @@ async function renderChecklist() {
       </div>
       <button class="btn btn-primary btn-sm" onclick="openTaskModal()">+ Nova Tarefa</button>
     </div>
-    <div class="card" style="margin-top:10px">
-      <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center">
-        <div style="font-size:13px;color:var(--text-light)">
-          <strong>MO's:</strong> ${moTasks.length} tarefas &nbsp;|&nbsp;
-          <strong>Equipes:</strong> ${teamSpecificTasks.length} tarefas
-        </div>
-        <button class="btn btn-secondary btn-sm" onclick="goToEquipesFromChecklist()">Ver responsabilidades por equipe</button>
-      </div>
-    </div>
-    <h3 style="margin:16px 0 8px;color:var(--primary)">Pré-Encontro (MO's)</h3>
-    <div id="task-categories-mos"></div>
-    <h3 style="margin:20px 0 8px;color:var(--primary)">Tarefas Específicas por Equipe</h3>
-    <div id="task-categories-teams"></div>
+    <div id="task-phase-content"></div>
   `;
   const teams = [...new Set(tasksCache.map(t => t.responsible_team).filter(Boolean))].sort();
   const teamSelect = document.getElementById('filter-team');
   teams.forEach(t => { const o = document.createElement('option'); o.value = t; o.textContent = t; teamSelect.appendChild(o); });
   renderChecklistSections(tasksCache);
+}
+
+function switchPhaseTab(phase) {
+  currentPhaseTab = phase;
+  renderChecklistSections(tasksCache);
+  document.querySelectorAll('.phase-tab').forEach(btn => {
+    const isActive = btn.textContent.includes(phase === 'pre' ? 'Pré-Encontro' : 'Durante o Encontro');
+    btn.style.borderBottom = isActive ? '3px solid var(--primary)' : '3px solid transparent';
+    btn.style.color = isActive ? 'var(--primary)' : 'var(--text-light)';
+  });
 }
 
 function filterTasks() {
@@ -294,10 +302,28 @@ function isMOTask(task) {
 }
 
 function renderChecklistSections(tasks) {
-  const moTasks = tasks.filter(isMOTask);
-  const teamSpecificTasks = tasks.filter(t => !isMOTask(t));
-  renderTaskCategories(moTasks, 'task-categories-mos', 'Nenhuma tarefa de MO encontrada para os filtros atuais.');
-  renderTaskCategories(teamSpecificTasks, 'task-categories-teams', 'Nenhuma tarefa específica de equipe encontrada para os filtros atuais.');
+  const phaseTasks = tasks.filter(t => (t.phase || 'pre') === currentPhaseTab);
+  const moTasks = phaseTasks.filter(isMOTask);
+  const teamSpecificTasks = phaseTasks.filter(t => !isMOTask(t));
+  const container = document.getElementById('task-phase-content');
+  if (!container) return;
+  const phaseLabel = currentPhaseTab === 'pre' ? 'Pré-Encontro' : 'Durante o Encontro';
+  container.innerHTML = `
+    <div class="card" style="margin-bottom:12px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center">
+      <div style="font-size:13px;color:var(--text-light)">
+        <strong>${phaseLabel}:</strong> ${phaseTasks.length} tarefas &nbsp;|&nbsp;
+        <strong>MO's:</strong> ${moTasks.length} &nbsp;|&nbsp;
+        <strong>Equipes:</strong> ${teamSpecificTasks.length}
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="goToEquipesFromChecklist()">Ver responsabilidades por equipe</button>
+    </div>
+    <h3 style="margin:16px 0 8px;color:var(--primary)">Responsabilidades Gerais (MO's)</h3>
+    <div id="task-categories-mos"></div>
+    <h3 style="margin:20px 0 8px;color:var(--primary)">Tarefas Específicas por Equipe</h3>
+    <div id="task-categories-teams"></div>
+  `;
+  renderTaskCategories(moTasks, 'task-categories-mos', `Nenhuma tarefa de MO encontrada para ${phaseLabel} com os filtros atuais.`);
+  renderTaskCategories(teamSpecificTasks, 'task-categories-teams', `Nenhuma tarefa específica de equipe encontrada para ${phaseLabel} com os filtros atuais.`);
 }
 
 function renderTaskCategories(tasks, containerId = 'task-categories', emptyMessage = 'Nenhuma tarefa encontrada.') {
@@ -382,23 +408,29 @@ function openTaskModal(id) {
     <div class="form-group"><label>Categoria</label><input id="t-category" value="${task?.category || ''}"></div>
     <div class="form-row">
       <div class="form-group"><label>Número</label><input id="t-number" value="${task?.item_number || ''}"></div>
+      <div class="form-group"><label>Fase</label><select id="t-phase">
+        <option value="pre" ${(!task || task?.phase==='pre')?'selected':''}>Pré-Encontro (Preparação)</option>
+        <option value="during" ${task?.phase==='during'?'selected':''}>Durante o Encontro (Execução)</option>
+      </select></div>
+    </div>
+    <div class="form-row">
       <div class="form-group"><label>Prioridade</label><select id="t-priority">
         <option value="baixa" ${task?.priority==='baixa'?'selected':''}>Baixa</option>
         <option value="media" ${task?.priority==='media'||!task?'selected':''}>Média</option>
         <option value="alta" ${task?.priority==='alta'?'selected':''}>Alta</option>
       </select></div>
+      <div class="form-group"><label>Prazo</label><input id="t-deadline" value="${task?.deadline || ''}"></div>
     </div>
     <div class="form-group"><label>Título</label><input id="t-title" value="${task?.title || ''}"></div>
     <div class="form-group"><label>Descrição</label><textarea id="t-desc" rows="3">${task?.description || ''}</textarea></div>
     <div class="form-row">
       <div class="form-group"><label>Equipe Responsável</label><input id="t-team" value="${task?.responsible_team || ''}"></div>
-      <div class="form-group"><label>Prazo</label><input id="t-deadline" value="${task?.deadline || ''}"></div>
+      <div class="form-group"><label>Status</label><select id="t-status">
+        <option value="pendente" ${task?.status==='pendente'||!task?'selected':''}>Pendente</option>
+        <option value="em_andamento" ${task?.status==='em_andamento'?'selected':''}>Em Andamento</option>
+        <option value="concluido" ${task?.status==='concluido'?'selected':''}>Concluído</option>
+      </select></div>
     </div>
-    <div class="form-group"><label>Status</label><select id="t-status">
-      <option value="pendente" ${task?.status==='pendente'||!task?'selected':''}>Pendente</option>
-      <option value="em_andamento" ${task?.status==='em_andamento'?'selected':''}>Em Andamento</option>
-      <option value="concluido" ${task?.status==='concluido'?'selected':''}>Concluído</option>
-    </select></div>
     <div class="form-group"><label>Observações</label><textarea id="t-notes" rows="2">${task?.notes || ''}</textarea></div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancelar</button>
@@ -421,6 +453,7 @@ async function saveTask(id, btn) {
     priority: document.getElementById('t-priority').value,
     status: document.getElementById('t-status').value,
     notes: document.getElementById('t-notes').value,
+    phase: document.getElementById('t-phase').value,
   };
   if (id) await api(`/tasks/${id}`, { method: 'PUT', body: JSON.stringify(data) });
   else await api('/tasks', { method: 'POST', body: JSON.stringify(data) });

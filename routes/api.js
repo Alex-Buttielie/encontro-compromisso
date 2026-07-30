@@ -6,26 +6,27 @@ const router = express.Router();
 // ============ TASKS ============
 
 router.get('/tasks', (req, res) => {
-  const { category, status, priority, team } = req.query;
+  const { category, status, priority, team, phase } = req.query;
   let sql = 'SELECT * FROM tasks WHERE 1=1';
   const params = [];
   if (category) { sql += ' AND category = ?'; params.push(category); }
   if (status) { sql += ' AND status = ?'; params.push(status); }
   if (priority) { sql += ' AND priority = ?'; params.push(priority); }
   if (team) { sql += ' AND responsible_team = ?'; params.push(team); }
+  if (phase) { sql += ' AND phase = ?'; params.push(phase); }
   sql += ' ORDER BY category, CAST(item_number AS REAL), item_number';
   res.json(db.prepare(sql).all(...params));
 });
 
 router.post('/tasks', (req, res) => {
-  const { category, item_number, title, description, responsible_team, deadline, priority, status, notes } = req.body;
-  const result = db.prepare(`INSERT INTO tasks (category, item_number, title, description, responsible_team, deadline, priority, status, notes) VALUES (?,?,?,?,?,?,?,?,?)`).run(category, item_number, title, description, responsible_team, deadline, priority, status || 'pendente', notes);
+  const { category, item_number, title, description, responsible_team, deadline, priority, status, notes, phase } = req.body;
+  const result = db.prepare(`INSERT INTO tasks (category, item_number, title, description, responsible_team, deadline, priority, status, notes, phase) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(category, item_number, title, description, responsible_team, deadline, priority, status || 'pendente', notes, phase || 'pre');
   res.json({ id: result.lastInsertRowid });
 });
 
 router.put('/tasks/:id', (req, res) => {
-  const { category, item_number, title, description, responsible_team, deadline, priority, status, notes } = req.body;
-  db.prepare(`UPDATE tasks SET category=?, item_number=?, title=?, description=?, responsible_team=?, deadline=?, priority=?, status=?, notes=?, updated_at=datetime('now','localtime') WHERE id=?`).run(category, item_number, title, description, responsible_team, deadline, priority, status, notes, req.params.id);
+  const { category, item_number, title, description, responsible_team, deadline, priority, status, notes, phase } = req.body;
+  db.prepare(`UPDATE tasks SET category=?, item_number=?, title=?, description=?, responsible_team=?, deadline=?, priority=?, status=?, notes=?, phase=?, updated_at=datetime('now','localtime') WHERE id=?`).run(category, item_number, title, description, responsible_team, deadline, priority, status, notes, phase || 'pre', req.params.id);
   res.json({ success: true });
 });
 
