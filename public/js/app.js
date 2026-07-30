@@ -849,7 +849,11 @@ function renderRelatorios() {
         </a>
         <a class="btn-pdf" href="/reports/lembretes" target="_blank">
           <div class="btn-pdf-icon" style="background:rgba(192,57,43,0.15);color:var(--primary)">🔔</div>
-          <div class="btn-pdf-info"><h4>Relatório de Lembretes</h4><p>Prazos automáticos e lembretes manuais</p></div>
+          <div class="btn-pdf-info"><h4>Relatório de Lembretes</h4><p>Prazos automáticos e lembretes manuais por módulo</p></div>
+        </a>
+        <a class="btn-pdf" href="/reports/escolinhas" target="_blank">
+          <div class="btn-pdf-icon" style="background:rgba(44,123,229,0.15);color:var(--primary)">📅</div>
+          <div class="btn-pdf-info"><h4>Calendário de Escolinhas 2026</h4><p>Eventos e escolinhas de preparação com datas</p></div>
         </a>
       </div>
     </div>

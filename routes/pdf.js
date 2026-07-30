@@ -304,6 +304,49 @@ function generateFullReport() {
     y += 10;
   }
 
+  // === ESCOLINHAS E EVENTOS DO CALENDARIO ===
+  doc.addPage();
+  y = 50;
+  reportHeader(doc, 'Escolinhas e Eventos do Calendario 2026', 'Cronograma de formacao e preparacao - Abracando');
+  y = 155;
+
+  const allEsc = db.getAll('escolinhas').sort((a, b) => {
+    const dCmp = (a.date || '9999').localeCompare(b.date || '9999');
+    if (dCmp !== 0) return dCmp;
+    return (a.time || '').localeCompare(b.time || '');
+  });
+  const escDone = allEsc.filter(e => e.status === 'concluida' || e.status === 'concluido').length;
+  const escPending = allEsc.length - escDone;
+  summaryCard(doc, 'Total', allEsc.length, 50, y, 120, 50, COLORS.secondary);
+  summaryCard(doc, 'Concluidas', escDone, 180, y, 120, 50, COLORS.green);
+  summaryCard(doc, 'Pendentes', escPending, 310, y, 120, 50, COLORS.orange);
+  summaryCard(doc, 'Tipos', new Set(allEsc.map(e => e.type)).size, 440, y, 120, 50, COLORS.primary);
+  y += 70;
+
+  const escTypes = [...new Set(allEsc.map(e => e.type || 'evento'))].sort();
+  for (const type of escTypes) {
+    if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
+    const typeItems = allEsc.filter(e => (e.type || 'evento') === type);
+    const typeLabels = { formacao: 'Escolinhas de Formacao', equipes_extras: 'Equipes Extras', cozinha: 'Cozinha', implantacao: 'Implantacao', missa_entrega: 'Missa de Entrega', evento: 'Eventos Gerais' };
+    y = sectionTitle(doc, `${typeLabels[type] || type} (${typeItems.length})`, y, COLORS.primary);
+    for (const e of typeItems) {
+      if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+      zebraRow(doc, y, 28);
+      const dt = e.date ? new Date(e.date + 'T00:00:00').toLocaleDateString('pt-BR') : 'A definir';
+      doc.fillColor(COLORS.primary).fontSize(10).font('Helvetica-Bold').text(dt, 55, y + 2, { width: 75 });
+      doc.fillColor(COLORS.dark).font('Helvetica').fontSize(9).text(e.name || '-', 135, y + 2, { width: 280 });
+      doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica').text(e.location || '-', 420, y + 2, { width: 70 });
+      const stColor = e.status === 'concluida' || e.status === 'concluido' ? COLORS.green : e.status === 'em_andamento' ? COLORS.orange : COLORS.gray;
+      doc.fillColor(stColor).font('Helvetica-Bold').fontSize(8).text(e.status || 'agendada', 500, y + 2, { width: 60 });
+      if (e.description) {
+        doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica-Oblique').text(e.description, 135, y + 14, { width: 420 });
+        y += 14;
+      }
+      y += 28;
+    }
+    y += 8;
+  }
+
   // === DURANTE O ENCONTRO ===
   if (duringTasks.length > 0) {
     doc.addPage();
@@ -832,6 +875,61 @@ function generateFinanceReport() {
     y += 30;
   }
 
+  // === EVENTOS FINANCEIROS ===
+  const finEvents = db.getAll('finance_events');
+  if (finEvents.length > 0) {
+    y += 12;
+    if (y > PAGE_BOTTOM - 60) { doc.addPage(); y = 50; }
+    y = sectionTitle(doc, 'Eventos Financeiros', y, COLORS.secondary);
+    y = tableHeader(doc, [
+      { label: 'Evento', x: 54, w: 200 },
+      { label: 'Data', x: 260, w: 70 },
+      { label: 'Receita Prev.', x: 335, w: 90, align: 'right' },
+      { label: 'Despesa Prev.', x: 430, w: 90, align: 'right' },
+      { label: 'Status', x: 525, w: 35, align: 'right' },
+    ], y);
+    for (const ev of finEvents.sort((a, b) => (a.date || '').localeCompare(b.date || ''))) {
+      if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+      zebraRow(doc, y, 18);
+      doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(ev.name || '-', 56, y + 4, { width: 200 });
+      doc.fillColor(COLORS.gray).text(ev.date ? fmtDate(ev.date) : '-', 260, y + 4, { width: 70 });
+      doc.fillColor(COLORS.green).text(fmtMoney(ev.expected_income || 0), 335, y + 4, { width: 90, align: 'right' });
+      doc.fillColor(COLORS.red).text(fmtMoney(ev.expected_expense || 0), 430, y + 4, { width: 90, align: 'right' });
+      const evColor = ev.status === 'concluido' ? COLORS.green : ev.status === 'em_andamento' ? COLORS.orange : COLORS.gray;
+      doc.fillColor(evColor).font('Helvetica-Bold').text(ev.status || '-', 525, y + 4, { width: 35, align: 'right' });
+      y += 18;
+    }
+  }
+
+  // === ORCAMENTO POR CATEGORIA ===
+  const finBudget = db.getAll('finance_budget');
+  if (finBudget.length > 0) {
+    y += 12;
+    if (y > PAGE_BOTTOM - 60) { doc.addPage(); y = 50; }
+    y = sectionTitle(doc, 'Orcamento por Categoria', y, COLORS.primary);
+    y = tableHeader(doc, [
+      { label: 'Categoria', x: 54, w: 180 },
+      { label: 'Orcado', x: 240, w: 100, align: 'right' },
+      { label: 'Gasto', x: 345, w: 100, align: 'right' },
+      { label: 'Saldo', x: 450, w: 80, align: 'right' },
+      { label: '%', x: 535, w: 25, align: 'right' },
+    ], y);
+    for (const b of finBudget.sort((a, b) => (a.category || '').localeCompare(b.category || ''))) {
+      if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+      zebraRow(doc, y, 16);
+      const spent = b.spent || 0;
+      const budgetAmt = b.amount || b.budgeted || 0;
+      const bal = budgetAmt - spent;
+      const bPct = budgetAmt > 0 ? Math.round((spent / budgetAmt) * 100) : 0;
+      doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(b.category || '-', 56, y + 3, { width: 180 });
+      doc.fillColor(COLORS.secondary).text(fmtMoney(budgetAmt), 240, y + 3, { width: 100, align: 'right' });
+      doc.fillColor(COLORS.red).text(fmtMoney(spent), 345, y + 3, { width: 100, align: 'right' });
+      doc.fillColor(bal >= 0 ? COLORS.green : COLORS.red).font('Helvetica-Bold').text(fmtMoney(bal), 450, y + 3, { width: 80, align: 'right' });
+      doc.fillColor(bPct > 100 ? COLORS.red : bPct > 80 ? COLORS.orange : COLORS.green).text(`${bPct}%`, 535, y + 3, { width: 25, align: 'right' });
+      y += 16;
+    }
+  }
+
   doc.end();
   return new Promise(resolve => { doc.on('end', () => resolve(Buffer.concat(buffers))); });
 }
@@ -1259,6 +1357,40 @@ function generateCoordinatorGuideReport() {
       y += 26;
     }
     y += 14;
+  }
+
+  // ============ CALENDARIO DE PREPARACAO ============
+  doc.addPage();
+  reportHeader(doc, 'Calendario de Preparacao 2026', 'Escolinhas e eventos antes do Encontro');
+  y = 155;
+
+  const calEsc = db.getAll('escolinhas').sort((a, b) => {
+    const dCmp = (a.date || '9999').localeCompare(b.date || '9999');
+    if (dCmp !== 0) return dCmp;
+    return (a.time || '').localeCompare(b.time || '');
+  });
+  if (calEsc.length === 0) {
+    doc.fillColor(COLORS.gray).fontSize(11).font('Helvetica-Oblique').text('Nenhuma escolinha ou evento cadastrado.', 55, y);
+    y += 20;
+  } else {
+    y = tableHeader(doc, [
+      { label: 'Data', x: 54, w: 75 },
+      { label: 'Hora', x: 135, w: 45 },
+      { label: 'Evento', x: 190, w: 200 },
+      { label: 'Local', x: 400, w: 90 },
+      { label: 'Publico', x: 500, w: 60 },
+    ], y);
+    for (const e of calEsc) {
+      if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+      zebraRow(doc, y, 22);
+      const dt = e.date ? new Date(e.date + 'T00:00:00').toLocaleDateString('pt-BR') : 'A definir';
+      doc.fillColor(COLORS.primary).fontSize(9).font('Helvetica-Bold').text(dt, 56, y + 4, { width: 75 });
+      doc.fillColor(COLORS.dark).font('Helvetica').text(e.time || '-', 135, y + 4, { width: 45 });
+      doc.font('Helvetica-Bold').text(e.name || '-', 190, y + 4, { width: 200 });
+      doc.font('Helvetica').fillColor(COLORS.gray).text(e.location || '-', 400, y + 4, { width: 90 });
+      doc.fillColor(COLORS.secondary).fontSize(8).font('Helvetica-Oblique').text(e.target_audience || '-', 500, y + 4, { width: 60 });
+      y += 22;
+    }
   }
 
   // ============ ALICERCES E ALVENARIAS ============
@@ -1902,37 +2034,48 @@ function generatePreparationReport() {
 
   // === ESCOLINHAS / ENCONTROS DE PREPARACAO ===
   doc.addPage();
-  reportHeader(doc, 'Escolinhas e Encontros de Preparacao', 'Cronograma de formacao antes do Encontro');
+  reportHeader(doc, 'Escolinhas e Encontros de Preparacao 2026', 'Cronograma de formacao antes do Encontro');
   y = 155;
 
   const allEsc = db.getAll('escolinhas').sort((a, b) => {
-    const dCmp = (a.date || '').localeCompare(b.date || '');
+    const dCmp = (a.date || '9999').localeCompare(b.date || '9999');
     if (dCmp !== 0) return dCmp;
     return (a.time || '').localeCompare(b.time || '');
   });
+  const escTotal = allEsc.length;
+  const escDone = allEsc.filter(e => e.status === 'concluida' || e.status === 'concluido').length;
+  const escScheduled = allEsc.filter(e => e.status === 'agendada' || e.status === 'pendente').length;
+  summaryCard(doc, 'Total', escTotal, 50, y, 120, 50, COLORS.secondary);
+  summaryCard(doc, 'Concluidas', escDone, 180, y, 120, 50, COLORS.green);
+  summaryCard(doc, 'Agendadas', escScheduled, 310, y, 120, 50, COLORS.orange);
+  summaryCard(doc, 'Tipos', new Set(allEsc.map(e => e.type)).size, 440, y, 120, 50, COLORS.primary);
+  y += 70;
+
   if (allEsc.length === 0) {
     doc.fillColor(COLORS.gray).fontSize(11).font('Helvetica-Oblique').text('Nenhuma escolinha cadastrada.', 55, y);
   } else {
     y = tableHeader(doc, [
       { label: 'Data', x: 54, w: 70 },
-      { label: 'Hora', x: 130, w: 50 },
-      { label: 'Nome', x: 190, w: 180 },
-      { label: 'Local', x: 380, w: 100 },
-      { label: 'Status', x: 490, w: 70 },
+      { label: 'Hora', x: 130, w: 45 },
+      { label: 'Nome', x: 180, w: 170 },
+      { label: 'Local', x: 355, w: 85 },
+      { label: 'Publico', x: 445, w: 80 },
+      { label: 'Status', x: 530, w: 30, align: 'right' },
     ], y);
     for (const e of allEsc) {
       if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
-      zebraRow(doc, y, 20);
-      const dt = e.date ? new Date(e.date + 'T00:00:00').toLocaleDateString('pt-BR') : '-';
-      doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(dt, 56, y + 4, { width: 70 });
-      doc.text(e.time || '-', 130, y + 4, { width: 50 });
-      doc.font('Helvetica-Bold').text(e.name || '-', 190, y + 4, { width: 180 });
-      doc.font('Helvetica').fillColor(COLORS.gray).text(e.location || '-', 380, y + 4, { width: 100 });
-      const stColor = e.status === 'concluido' ? COLORS.green : e.status === 'em_andamento' ? COLORS.orange : COLORS.gray;
-      doc.fillColor(stColor).font('Helvetica-Bold').text(e.status || '-', 490, y + 4, { width: 70 });
-      y += 20;
+      zebraRow(doc, y, 22);
+      const dt = e.date ? new Date(e.date + 'T00:00:00').toLocaleDateString('pt-BR') : 'A definir';
+      doc.fillColor(COLORS.primary).fontSize(9).font('Helvetica-Bold').text(dt, 56, y + 4, { width: 70 });
+      doc.fillColor(COLORS.dark).font('Helvetica').text(e.time || '-', 130, y + 4, { width: 45 });
+      doc.font('Helvetica-Bold').text(e.name || '-', 180, y + 4, { width: 170 });
+      doc.font('Helvetica').fillColor(COLORS.gray).text(e.location || '-', 355, y + 4, { width: 85 });
+      doc.fillColor(COLORS.secondary).fontSize(8).font('Helvetica-Oblique').text(e.target_audience || '-', 445, y + 4, { width: 80 });
+      const stColor = e.status === 'concluida' || e.status === 'concluido' ? COLORS.green : e.status === 'em_andamento' ? COLORS.orange : COLORS.gray;
+      doc.fillColor(stColor).font('Helvetica-Bold').fontSize(8).text(e.status || '-', 530, y + 4, { width: 30, align: 'right' });
+      y += 22;
       if (e.description) {
-        doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica-Oblique').text(e.description, 190, y, { width: 370 });
+        doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica-Oblique').text(e.description, 180, y, { width: 380 });
         y += 12;
       }
       y += 4;
@@ -2137,6 +2280,31 @@ function generateLembretesReport() {
   summaryCard(doc, 'Total Geral', autoLembretes.length + manualLembretes.length, 380, y, 100, 45, COLORS.primary);
   y += 65;
 
+  // === PROGRESSO POR MODULO/CATEGORIA ===
+  const lemCats = {};
+  manualLembretes.forEach(l => {
+    const c = l.category || 'Geral MOs';
+    if (!lemCats[c]) lemCats[c] = { total: 0, done: 0 };
+    lemCats[c].total++;
+    if (l.status === 'concluido') lemCats[c].done++;
+  });
+  const lemCatEntries = Object.entries(lemCats).sort((a, b) => b[1].total - a[1].total);
+  if (lemCatEntries.length > 0) {
+    if (y > PAGE_BOTTOM - 60) { doc.addPage(); y = 50; }
+    y = sectionTitle(doc, 'Progresso por Modulo', y, COLORS.secondary);
+    for (const [cat, vals] of lemCatEntries) {
+      if (y > PAGE_BOTTOM - 30) { doc.addPage(); y = 50; }
+      const catPct = vals.total > 0 ? Math.round((vals.done / vals.total) * 100) : 0;
+      const catColor = catPct === 100 ? COLORS.green : catPct >= 50 ? COLORS.orange : COLORS.red;
+      doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica-Bold').text(cat, 55, y, { width: 300 });
+      doc.fillColor(COLORS.gray).fontSize(9).font('Helvetica').text(`${vals.done}/${vals.total} (${catPct}%)`, 400, y, { width: 80, align: 'right' });
+      y += 14;
+      progressBar(doc, catPct, 55, y, 450);
+      y += 18;
+    }
+    y += 10;
+  }
+
   if (!encStart) {
     if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
     doc.fillColor(COLORS.gray).fontSize(11).font('Helvetica-Oblique').text('Defina a data do Encontro para gerar lembretes automaticos baseados nos prazos do manual.', 50, y, { width: CONTENT_WIDTH });
@@ -2180,35 +2348,137 @@ function generateLembretesReport() {
     y += 12;
   }
 
-  // === LEMBRETES MANUAIS ===
+  // === LEMBRETES MANUAIS (AGRUPADOS POR MODULO) ===
   if (y > PAGE_BOTTOM - 50) { doc.addPage(); y = 50; }
-  y = sectionTitle(doc, 'Lembretes Manuais', y, COLORS.secondary);
+  y = sectionTitle(doc, 'Lembretes Manuais por Modulo', y, COLORS.secondary);
   if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
 
   if (manualLembretes.length === 0) {
     doc.fillColor(COLORS.gray).fontSize(11).font('Helvetica-Oblique').text('Nenhum lembrete manual cadastrado.', 55, y, { width: CONTENT_WIDTH });
     y += 25;
   } else {
+    const manualByCat = {};
+    manualLembretes.forEach(l => {
+      const c = l.category || 'Geral MOs';
+      if (!manualByCat[c]) manualByCat[c] = [];
+      manualByCat[c].push(l);
+    });
+    for (const [cat, catItems] of Object.entries(manualByCat).sort((a, b) => a[0].localeCompare(b[0]))) {
+      if (y > PAGE_BOTTOM - 60) { doc.addPage(); y = 50; }
+      const cDone = catItems.filter(l => l.status === 'concluido').length;
+      const cPct = catItems.length > 0 ? Math.round((cDone / catItems.length) * 100) : 0;
+      doc.fillColor(COLORS.primary).fontSize(11).font('Helvetica-Bold').text(`${cat} (${cDone}/${catItems.length} - ${cPct}%)`, 55, y);
+      y += 16;
+      progressBar(doc, cPct, 55, y, CONTENT_WIDTH);
+      y += 16;
+
+      y = tableHeader(doc, [
+        { label: 'Titulo', x: 54, w: 180 },
+        { label: 'Descricao', x: 240, w: 160 },
+        { label: 'Prazo', x: 405, w: 65 },
+        { label: 'Prioridade', x: 475, w: 60 },
+        { label: 'Status', x: 540, w: 50, align: 'right' },
+      ], y);
+
+      for (const l of catItems) {
+        if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+        zebraRow(doc, y, 20);
+        doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica-Bold').text(l.title || '-', 56, y + 4, { width: 180 });
+        doc.fillColor(COLORS.gray).font('Helvetica').text(l.description || '-', 240, y + 4, { width: 160 });
+        doc.fillColor(COLORS.dark).font('Helvetica').text(l.due_date ? fmtDate(l.due_date) : '-', 405, y + 4, { width: 65 });
+        const pColor = l.priority === 'alta' ? COLORS.red : l.priority === 'media' ? COLORS.orange : COLORS.gray;
+        doc.fillColor(pColor).font('Helvetica-Bold').text(priorityLabel(l.priority), 475, y + 4, { width: 60 });
+        const sColor = l.status === 'concluido' ? COLORS.green : l.status === 'em_andamento' ? COLORS.orange : COLORS.gray;
+        doc.fillColor(sColor).font('Helvetica-Bold').text(l.status === 'concluido' ? 'OK' : l.status === 'em_andamento' ? 'Em curso' : 'Pendente', 540, y + 4, { width: 50, align: 'right' });
+        y += 20;
+      }
+      y += 12;
+    }
+  }
+
+  doc.end();
+  return new Promise(resolve => { doc.on('end', () => resolve(Buffer.concat(buffers))); });
+}
+
+function generateEscolinhasReport() {
+  const doc = createReportDoc();
+  const buffers = [];
+  doc.on('data', buffers.push.bind(buffers));
+
+  const enc = getEncounter();
+  const encInfo = enc.name ? `${enc.name} - ${fmtDate(enc.start_date)} a ${fmtDate(enc.end_date)}` : '';
+  reportHeader(doc, 'Calendario de Escolinhas e Eventos 2026', `Cronograma completo de formacao${encInfo ? ' | ' + encInfo : ''}`);
+
+  let y = 155;
+  const allEsc = db.getAll('escolinhas').sort((a, b) => {
+    const dCmp = (a.date || '9999').localeCompare(b.date || '9999');
+    if (dCmp !== 0) return dCmp;
+    return (a.time || '').localeCompare(b.time || '');
+  });
+
+  const total = allEsc.length;
+  const done = allEsc.filter(e => e.status === 'concluida' || e.status === 'concluido').length;
+  const scheduled = allEsc.filter(e => e.status === 'agendada' || e.status === 'pendente').length;
+  const inProgress = allEsc.filter(e => e.status === 'em_andamento').length;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+  summaryCard(doc, 'Total', total, 50, y, 120, 50, COLORS.secondary);
+  summaryCard(doc, 'Concluidas', done, 180, y, 120, 50, COLORS.green);
+  summaryCard(doc, 'Em Andamento', inProgress, 310, y, 120, 50, COLORS.orange);
+  summaryCard(doc, 'Agendadas', scheduled, 440, y, 120, 50, COLORS.gray);
+  y += 70;
+
+  doc.fillColor(COLORS.dark).fontSize(12).font('Helvetica-Bold').text(`Progresso Geral: ${pct}%`, 50, y);
+  y += 18;
+  progressBar(doc, pct, 50, y, CONTENT_WIDTH);
+  y += 30;
+
+  const typeLabels = {
+    formacao: 'Escolinhas de Formacao', equipes_extras: 'Equipes Extras',
+    cozinha: 'Cozinha', implantacao: 'Implantacao', missa_entrega: 'Missa de Entrega',
+    evento: 'Eventos Gerais'
+  };
+
+  const types = [...new Set(allEsc.map(e => e.type || 'evento'))].sort();
+  for (const type of types) {
+    if (y > PAGE_BOTTOM - 60) { doc.addPage(); y = 50; }
+    const typeItems = allEsc.filter(e => (e.type || 'evento') === type);
+    const tDone = typeItems.filter(e => e.status === 'concluida' || e.status === 'concluido').length;
+    const tPct = typeItems.length > 0 ? Math.round((tDone / typeItems.length) * 100) : 0;
+    y = sectionTitle(doc, `${typeLabels[type] || type} (${typeItems.length})`, y, COLORS.primary);
+    doc.fillColor(COLORS.gray).fontSize(9).font('Helvetica').text(`${tDone}/${typeItems.length} (${tPct}%)`, 500, y - 18, { width: 60, align: 'right' });
+    y += 4;
+    progressBar(doc, tPct, 50, y, CONTENT_WIDTH);
+    y += 18;
+
     y = tableHeader(doc, [
-      { label: 'Titulo', x: 54, w: 180 },
-      { label: 'Descricao', x: 240, w: 160 },
-      { label: 'Prazo', x: 405, w: 65 },
-      { label: 'Prioridade', x: 475, w: 60 },
-      { label: 'Status', x: 540, w: 50, align: 'right' },
+      { label: 'Data', x: 54, w: 75 },
+      { label: 'Hora', x: 135, w: 45 },
+      { label: 'Nome', x: 185, w: 170 },
+      { label: 'Local', x: 360, w: 85 },
+      { label: 'Publico', x: 450, w: 80 },
+      { label: 'Status', x: 535, w: 25, align: 'right' },
     ], y);
 
-    for (const l of manualLembretes) {
+    for (const e of typeItems) {
       if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
-      zebraRow(doc, y, 20);
-      doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica-Bold').text(l.title || '-', 56, y + 4, { width: 180 });
-      doc.fillColor(COLORS.gray).font('Helvetica').text(l.description || '-', 240, y + 4, { width: 160 });
-      doc.fillColor(COLORS.dark).font('Helvetica').text(l.due_date ? fmtDate(l.due_date) : '-', 405, y + 4, { width: 65 });
-      const pColor = l.priority === 'alta' ? COLORS.red : l.priority === 'media' ? COLORS.orange : COLORS.gray;
-      doc.fillColor(pColor).font('Helvetica-Bold').text(priorityLabel(l.priority), 475, y + 4, { width: 60 });
-      const sColor = l.status === 'concluido' ? COLORS.green : l.status === 'em_andamento' ? COLORS.orange : COLORS.gray;
-      doc.fillColor(sColor).font('Helvetica-Bold').text(l.status === 'concluido' ? 'OK' : l.status === 'em_andamento' ? 'Em curso' : 'Pendente', 540, y + 4, { width: 50, align: 'right' });
-      y += 20;
+      zebraRow(doc, y, 26);
+      const dt = e.date ? new Date(e.date + 'T00:00:00').toLocaleDateString('pt-BR') : 'A definir';
+      doc.fillColor(COLORS.primary).fontSize(9).font('Helvetica-Bold').text(dt, 56, y + 4, { width: 75 });
+      doc.fillColor(COLORS.dark).font('Helvetica').text(e.time || '-', 135, y + 4, { width: 45 });
+      doc.font('Helvetica-Bold').text(e.name || '-', 185, y + 4, { width: 170 });
+      doc.font('Helvetica').fillColor(COLORS.gray).text(e.location || '-', 360, y + 4, { width: 85 });
+      doc.fillColor(COLORS.secondary).fontSize(7).font('Helvetica-Oblique').text(e.target_audience || '-', 450, y + 4, { width: 80 });
+      const stColor = e.status === 'concluida' || e.status === 'concluido' ? COLORS.green : e.status === 'em_andamento' ? COLORS.orange : COLORS.gray;
+      doc.fillColor(stColor).font('Helvetica-Bold').fontSize(7).text(e.status || '-', 535, y + 4, { width: 25, align: 'right' });
+      y += 26;
+      if (e.description) {
+        doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica-Oblique').text(e.description, 185, y, { width: 375 });
+        y += 12;
+      }
+      y += 4;
     }
+    y += 12;
   }
 
   doc.end();
@@ -2218,4 +2488,4 @@ function generateLembretesReport() {
 module.exports = { generateFullReport, generateCategoryReport, generateTeamReport, generateTeamScheduleReport,
   generateScheduleReport, generateParticipantsReport, generateFinanceReport, generateAlicercesReport,
   generateLembrancinhasReport, generateFornecedoresReport, generateAvisosReport, generateKitReport,
-  generateCoordinatorGuideReport, generatePreparationReport, generateLembretesReport };
+  generateCoordinatorGuideReport, generatePreparationReport, generateLembretesReport, generateEscolinhasReport };
