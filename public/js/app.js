@@ -3136,3 +3136,41 @@ async function openLembreteDetails(id) {
 currentPage = getPageFromHash();
 updateActiveNav();
 renderPage();
+checkVersionUpdate();
+
+async function checkVersionUpdate() {
+  try {
+    const data = await api('/version');
+    if (!data.latest) return;
+    const seenVersion = localStorage.getItem('app_version_seen') || '';
+    if (data.latest.version !== seenVersion) {
+      showVersionModal(data.latest);
+      localStorage.setItem('app_version_seen', data.latest.version);
+    }
+  } catch (e) {}
+}
+
+function showVersionModal(info) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay active';
+  overlay.innerHTML = `<div class="modal" style="max-width:520px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <span style="font-size:28px">🎉</span>
+      <div>
+        <h3 style="margin:0">Atualização v${info.version}</h3>
+        <span style="font-size:12px;color:var(--text-light)">${info.date} — ${info.title}</span>
+      </div>
+    </div>
+    <div style="margin:12px 0">
+      <p style="font-weight:600;margin-bottom:8px">O que há de novo:</p>
+      <ul style="margin:0;padding-left:20px;line-height:1.8">
+        ${info.changes.map(c => '<li>' + c + '</li>').join('')}
+      </ul>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="this.closest('.modal-overlay').remove()">Entendi</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+}

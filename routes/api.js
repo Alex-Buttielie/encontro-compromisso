@@ -1,7 +1,20 @@
 const express = require('express');
 const db = require('../db/database');
+const fs = require('fs');
+const path = require('path');
 
 const router = express.Router();
+
+// ============ VERSION ============
+
+router.get('/version', (req, res) => {
+  try {
+    const changelog = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'CHANGELOG.json'), 'utf-8'));
+    res.json({ latest: changelog[0], all: changelog });
+  } catch (e) {
+    res.json({ latest: null, all: [] });
+  }
+});
 
 // ============ TASKS ============
 

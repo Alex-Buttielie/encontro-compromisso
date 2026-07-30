@@ -1,0 +1,49 @@
+[
+  {
+    "version": "1.14.0",
+    "date": "2026-07-30",
+    "title": "Rotas URL e Novas Funcionalidades",
+    "changes": [
+      "Rotas URL (hash routing) para todas as telas — bookmark, back/forward e compartilhamento",
+      "Filtros para lembretes automáticos — urgência, categoria, equipe e busca textual",
+      "Modal de detalhes de tarefas e lembretes — visualização completa com vínculos",
+      "Relatório de lembretes com rows dinâmicas e sem páginas em branco",
+      "Row heights dinâmicas em todos os relatórios PDF",
+      "No-cache headers em arquivos estáticos para evitar cache stale",
+      "Migration V7 — garante seed de team_members em todos os ambientes",
+      "Integração bidirecional checklist × lembretes",
+      "UI/UX melhorado em todos os módulos"
+    ]
+  },
+  {
+    "version": "1.13.1",
+    "date": "2026-07-30",
+    "title": "Correção de Sintaxe",
+    "changes": [
+      "Correção de erro de sintaxe em renderAutoLembretes que quebrava todas as telas"
+    ]
+  },
+  {
+    "version": "1.13.0",
+    "date": "2026-07-30",
+    "title": "Filtros e Correções",
+    "changes": [
+      "Filtros para lembretes automáticos — urgência, categoria, equipe e busca",
+      "Relatório de lembretes com rows dinâmicas e sem páginas em branco",
+      "Migration V7 — garante seed de team_members",
+      "No-cache headers em arquivos estáticos"
+    ]
+  },
+  {
+    "version": "1.12.0",
+    "date": "2026-07-30",
+    "title": "Detalhes e Relatórios",
+    "changes": [
+      "Modal de detalhes de tarefas e lembretes",
+      "Row heights dinâmicas em todos os relatórios PDF",
+      "Correção de layouts quebrados nos relatórios PDF",
+      "Integração bidirecional checklist × lembretes",
+      "UI/UX melhorado em todos os módulos"
+    ]
+  }
+]
