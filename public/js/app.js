@@ -485,6 +485,9 @@ function renderTaskItem(t) {
       </div>
     </div>
     <div class="task-actions">
+      <button class="btn-icon" onclick="openTaskDetails(${t.id})" title="Ver detalhes">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
       <button class="btn-icon" onclick="openTaskModal(${t.id})" title="Editar">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
       </button>
@@ -2292,6 +2295,9 @@ function renderManualLembretes(list) {
       <span class="badge-sm ${statusBadges[l.status] || 'badge-gray'}">${l.status}</span>
       <span class="badge-sm ${priorityBadges[l.priority] || 'badge-gray'}">${l.priority}</span>
       <div style="display:flex;gap:4px;margin-top:4px">
+        <button class="btn-icon" onclick="openLembreteDetails(${l.id})" title="Ver detalhes">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
         <button class="btn-icon" onclick="toggleLembreteStatus(${l.id})" title="${l.status === 'concluido' ? 'Reabrir' : 'Concluir'}">${l.status === 'concluido' ? '↩️' : '✅'}</button>
         <button class="btn-icon" onclick="openLembreteModal(${l.id})" title="Editar">✏️</button>
         <button class="btn-icon" onclick="deleteLembrete(${l.id})" title="Excluir">🗑️</button>
@@ -2913,6 +2919,125 @@ async function deleteAviso(id) {
   await api(`/avisos/${id}`, { method: 'DELETE' });
   toast('Aviso excluído', 'error');
   renderAvisos();
+}
+
+// ============ DETALHES (TASKS & LEMBRETES) ============
+
+async function openTaskDetails(id) {
+  const t = tasksCache.find(t => t.id === id);
+  if (!t) return;
+  if (lembretesCache.length === 0) {
+    try { lembretesCache = await api('/lembretes'); } catch(e) {}
+  }
+  const linkedLem = lembretesCache.find(l => Number(l.related_task_id) === Number(id));
+  const statusColors = { concluido: 'var(--success)', em_andamento: 'var(--warning)', pendente: 'var(--text-light)' };
+  const priorityColors = { alta: 'var(--danger)', media: 'var(--warning)', baixa: 'var(--text-light)' };
+  const phaseLabel = t.phase === 'during' ? 'Durante o Encontro' : 'Pré-Encontro';
+  const created = t.created_at ? new Date(t.created_at).toLocaleString('pt-BR') : '-';
+  const updated = t.updated_at ? new Date(t.updated_at).toLocaleString('pt-BR') : '-';
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay active';
+  overlay.innerHTML = `<div class="modal modal-details">
+    <div class="details-header">
+      <div class="details-header-left">
+        <span class="details-badge" style="background:${statusColors[t.status] || 'var(--text-light)'}">${statusLabel(t.status)}</span>
+        <span class="details-badge" style="background:${priorityColors[t.priority] || 'var(--text-light)'}">${priorityLabel(t.priority)}</span>
+        ${t.item_number ? `<span class="details-num">[${t.item_number}]</span>` : ''}
+      </div>
+      <button class="btn-icon" onclick="this.closest('.modal-overlay').remove()" title="Fechar">✕</button>
+    </div>
+    <h3 class="details-title">${t.title}</h3>
+    ${t.description ? `<div class="details-description">${t.description}</div>` : '<div class="details-description details-empty">Sem descrição</div>'}
+
+    <div class="details-grid">
+      <div class="detail-row"><span class="detail-label">📁 Categoria</span><span class="detail-value">${t.category || '-'}</span></div>
+      <div class="detail-row"><span class="detail-label">🔄 Fase</span><span class="detail-value">${phaseLabel}</span></div>
+      <div class="detail-row"><span class="detail-label">👥 Equipe</span><span class="detail-value">${t.responsible_team || '-'}</span></div>
+      <div class="detail-row"><span class="detail-label">⏰ Prazo</span><span class="detail-value">${t.deadline || '-'}</span></div>
+    </div>
+
+    ${t.notes ? `<div class="detail-section"><div class="detail-section-title">📝 Observações</div><div class="detail-section-body">${t.notes}</div></div>` : ''}
+
+    ${linkedLem ? `<div class="detail-section detail-linked">
+      <div class="detail-section-title">🔗 Lembrete Vinculado</div>
+      <div class="detail-section-body">
+        <div><strong>${linkedLem.title}</strong></div>
+        ${linkedLem.description ? `<div class="detail-sub">${linkedLem.description}</div>` : ''}
+        <div class="detail-sub">Status: ${linkedLem.status} · Prioridade: ${priorityLabel(linkedLem.priority)} · Vencimento: ${linkedLem.due_date ? new Date(linkedLem.due_date).toLocaleDateString('pt-BR') : '-'}</div>
+      </div>
+    </div>` : ''}
+
+    <div class="detail-timestamps">
+      <span>Criado em: ${created}</span>
+      ${updated !== '-' ? `<span>Atualizado em: ${updated}</span>` : ''}
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Fechar</button>
+      <button class="btn btn-primary" onclick="this.closest('.modal-overlay').remove(); openTaskModal(${id})">✏️ Editar</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+}
+
+async function openLembreteDetails(id) {
+  const l = lembretesCache.find(l => l.id === id);
+  if (!l) return;
+  if (tasksCache.length === 0) {
+    try { tasksCache = await api('/tasks'); } catch(e) {}
+  }
+  const linkedTask = l.related_task_id ? tasksCache.find(t => Number(t.id) === Number(l.related_task_id)) : null;
+  const statusColors = { concluido: 'var(--success)', pendente: 'var(--warning)' };
+  const priorityColors = { alta: 'var(--danger)', media: 'var(--warning)', baixa: 'var(--text-light)' };
+  const cat = l.category || 'Geral MOs';
+  const catIcon = LEMBRETE_CATEGORY_ICONS[cat] || '📌';
+  const created = l.created_at ? new Date(l.created_at).toLocaleString('pt-BR') : '-';
+  const updated = l.updated_at ? new Date(l.updated_at).toLocaleString('pt-BR') : '-';
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay active';
+  overlay.innerHTML = `<div class="modal modal-details">
+    <div class="details-header">
+      <div class="details-header-left">
+        <span class="details-badge" style="background:${statusColors[l.status] || 'var(--text-light)'}">${l.status === 'concluido' ? 'Concluído' : 'Pendente'}</span>
+        <span class="details-badge" style="background:${priorityColors[l.priority] || 'var(--text-light)'}">${priorityLabel(l.priority)}</span>
+        <span class="details-badge" style="background:var(--info)">${catIcon} ${cat}</span>
+      </div>
+      <button class="btn-icon" onclick="this.closest('.modal-overlay').remove()" title="Fechar">✕</button>
+    </div>
+    <h3 class="details-title">${l.title}</h3>
+    ${l.description ? `<div class="details-description">${l.description}</div>` : '<div class="details-description details-empty">Sem descrição</div>'}
+
+    <div class="details-grid">
+      <div class="detail-row"><span class="detail-label">📅 Vencimento</span><span class="detail-value">${l.due_date ? new Date(l.due_date).toLocaleDateString('pt-BR') : '-'}</span></div>
+      <div class="detail-row"><span class="detail-label">📌 Categoria</span><span class="detail-value">${cat}</span></div>
+      <div class="detail-row"><span class="detail-label">🔗 Vínculo</span><span class="detail-value">${l.related_task_id ? 'Vinculado ao checklist' : 'Sem vínculo'}</span></div>
+      <div class="detail-row"><span class="detail-label">📊 Status</span><span class="detail-value">${l.status === 'concluido' ? 'Concluído' : 'Pendente'}</span></div>
+    </div>
+
+    ${linkedTask ? `<div class="detail-section detail-linked">
+      <div class="detail-section-title">🔗 Tarefa Vinculada no Checklist</div>
+      <div class="detail-section-body">
+        <div><strong>[${linkedTask.item_number}] ${linkedTask.title}</strong></div>
+        ${linkedTask.description ? `<div class="detail-sub">${linkedTask.description}</div>` : ''}
+        <div class="detail-sub">Categoria: ${linkedTask.category || '-'} · Equipe: ${linkedTask.responsible_team || '-'} · Status: ${statusLabel(linkedTask.status)}</div>
+      </div>
+    </div>` : ''}
+
+    <div class="detail-timestamps">
+      <span>Criado em: ${created}</span>
+      ${updated !== '-' ? `<span>Atualizado em: ${updated}</span>` : ''}
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Fechar</button>
+      <button class="btn btn-primary" onclick="this.closest('.modal-overlay').remove(); openLembreteModal(${id})">✏️ Editar</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
 }
 
 // INIT
