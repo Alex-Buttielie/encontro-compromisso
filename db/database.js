@@ -97,6 +97,7 @@ function queryAll(sql, params) {
     if (lower.includes('and status = ?')) { const v = params[paramIdx++]; results = results.filter(t => t.status === v); }
     if (lower.includes('and priority = ?')) { const v = params[paramIdx++]; results = results.filter(t => t.priority === v); }
     if (lower.includes('and responsible_team = ?')) { const v = params[paramIdx++]; results = results.filter(t => t.responsible_team === v); }
+    if (lower.includes('and phase = ?')) { const v = params[paramIdx++]; results = results.filter(t => (t.phase || 'pre') === v); }
     results.sort((a, b) => {
       const catCmp = (a.category || '').localeCompare(b.category || '');
       if (catCmp !== 0) return catCmp;
@@ -205,7 +206,7 @@ function execute(sql, params) {
     data.tasks.push({
       id, category: params[0], item_number: params[1], title: params[2], description: params[3],
       responsible_team: params[4], deadline: params[5], priority: params[6],
-      status: params[7] || 'pendente', notes: params[8],
+      status: params[7] || 'pendente', notes: params[8], phase: params[9] || 'pre',
       created_at: new Date().toISOString(), updated_at: new Date().toISOString()
     });
     save();
@@ -238,11 +239,11 @@ function execute(sql, params) {
     return { lastInsertRowid: id };
   }
   if (lower.startsWith('update tasks set category')) {
-    const t = data.tasks.find(t => t.id === Number(params[9]));
+    const t = data.tasks.find(t => t.id === Number(params[10]));
     if (t) {
       Object.assign(t, { category: params[0], item_number: params[1], title: params[2], description: params[3],
         responsible_team: params[4], deadline: params[5], priority: params[6], status: params[7],
-        notes: params[8], updated_at: new Date().toISOString() });
+        notes: params[8], phase: params[9] || t.phase || 'pre', updated_at: new Date().toISOString() });
       save();
     }
     return { changes: t ? 1 : 0 };

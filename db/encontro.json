@@ -11,7 +11,8 @@
       "priority": "alta",
       "status": "concluido",
       "created_at": "2026-07-29T15:00:18.510Z",
-      "updated_at": "2026-07-29T18:35:42.691Z"
+      "updated_at": "2026-07-29T18:35:42.691Z",
+      "phase": "pre"
     },
     {
       "id": 3,
@@ -24,7 +25,8 @@
       "priority": "alta",
       "status": "concluido",
       "created_at": "2026-07-29T15:00:18.514Z",
-      "updated_at": "2026-07-29T18:35:16.852Z"
+      "updated_at": "2026-07-29T18:35:16.852Z",
+      "phase": "pre"
     },
     {
       "id": 4,
@@ -37,7 +39,8 @@
       "priority": "alta",
       "status": "concluido",
       "created_at": "2026-07-29T15:00:18.518Z",
-      "updated_at": "2026-07-29T18:35:19.560Z"
+      "updated_at": "2026-07-29T18:35:19.560Z",
+      "phase": "pre"
     },
     {
       "id": 5,
@@ -50,7 +53,8 @@
       "priority": "alta",
       "status": "concluido",
       "created_at": "2026-07-29T15:00:18.524Z",
-      "updated_at": "2026-07-29T18:35:22.080Z"
+      "updated_at": "2026-07-29T18:35:22.080Z",
+      "phase": "pre"
     },
     {
       "id": 6,
@@ -63,7 +67,8 @@
       "priority": "alta",
       "status": "concluido",
       "created_at": "2026-07-29T15:00:18.530Z",
-      "updated_at": "2026-07-29T18:35:24.377Z"
+      "updated_at": "2026-07-29T18:35:24.377Z",
+      "phase": "pre"
     },
     {
       "id": 7,
@@ -76,7 +81,8 @@
       "priority": "alta",
       "status": "concluido",
       "created_at": "2026-07-29T15:00:18.536Z",
-      "updated_at": "2026-07-29T18:35:31.441Z"
+      "updated_at": "2026-07-29T18:35:31.441Z",
+      "phase": "pre"
     },
     {
       "id": 8,
@@ -89,7 +95,8 @@
       "priority": "media",
       "status": "concluido",
       "created_at": "2026-07-29T15:00:18.545Z",
-      "updated_at": "2026-07-29T18:35:34.291Z"
+      "updated_at": "2026-07-29T18:35:34.291Z",
+      "phase": "pre"
     },
     {
       "id": 9,
@@ -102,7 +109,8 @@
       "priority": "media",
       "status": "concluido",
       "created_at": "2026-07-29T15:00:18.551Z",
-      "updated_at": "2026-07-29T18:35:36.194Z"
+      "updated_at": "2026-07-29T18:35:36.194Z",
+      "phase": "pre"
     },
     {
       "id": 10,
@@ -115,7 +123,8 @@
       "priority": "media",
       "status": "concluido",
       "created_at": "2026-07-29T15:00:18.554Z",
-      "updated_at": "2026-07-29T18:35:38.369Z"
+      "updated_at": "2026-07-29T18:35:38.369Z",
+      "phase": "pre"
     },
     {
       "id": 11,
@@ -128,7 +137,8 @@
       "priority": "alta",
       "status": "pendente",
       "created_at": "2026-07-29T15:00:18.557Z",
-      "updated_at": "2026-07-29T18:35:53.555Z"
+      "updated_at": "2026-07-29T18:35:53.555Z",
+      "phase": "pre"
     },
     {
       "id": 12,
@@ -141,7 +151,8 @@
       "priority": "alta",
       "status": "pendente",
       "created_at": "2026-07-29T15:00:18.559Z",
-      "updated_at": "2026-07-29T18:35:58.734Z"
+      "updated_at": "2026-07-29T18:35:58.734Z",
+      "phase": "pre"
     },
     {
       "id": 13,
@@ -154,7 +165,8 @@
       "priority": "alta",
       "status": "concluido",
       "created_at": "2026-07-29T15:00:18.562Z",
-      "updated_at": "2026-07-29T18:50:33.005Z"
+      "updated_at": "2026-07-29T18:50:33.005Z",
+      "phase": "pre"
     },
     {
       "id": 14,
@@ -167,7 +179,8 @@
       "priority": "alta",
       "status": "concluido",
       "created_at": "2026-07-29T15:00:18.567Z",
-      "updated_at": "2026-07-29T18:36:11.374Z"
+      "updated_at": "2026-07-29T18:36:11.374Z",
+      "phase": "pre"
     },
     {
       "id": 15,
@@ -180,7 +193,8 @@
       "priority": "alta",
       "status": "concluido",
       "created_at": "2026-07-29T15:00:18.570Z",
-      "updated_at": "2026-07-29T18:36:12.606Z"
+      "updated_at": "2026-07-29T18:36:12.606Z",
+      "phase": "pre"
     },
     {
       "id": 16,
@@ -193,7 +207,8 @@
       "priority": "alta",
       "status": "concluido",
       "created_at": "2026-07-29T15:00:18.578Z",
-      "updated_at": "2026-07-29T18:36:14.442Z"
+      "updated_at": "2026-07-29T18:36:14.442Z",
+      "phase": "pre"
     },
     {
       "id": 17,
@@ -206,7 +221,8 @@
       "priority": "alta",
       "status": "concluido",
       "created_at": "2026-07-29T15:00:18.586Z",
-      "updated_at": "2026-07-29T18:39:21.712Z"
+      "updated_at": "2026-07-29T18:39:21.712Z",
+      "phase": "pre"
     },
     {
       "id": 18,
@@ -219,7 +235,8 @@
       "priority": "media",
       "status": "concluido",
       "created_at": "2026-07-29T15:00:18.587Z",
-      "updated_at": "2026-07-29T18:39:22.915Z"
+      "updated_at": "2026-07-29T18:39:22.915Z",
+      "phase": "pre"
     },
     {
       "id": 19,
@@ -232,7 +249,8 @@
       "priority": "alta",
       "status": "pendente",
       "created_at": "2026-07-29T15:00:18.592Z",
-      "updated_at": "2026-07-29T15:00:18.592Z"
+      "updated_at": "2026-07-29T15:00:18.592Z",
+      "phase": "pre"
     },
     {
       "id": 20,
@@ -245,7 +263,8 @@
       "priority": "alta",
       "status": "pendente",
       "created_at": "2026-07-29T15:00:18.601Z",
-      "updated_at": "2026-07-29T15:00:18.601Z"
+      "updated_at": "2026-07-29T15:00:18.601Z",
+      "phase": "pre"
     },
     {
       "id": 21,
@@ -258,7 +277,8 @@
       "priority": "alta",
       "status": "pendente",
       "created_at": "2026-07-29T15:00:18.609Z",
-      "updated_at": "2026-07-29T15:00:18.609Z"
+      "updated_at": "2026-07-29T15:00:18.609Z",
+      "phase": "pre"
     },
     {
       "id": 22,
@@ -271,7 +291,8 @@
       "priority": "media",
       "status": "concluido",
       "created_at": "2026-07-29T15:00:18.619Z",
-      "updated_at": "2026-07-29T18:39:38.032Z"
+      "updated_at": "2026-07-29T18:39:38.032Z",
+      "phase": "pre"
     },
     {
       "id": 23,
@@ -284,7 +305,8 @@
       "priority": "media",
       "status": "pendente",
       "created_at": "2026-07-29T15:00:18.621Z",
-      "updated_at": "2026-07-29T15:00:18.621Z"
+      "updated_at": "2026-07-29T15:00:18.621Z",
+      "phase": "pre"
     },
     {
       "id": 24,
@@ -297,7 +319,8 @@
       "priority": "alta",
       "status": "pendente",
       "created_at": "2026-07-29T15:00:18.625Z",
-      "updated_at": "2026-07-29T15:00:18.625Z"
+      "updated_at": "2026-07-29T15:00:18.625Z",
+      "phase": "pre"
     },
     {
       "id": 25,
@@ -310,7 +333,8 @@
       "priority": "alta",
       "status": "pendente",
       "created_at": "2026-07-29T15:00:18.629Z",
-      "updated_at": "2026-07-29T15:00:18.629Z"
+      "updated_at": "2026-07-29T15:00:18.629Z",
+      "phase": "pre"
     },
     {
       "id": 26,
@@ -323,7 +347,8 @@
       "priority": "media",
       "status": "pendente",
       "created_at": "2026-07-29T15:00:18.637Z",
-      "updated_at": "2026-07-29T15:00:18.637Z"
+      "updated_at": "2026-07-29T15:00:18.637Z",
+      "phase": "pre"
     },
     {
       "id": 27,
@@ -336,7 +361,8 @@
       "priority": "alta",
       "status": "concluido",
       "created_at": "2026-07-29T15:00:18.645Z",
-      "updated_at": "2026-07-29T18:36:40.352Z"
+      "updated_at": "2026-07-29T18:36:40.352Z",
+      "phase": "pre"
     },
     {
       "id": 28,
@@ -349,7 +375,8 @@
       "priority": "alta",
       "status": "pendente",
       "created_at": "2026-07-29T15:00:18.653Z",
-      "updated_at": "2026-07-29T15:00:18.653Z"
+      "updated_at": "2026-07-29T15:00:18.653Z",
+      "phase": "pre"
     },
     {
       "id": 29,
@@ -362,7 +389,8 @@
       "priority": "media",
       "status": "pendente",
       "created_at": "2026-07-29T15:00:18.661Z",
-      "updated_at": "2026-07-29T15:00:18.661Z"
+      "updated_at": "2026-07-29T15:00:18.661Z",
+      "phase": "pre"
     },
     {
       "id": 30,
@@ -375,7 +403,8 @@
       "priority": "alta",
       "status": "pendente",
       "created_at": "2026-07-29T15:00:18.666Z",
-      "updated_at": "2026-07-29T15:00:18.666Z"
+      "updated_at": "2026-07-29T15:00:18.666Z",
+      "phase": "pre"
     },
     {
       "id": 31,
@@ -388,7 +417,8 @@
       "priority": "media",
       "status": "pendente",
       "created_at": "2026-07-29T15:00:18.670Z",
-      "updated_at": "2026-07-29T15:00:18.670Z"
+      "updated_at": "2026-07-29T15:00:18.670Z",
+      "phase": "pre"
     },
     {
       "id": 32,
@@ -401,7 +431,8 @@
       "priority": "media",
       "status": "pendente",
       "created_at": "2026-07-29T15:00:18.674Z",
-      "updated_at": "2026-07-29T18:37:13.017Z"
+      "updated_at": "2026-07-29T18:37:13.017Z",
+      "phase": "pre"
     },
     {
       "id": 33,
@@ -414,7 +445,8 @@
       "priority": "media",
       "status": "pendente",
       "created_at": "2026-07-29T15:00:18.682Z",
-      "updated_at": "2026-07-29T15:00:18.682Z"
+      "updated_at": "2026-07-29T15:00:18.682Z",
+      "phase": "pre"
     },
     {
       "id": 34,
@@ -427,7 +459,8 @@
       "priority": "baixa",
       "status": "pendente",
       "created_at": "2026-07-29T15:00:18.692Z",
-      "updated_at": "2026-07-29T15:00:18.692Z"
+      "updated_at": "2026-07-29T15:00:18.692Z",
+      "phase": "pre"
     },
     {
       "id": 35,
@@ -440,7 +473,8 @@
       "priority": "alta",
       "status": "concluido",
       "created_at": "2026-07-29T15:00:18.695Z",
-      "updated_at": "2026-07-29T18:38:13.544Z"
+      "updated_at": "2026-07-29T18:38:13.544Z",
+      "phase": "pre"
     },
     {
       "id": 36,
@@ -453,7 +487,8 @@
       "priority": "media",
       "status": "pendente",
       "created_at": "2026-07-29T15:00:18.699Z",
-      "updated_at": "2026-07-29T15:00:18.699Z"
+      "updated_at": "2026-07-29T15:00:18.699Z",
+      "phase": "pre"
     },
     {
       "id": 37,
@@ -466,7 +501,8 @@
       "priority": "media",
       "status": "pendente",
       "created_at": "2026-07-29T15:00:18.704Z",
-      "updated_at": "2026-07-29T15:00:18.704Z"
+      "updated_at": "2026-07-29T15:00:18.704Z",
+      "phase": "pre"
     },
     {
       "id": 38,
@@ -479,7 +515,8 @@
       "priority": "alta",
       "status": "pendente",
       "created_at": "2026-07-29T15:00:18.707Z",
-      "updated_at": "2026-07-29T15:00:18.707Z"
+      "updated_at": "2026-07-29T15:00:18.707Z",
+      "phase": "pre"
     },
     {
       "id": 39,
@@ -492,7 +529,8 @@
       "priority": "alta",
       "status": "pendente",
       "created_at": "2026-07-29T15:00:18.712Z",
-      "updated_at": "2026-07-29T15:00:18.712Z"
+      "updated_at": "2026-07-29T15:00:18.712Z",
+      "phase": "pre"
     },
     {
       "id": 40,
@@ -505,7 +543,8 @@
       "priority": "media",
       "status": "pendente",
       "created_at": "2026-07-29T15:00:18.715Z",
-      "updated_at": "2026-07-29T15:00:18.715Z"
+      "updated_at": "2026-07-29T15:00:18.715Z",
+      "phase": "pre"
     },
     {
       "id": 41,
@@ -518,7 +557,8 @@
       "priority": "alta",
       "status": "pendente",
       "created_at": "2026-07-29T15:00:18.718Z",
-      "updated_at": "2026-07-29T15:00:18.718Z"
+      "updated_at": "2026-07-29T15:00:18.718Z",
+      "phase": "pre"
     },
     {
       "id": 42,
@@ -531,7 +571,8 @@
       "priority": "alta",
       "status": "pendente",
       "created_at": "2026-07-29T15:00:18.719Z",
-      "updated_at": "2026-07-29T15:00:18.719Z"
+      "updated_at": "2026-07-29T15:00:18.719Z",
+      "phase": "pre"
     },
     {
       "id": 43,
@@ -544,7 +585,8 @@
       "priority": "media",
       "status": "pendente",
       "created_at": "2026-07-29T15:00:18.722Z",
-      "updated_at": "2026-07-29T15:00:18.722Z"
+      "updated_at": "2026-07-29T15:00:18.722Z",
+      "phase": "pre"
     },
     {
       "id": 44,
@@ -557,7 +599,8 @@
       "priority": "media",
       "status": "concluido",
       "created_at": "2026-07-29T15:00:18.729Z",
-      "updated_at": "2026-07-29T18:39:14.603Z"
+      "updated_at": "2026-07-29T18:39:14.603Z",
+      "phase": "pre"
     },
     {
       "id": 45,
@@ -570,7 +613,8 @@
       "priority": "alta",
       "status": "pendente",
       "created_at": "2026-07-29T15:00:18.736Z",
-      "updated_at": "2026-07-29T15:00:18.736Z"
+      "updated_at": "2026-07-29T15:00:18.736Z",
+      "phase": "pre"
     },
     {
       "id": 46,
@@ -583,7 +627,8 @@
       "priority": "alta",
       "status": "pendente",
       "created_at": "2026-07-29T15:00:18.743Z",
-      "updated_at": "2026-07-29T15:00:18.743Z"
+      "updated_at": "2026-07-29T15:00:18.743Z",
+      "phase": "pre"
     },
     {
       "id": 47,
@@ -596,7 +641,8 @@
       "priority": "alta",
       "status": "pendente",
       "created_at": "2026-07-29T15:00:18.750Z",
-      "updated_at": "2026-07-29T15:00:18.750Z"
+      "updated_at": "2026-07-29T15:00:18.750Z",
+      "phase": "pre"
     },
     {
       "id": 48,
@@ -609,7 +655,8 @@
       "priority": "alta",
       "status": "concluido",
       "created_at": "2026-07-29T15:00:18.756Z",
-      "updated_at": "2026-07-29T18:34:24.273Z"
+      "updated_at": "2026-07-29T18:34:24.273Z",
+      "phase": "pre"
     },
     {
       "id": 49,
@@ -622,7 +669,8 @@
       "priority": "alta",
       "status": "pendente",
       "created_at": "2026-07-29T15:00:18.762Z",
-      "updated_at": "2026-07-29T15:00:18.762Z"
+      "updated_at": "2026-07-29T15:00:18.762Z",
+      "phase": "pre"
     },
     {
       "id": 50,
@@ -635,7 +683,8 @@
       "priority": "baixa",
       "status": "concluido",
       "created_at": "2026-07-29T15:00:18.767Z",
-      "updated_at": "2026-07-29T18:34:28.990Z"
+      "updated_at": "2026-07-29T18:34:28.990Z",
+      "phase": "pre"
     },
     {
       "id": 51,
@@ -648,7 +697,8 @@
       "priority": "alta",
       "status": "pendente",
       "created_at": "2026-07-29T15:00:18.773Z",
-      "updated_at": "2026-07-29T15:00:18.773Z"
+      "updated_at": "2026-07-29T15:00:18.773Z",
+      "phase": "pre"
     },
     {
       "id": 52,
@@ -661,7 +711,8 @@
       "priority": "alta",
       "status": "pendente",
       "created_at": "2026-07-29T15:00:18.775Z",
-      "updated_at": "2026-07-29T18:37:49.045Z"
+      "updated_at": "2026-07-29T18:37:49.045Z",
+      "phase": "pre"
     },
     {
       "id": 53,
@@ -674,7 +725,8 @@
       "priority": "media",
       "status": "concluido",
       "created_at": "2026-07-29T15:00:18.778Z",
-      "updated_at": "2026-07-29T18:37:42.042Z"
+      "updated_at": "2026-07-29T18:37:42.042Z",
+      "phase": "pre"
     },
     {
       "id": 54,
@@ -687,7 +739,8 @@
       "priority": "media",
       "status": "concluido",
       "created_at": "2026-07-29T15:00:18.785Z",
-      "updated_at": "2026-07-29T18:37:43.869Z"
+      "updated_at": "2026-07-29T18:37:43.869Z",
+      "phase": "pre"
     },
     {
       "id": 55,
@@ -700,7 +753,8 @@
       "priority": "alta",
       "status": "pendente",
       "created_at": "2026-07-29T15:00:18.790Z",
-      "updated_at": "2026-07-29T15:00:18.790Z"
+      "updated_at": "2026-07-29T15:00:18.790Z",
+      "phase": "pre"
     },
     {
       "id": 56,
@@ -713,7 +767,8 @@
       "priority": "media",
       "status": "concluido",
       "created_at": "2026-07-29T15:00:18.795Z",
-      "updated_at": "2026-07-29T18:37:54.394Z"
+      "updated_at": "2026-07-29T18:37:54.394Z",
+      "phase": "pre"
     },
     {
       "id": 57,
@@ -726,7 +781,8 @@
       "priority": "media",
       "status": "pendente",
       "created_at": "2026-07-29T15:00:18.802Z",
-      "updated_at": "2026-07-29T15:00:18.802Z"
+      "updated_at": "2026-07-29T15:00:18.802Z",
+      "phase": "pre"
     },
     {
       "id": 58,
@@ -739,7 +795,8 @@
       "priority": "baixa",
       "status": "pendente",
       "created_at": "2026-07-29T15:00:18.810Z",
-      "updated_at": "2026-07-29T15:00:18.810Z"
+      "updated_at": "2026-07-29T15:00:18.810Z",
+      "phase": "pre"
     },
     {
       "id": 59,
@@ -752,7 +809,8 @@
       "priority": "media",
       "status": "pendente",
       "created_at": "2026-07-29T15:00:18.821Z",
-      "updated_at": "2026-07-29T15:00:18.821Z"
+      "updated_at": "2026-07-29T15:00:18.821Z",
+      "phase": "pre"
     },
     {
       "id": 60,
@@ -765,7 +823,8 @@
       "priority": "baixa",
       "status": "pendente",
       "created_at": "2026-07-29T15:00:18.832Z",
-      "updated_at": "2026-07-29T15:00:18.832Z"
+      "updated_at": "2026-07-29T15:00:18.832Z",
+      "phase": "pre"
     },
     {
       "id": 61,
@@ -778,7 +837,8 @@
       "priority": "alta",
       "status": "concluido",
       "created_at": "2026-07-29T15:00:18.837Z",
-      "updated_at": "2026-07-29T15:30:56.962Z"
+      "updated_at": "2026-07-29T15:30:56.962Z",
+      "phase": "pre"
     },
     {
       "id": 62,
@@ -791,7 +851,8 @@
       "priority": "alta",
       "status": "concluido",
       "created_at": "2026-07-29T15:00:18.844Z",
-      "updated_at": "2026-07-29T15:30:55.300Z"
+      "updated_at": "2026-07-29T15:30:55.300Z",
+      "phase": "pre"
     },
     {
       "id": 63,
@@ -804,7 +865,8 @@
       "priority": "media",
       "status": "concluido",
       "created_at": "2026-07-29T15:00:18.851Z",
-      "updated_at": "2026-07-29T15:31:00.615Z"
+      "updated_at": "2026-07-29T15:31:00.615Z",
+      "phase": "pre"
     },
     {
       "id": 64,
@@ -817,7 +879,8 @@
       "priority": "baixa",
       "status": "concluido",
       "created_at": "2026-07-29T15:00:18.858Z",
-      "updated_at": "2026-07-29T15:30:58.924Z"
+      "updated_at": "2026-07-29T15:30:58.924Z",
+      "phase": "pre"
     },
     {
       "id": 66,
@@ -831,7 +894,8 @@
       "status": "concluido",
       "notes": "",
       "created_at": "2026-07-29T16:03:21.183Z",
-      "updated_at": "2026-07-29T18:39:17.075Z"
+      "updated_at": "2026-07-29T18:39:17.075Z",
+      "phase": "pre"
     },
     {
       "id": 76,
@@ -845,7 +909,8 @@
       "status": "pendente",
       "notes": "",
       "created_at": "2026-07-29T18:16:28.433Z",
-      "updated_at": "2026-07-29T18:16:28.433Z"
+      "updated_at": "2026-07-29T18:16:28.433Z",
+      "phase": "pre"
     },
     {
       "id": 77,
@@ -859,7 +924,8 @@
       "status": "pendente",
       "notes": "",
       "created_at": "2026-07-29T18:16:28.445Z",
-      "updated_at": "2026-07-29T18:16:28.445Z"
+      "updated_at": "2026-07-29T18:16:28.445Z",
+      "phase": "pre"
     },
     {
       "id": 78,
@@ -873,7 +939,8 @@
       "status": "pendente",
       "notes": "",
       "created_at": "2026-07-29T18:16:28.455Z",
-      "updated_at": "2026-07-29T18:16:28.455Z"
+      "updated_at": "2026-07-29T18:16:28.455Z",
+      "phase": "pre"
     },
     {
       "id": 79,
@@ -887,7 +954,8 @@
       "status": "concluido",
       "notes": "",
       "created_at": "2026-07-29T18:16:28.479Z",
-      "updated_at": "2026-07-29T18:38:48.284Z"
+      "updated_at": "2026-07-29T18:38:48.284Z",
+      "phase": "pre"
     },
     {
       "id": 80,
@@ -901,7 +969,8 @@
       "status": "pendente",
       "notes": "",
       "created_at": "2026-07-29T18:16:28.492Z",
-      "updated_at": "2026-07-29T18:38:57.531Z"
+      "updated_at": "2026-07-29T18:38:57.531Z",
+      "phase": "pre"
     },
     {
       "id": 81,
@@ -915,7 +984,8 @@
       "status": "pendente",
       "notes": "",
       "created_at": "2026-07-29T18:16:28.507Z",
-      "updated_at": "2026-07-29T18:16:28.507Z"
+      "updated_at": "2026-07-29T18:16:28.507Z",
+      "phase": "pre"
     },
     {
       "id": 82,
@@ -929,7 +999,8 @@
       "status": "pendente",
       "notes": "",
       "created_at": "2026-07-29T18:16:28.524Z",
-      "updated_at": "2026-07-29T18:16:28.524Z"
+      "updated_at": "2026-07-29T18:16:28.524Z",
+      "phase": "pre"
     },
     {
       "id": 83,
@@ -943,7 +1014,8 @@
       "status": "pendente",
       "notes": "",
       "created_at": "2026-07-29T18:16:28.540Z",
-      "updated_at": "2026-07-29T18:16:28.540Z"
+      "updated_at": "2026-07-29T18:16:28.540Z",
+      "phase": "pre"
     },
     {
       "id": 84,
@@ -957,7 +1029,8 @@
       "status": "pendente",
       "notes": "",
       "created_at": "2026-07-29T18:16:28.555Z",
-      "updated_at": "2026-07-29T18:16:28.555Z"
+      "updated_at": "2026-07-29T18:16:28.555Z",
+      "phase": "pre"
     },
     {
       "id": 85,
@@ -971,7 +1044,8 @@
       "status": "pendente",
       "notes": "",
       "created_at": "2026-07-29T18:16:28.574Z",
-      "updated_at": "2026-07-29T18:16:28.574Z"
+      "updated_at": "2026-07-29T18:16:28.574Z",
+      "phase": "pre"
     },
     {
       "id": 86,
@@ -985,7 +1059,8 @@
       "status": "pendente",
       "notes": "",
       "created_at": "2026-07-29T18:16:28.586Z",
-      "updated_at": "2026-07-29T18:16:28.586Z"
+      "updated_at": "2026-07-29T18:16:28.586Z",
+      "phase": "pre"
     },
     {
       "id": 87,
@@ -999,7 +1074,8 @@
       "status": "pendente",
       "notes": "",
       "created_at": "2026-07-29T18:16:28.597Z",
-      "updated_at": "2026-07-29T18:16:28.597Z"
+      "updated_at": "2026-07-29T18:16:28.597Z",
+      "phase": "pre"
     },
     {
       "id": 88,
@@ -1013,7 +1089,8 @@
       "status": "pendente",
       "notes": "",
       "created_at": "2026-07-29T18:16:28.608Z",
-      "updated_at": "2026-07-29T18:16:28.608Z"
+      "updated_at": "2026-07-29T18:16:28.608Z",
+      "phase": "pre"
     },
     {
       "id": 89,
@@ -1027,7 +1104,8 @@
       "status": "pendente",
       "notes": "",
       "created_at": "2026-07-29T18:16:28.632Z",
-      "updated_at": "2026-07-29T18:16:28.632Z"
+      "updated_at": "2026-07-29T18:16:28.632Z",
+      "phase": "pre"
     },
     {
       "id": 90,
@@ -1041,7 +1119,8 @@
       "status": "pendente",
       "notes": "",
       "created_at": "2026-07-29T18:16:28.640Z",
-      "updated_at": "2026-07-29T18:16:28.640Z"
+      "updated_at": "2026-07-29T18:16:28.640Z",
+      "phase": "pre"
     },
     {
       "id": 91,
@@ -1055,7 +1134,8 @@
       "status": "pendente",
       "notes": "",
       "created_at": "2026-07-29T18:16:28.669Z",
-      "updated_at": "2026-07-29T18:16:28.669Z"
+      "updated_at": "2026-07-29T18:16:28.669Z",
+      "phase": "pre"
     },
     {
       "id": 92,
@@ -1069,7 +1149,8 @@
       "status": "pendente",
       "notes": "",
       "created_at": "2026-07-29T18:16:28.694Z",
-      "updated_at": "2026-07-29T18:16:28.694Z"
+      "updated_at": "2026-07-29T18:16:28.694Z",
+      "phase": "pre"
     },
     {
       "id": 93,
@@ -1083,7 +1164,8 @@
       "status": "pendente",
       "notes": "",
       "created_at": "2026-07-29T18:16:28.714Z",
-      "updated_at": "2026-07-29T18:16:28.714Z"
+      "updated_at": "2026-07-29T18:16:28.714Z",
+      "phase": "pre"
     },
     {
       "id": 94,
@@ -1097,7 +1179,8 @@
       "status": "pendente",
       "notes": "",
       "created_at": "2026-07-29T18:16:28.742Z",
-      "updated_at": "2026-07-29T18:16:28.742Z"
+      "updated_at": "2026-07-29T18:16:28.742Z",
+      "phase": "pre"
     },
     {
       "id": 95,
@@ -1111,7 +1194,8 @@
       "status": "pendente",
       "notes": "",
       "created_at": "2026-07-29T18:16:28.753Z",
-      "updated_at": "2026-07-29T18:16:28.753Z"
+      "updated_at": "2026-07-29T18:16:28.753Z",
+      "phase": "pre"
     },
     {
       "id": 96,
@@ -1125,7 +1209,8 @@
       "status": "pendente",
       "notes": "",
       "created_at": "2026-07-29T18:16:28.775Z",
-      "updated_at": "2026-07-29T18:16:28.775Z"
+      "updated_at": "2026-07-29T18:16:28.775Z",
+      "phase": "pre"
     },
     {
       "id": 97,
@@ -1139,7 +1224,8 @@
       "status": "pendente",
       "notes": "",
       "created_at": "2026-07-29T18:16:28.803Z",
-      "updated_at": "2026-07-29T18:16:28.803Z"
+      "updated_at": "2026-07-29T18:16:28.803Z",
+      "phase": "pre"
     },
     {
       "id": 98,
@@ -1153,7 +1239,8 @@
       "status": "pendente",
       "notes": "",
       "created_at": "2026-07-29T18:16:28.820Z",
-      "updated_at": "2026-07-29T18:16:28.820Z"
+      "updated_at": "2026-07-29T18:16:28.820Z",
+      "phase": "pre"
     },
     {
       "id": 99,
@@ -1167,7 +1254,8 @@
       "status": "pendente",
       "notes": "",
       "created_at": "2026-07-29T18:16:28.836Z",
-      "updated_at": "2026-07-29T18:16:28.836Z"
+      "updated_at": "2026-07-29T18:16:28.836Z",
+      "phase": "pre"
     },
     {
       "id": 100,
@@ -1181,7 +1269,8 @@
       "status": "pendente",
       "notes": "",
       "created_at": "2026-07-29T18:16:28.848Z",
-      "updated_at": "2026-07-29T18:16:28.848Z"
+      "updated_at": "2026-07-29T18:16:28.848Z",
+      "phase": "pre"
     },
     {
       "id": 101,
@@ -1195,7 +1284,8 @@
       "status": "pendente",
       "notes": "",
       "created_at": "2026-07-29T18:16:28.860Z",
-      "updated_at": "2026-07-29T18:16:28.860Z"
+      "updated_at": "2026-07-29T18:16:28.860Z",
+      "phase": "pre"
     },
     {
       "id": 102,
@@ -1209,7 +1299,8 @@
       "status": "pendente",
       "notes": "",
       "created_at": "2026-07-29T18:16:28.881Z",
-      "updated_at": "2026-07-29T18:16:28.881Z"
+      "updated_at": "2026-07-29T18:16:28.881Z",
+      "phase": "pre"
     },
     {
       "id": 103,
@@ -1223,7 +1314,8 @@
       "status": "pendente",
       "notes": "",
       "created_at": "2026-07-29T18:16:28.891Z",
-      "updated_at": "2026-07-29T18:16:28.891Z"
+      "updated_at": "2026-07-29T18:16:28.891Z",
+      "phase": "pre"
     }
   ],
   "teams": [

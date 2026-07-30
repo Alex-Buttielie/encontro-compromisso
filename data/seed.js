@@ -196,9 +196,9 @@ function seed() {
     return;
   }
 
-  const insertTask = db.prepare(`INSERT INTO tasks (category, item_number, title, description, responsible_team, deadline, priority, status) VALUES (?,?,?,?,?,?,?,?)`);
+  const insertTask = db.prepare(`INSERT INTO tasks (category, item_number, title, description, responsible_team, deadline, priority, status, phase) VALUES (?,?,?,?,?,?,?,?,?)`);
   for (const t of tasks) {
-    insertTask.run(t.category, t.item_number, t.title, t.description, t.responsible_team, t.deadline, t.priority, 'pendente');
+    insertTask.run(t.category, t.item_number, t.title, t.description, t.responsible_team, t.deadline, t.priority, 'pendente', t.phase || 'pre');
   }
 
   const insertTeam = db.prepare(`INSERT INTO teams (name, description) VALUES (?,?)`);
