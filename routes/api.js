@@ -27,17 +27,45 @@ router.post('/tasks', (req, res) => {
 router.put('/tasks/:id', (req, res) => {
   const { category, item_number, title, description, responsible_team, deadline, priority, status, notes, phase } = req.body;
   db.prepare(`UPDATE tasks SET category=?, item_number=?, title=?, description=?, responsible_team=?, deadline=?, priority=?, status=?, notes=?, phase=?, updated_at=datetime('now','localtime') WHERE id=?`).run(category, item_number, title, description, responsible_team, deadline, priority, status, notes, phase || 'pre', req.params.id);
+  // Sync linked lembrete
+  const lembretes = db.getAll('lembretes');
+  const lem = lembretes.find(l => Number(l.related_task_id) === Number(req.params.id));
+  if (lem) {
+    const lemFields = {};
+    if (title) lemFields.title = title;
+    if (description) lemFields.description = description;
+    if (category) lemFields.category = category;
+    if (priority) lemFields.priority = priority;
+    if (deadline !== undefined) lemFields.due_date = deadline;
+    if (status) lemFields.status = status === 'concluido' ? 'concluido' : 'pendente';
+    if (Object.keys(lemFields).length > 0) {
+      db.update('lembretes', lem.id, { ...lemFields, updated_at: new Date().toISOString() });
+    }
+  }
   res.json({ success: true });
 });
 
 router.patch('/tasks/:id/status', (req, res) => {
   const { status } = req.body;
   db.prepare(`UPDATE tasks SET status=?, updated_at=datetime('now','localtime') WHERE id=?`).run(status, req.params.id);
+  // Sync linked lembrete
+  const lembretes = db.getAll('lembretes');
+  const lem = lembretes.find(l => Number(l.related_task_id) === Number(req.params.id));
+  if (lem) {
+    const lemStatus = status === 'concluido' ? 'concluido' : 'pendente';
+    db.update('lembretes', lem.id, { status: lemStatus, updated_at: new Date().toISOString() });
+  }
   res.json({ success: true });
 });
 
 router.delete('/tasks/:id', (req, res) => {
   db.prepare('DELETE FROM tasks WHERE id=?').run(req.params.id);
+  // Delete linked lembrete if it was auto-created from this task
+  const lembretes = db.getAll('lembretes');
+  const lem = lembretes.find(l => Number(l.related_task_id) === Number(req.params.id));
+  if (lem) {
+    db.remove('lembretes', lem.id);
+  }
   res.json({ success: true });
 });
 
@@ -565,26 +593,90 @@ router.get('/lembretes', (req, res) => {
 
 router.post('/lembretes', (req, res) => {
   const { title, description, due_date, priority, related_task_id, status, category } = req.body;
+  let linkedTaskId = related_task_id || null;
+
+  // If no related_task_id, create a linked task automatically
+  if (!linkedTaskId) {
+    const taskResult = db.prepare(`INSERT INTO tasks (category, item_number, title, description, responsible_team, deadline, priority, status, notes, phase) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(
+      category || 'Geral MOs', 'L', title, description || '', "MO's", due_date || '', priority || 'media', status || 'pendente', 'Lembrete vinculado', 'pre'
+    );
+    linkedTaskId = taskResult.lastInsertRowid;
+  }
+
   const id = db.insert('lembretes', {
     title, description, due_date, priority: priority || 'media',
-    related_task_id, status: status || 'pendente', category: category || 'Geral MOs'
+    related_task_id: linkedTaskId, status: status || 'pendente', category: category || 'Geral MOs'
   });
-  res.json({ id });
+  res.json({ id, related_task_id: linkedTaskId });
 });
 
 router.put('/lembretes/:id', (req, res) => {
   db.update('lembretes', req.params.id, { ...req.body, updated_at: new Date().toISOString() });
+  // Sync linked task
+  const lem = db.getById('lembretes', Number(req.params.id));
+  if (lem && lem.related_task_id) {
+    const taskFields = {};
+    if (req.body.title) taskFields.title = req.body.title;
+    if (req.body.description) taskFields.description = req.body.description;
+    if (req.body.category) taskFields.category = req.body.category;
+    if (req.body.priority) taskFields.priority = req.body.priority;
+    if (req.body.due_date !== undefined) taskFields.deadline = req.body.due_date;
+    if (req.body.status) taskFields.status = req.body.status;
+    if (Object.keys(taskFields).length > 0) {
+      const task = db.getById('tasks', Number(lem.related_task_id));
+      if (task) {
+        db.prepare(`UPDATE tasks SET category=?, item_number=?, title=?, description=?, responsible_team=?, deadline=?, priority=?, status=?, notes=?, phase=?, updated_at=datetime('now','localtime') WHERE id=?`).run(
+          taskFields.category || task.category, task.item_number, taskFields.title || task.title,
+          taskFields.description !== undefined ? taskFields.description : task.description,
+          task.responsible_team, taskFields.deadline !== undefined ? taskFields.deadline : task.deadline,
+          taskFields.priority || task.priority, taskFields.status || task.status,
+          task.notes, task.phase || 'pre', lem.related_task_id
+        );
+      }
+    }
+  }
   res.json({ success: true });
 });
 
 router.patch('/lembretes/:id/status', (req, res) => {
   db.update('lembretes', req.params.id, { status: req.body.status });
+  // Sync linked task status
+  const lem = db.getById('lembretes', Number(req.params.id));
+  if (lem && lem.related_task_id) {
+    const taskStatus = req.body.status === 'concluido' ? 'concluido' : 'pendente';
+    db.prepare(`UPDATE tasks SET status=?, updated_at=datetime('now','localtime') WHERE id=?`).run(taskStatus, lem.related_task_id);
+  }
   res.json({ success: true });
 });
 
 router.delete('/lembretes/:id', (req, res) => {
+  const lem = db.getById('lembretes', Number(req.params.id));
   db.remove('lembretes', req.params.id);
+  // Delete linked task if it was auto-created (item_number = 'L')
+  if (lem && lem.related_task_id) {
+    const task = db.getById('tasks', Number(lem.related_task_id));
+    if (task && task.item_number === 'L') {
+      db.prepare('DELETE FROM tasks WHERE id=?').run(lem.related_task_id);
+    }
+  }
   res.json({ success: true });
+});
+
+router.post('/lembretes/sync', (req, res) => {
+  const lembretes = db.getAll('lembretes');
+  const tasks = db.getAll('tasks');
+  let created = 0;
+  for (const lem of lembretes) {
+    if (!lem.related_task_id || !tasks.find(t => t.id === Number(lem.related_task_id))) {
+      const result = db.prepare(`INSERT INTO tasks (category, item_number, title, description, responsible_team, deadline, priority, status, notes, phase) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(
+        lem.category || 'Geral MOs', 'L', lem.title, lem.description || '', "MO's",
+        lem.due_date || '', lem.priority || 'media', lem.status || 'pendente', 'Lembrete vinculado', 'pre'
+      );
+      db.update('lembretes', lem.id, { related_task_id: result.lastInsertRowid });
+      created++;
+    }
+  }
+  res.json({ success: true, created, message: `${created} tarefa(s) criada(s) a partir de lembretes sem vínculo.` });
 });
 
 router.get('/lembretes/auto', (req, res) => {

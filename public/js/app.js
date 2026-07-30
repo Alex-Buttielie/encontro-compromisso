@@ -468,12 +468,14 @@ function renderTaskCategories(tasks, containerId = 'task-categories', emptyMessa
 function renderTaskItem(t) {
   const checkboxClass = t.status === 'concluido' ? 'checked' : t.status === 'em_andamento' ? 'in-progress' : '';
   const priorityIcon = t.priority === 'alta' ? '🔴' : t.priority === 'media' ? '🟡' : '⚪';
+  const isLembrete = t.item_number === 'L' || (t.notes && t.notes.includes('Lembrete vinculado'));
   return `<div class="task-item status-${t.status}">
     <div class="task-checkbox ${checkboxClass}" onclick="cycleTaskStatus(${t.id})" title="Clique para mudar status"></div>
     <div class="task-body">
       <div class="task-title-line">
         <span class="task-num">[${t.item_number}]</span>
         <span class="task-title">${t.title}</span>
+        ${isLembrete ? '<span class="badge-sm badge-info" title="Vem de um lembrete">🔔 Lembrete</span>' : ''}
       </div>
       ${t.description ? `<div class="task-desc">${t.description}</div>` : ''}
       <div class="task-meta">
@@ -2138,7 +2140,10 @@ async function renderLembretes() {
     <div class="card">
       <div class="card-title" style="display:flex;justify-content:space-between;align-items:center">
         <span>Lembretes Manuais por Módulo</span>
-        <button class="btn btn-primary btn-sm" onclick="openLembreteModal()">+ Novo Lembrete</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary btn-sm" onclick="syncLembretesTasks()">🔄 Sincronizar com Checklist</button>
+          <button class="btn btn-primary btn-sm" onclick="openLembreteModal()">+ Novo Lembrete</button>
+        </div>
       </div>
 
       <div class="lem-tab-bar" id="lem-tabs">
@@ -2271,6 +2276,7 @@ function renderManualLembretes(list) {
   const catIcons = LEMBRETE_CATEGORY_ICONS;
   container.innerHTML = list.map(l => {
     const cat = l.category || 'Geral MOs';
+    const linked = l.related_task_id ? '<span class="badge-sm badge-info" title="Vinculado ao checklist">🔗 Checklist</span>' : '<span class="badge-sm badge-gray" title="Não vinculado">⚠️ Sem vínculo</span>';
     return `<div class="lembrete-card ${l.status === 'concluido' ? '' : 'info'}">
     <div class="lembrete-icon">${l.status === 'concluido' ? '✅' : '🔔'}</div>
     <div class="lembrete-info">
@@ -2279,6 +2285,7 @@ function renderManualLembretes(list) {
       <div class="lembrete-meta" style="margin-top:2px">
         <span class="lem-cat-badge">${catIcons[cat] || '📌'} ${cat}</span>
         ${l.due_date ? ` · <span class="lembrete-due" style="display:inline">Vence em ${new Date(l.due_date).toLocaleDateString('pt-BR')}</span>` : ''}
+        · ${linked}
       </div>
     </div>
     <div style="display:flex;flex-direction:column;align-items:end;gap:4px">
@@ -2292,6 +2299,12 @@ function renderManualLembretes(list) {
     </div>
   </div>`;
   }).join('');
+}
+
+async function syncLembretesTasks() {
+  const result = await api('/lembretes/sync', { method: 'POST' });
+  toast(result.message || 'Sincronização concluída!', 'success');
+  renderLembretes();
 }
 
 async function toggleLembreteStatus(id) {
