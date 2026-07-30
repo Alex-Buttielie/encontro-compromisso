@@ -810,7 +810,7 @@ function generateFornecedoresReport() {
   const buffers = [];
   doc.on('data', buffers.push.bind(buffers));
 
-  reportHeader(doc, 'Fornecedores & Pais de MPs', 'Agenda de contatos, cotacoes e pais das materias-primas');
+  reportHeader(doc, 'Fornecedores', 'Agenda de contatos e cotacoes de prestadores de servicos');
 
   let y = 145;
   const items = db.getAll('fornecedores');

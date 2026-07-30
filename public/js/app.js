@@ -124,6 +124,7 @@ function renderPage() {
   else if (currentPage === 'lembretes') renderLembretes();
   else if (currentPage === 'padrinhos') renderPadrinhos();
   else if (currentPage === 'fornecedores') renderFornecedores();
+  else if (currentPage === 'pais') renderPaisMP();
   else if (currentPage === 'avisos') renderAvisos();
   else if (currentPage === 'kit') renderKit();
   else if (currentPage === 'relatorios') renderRelatorios();
@@ -827,7 +828,7 @@ function renderRelatorios() {
         </a>
         <a class="btn-pdf" href="/reports/fornecedores" target="_blank">
           <div class="btn-pdf-icon" style="background:rgba(52,152,219,0.15);color:var(--info)">📦</div>
-          <div class="btn-pdf-info"><h4>Fornecedores & Pais de MPs</h4><p>Contatos, cotações e pais das matérias-primas</p></div>
+          <div class="btn-pdf-info"><h4>Fornecedores</h4><p>Contatos, cotações e status de contratação</p></div>
         </a>
         <a class="btn-pdf" href="/reports/avisos" target="_blank">
           <div class="btn-pdf-icon" style="background:rgba(241,196,15,0.15);color:var(--warning)">📢</div>
@@ -1752,83 +1753,40 @@ async function deletePadrinho(id) {
 
 // ============ FORNECEDORES ============
 let fornecedoresCache = [];
-let fornecedoresTab = 'fornecedor'; // 'fornecedor' | 'pai_mp'
 
 async function renderFornecedores() {
   fornecedoresCache = await api('/fornecedores');
   const main = document.getElementById('main-content');
-  const fornecedores = fornecedoresCache.filter(f => (f.type || 'fornecedor') === 'fornecedor');
-  const paisMP = fornecedoresCache.filter(f => f.type === 'pai_mp');
-  const contratados = fornecedores.filter(f => f.status === 'contratado').length;
-  const pendentes = fornecedores.filter(f => f.status === 'pendente').length;
-  const paisContatados = paisMP.filter(f => f.status === 'contratado').length;
-  const paisPendentes = paisMP.filter(f => f.status === 'pendente').length;
+  const list = fornecedoresCache.filter(f => (f.type || 'fornecedor') === 'fornecedor');
+  const contratados = list.filter(f => f.status === 'contratado').length;
+  const pendentes = list.filter(f => f.status === 'pendente').length;
+  const categories = [...new Set(list.map(f => f.category).filter(Boolean))].sort();
   main.innerHTML = `
-    <h1 class="page-title">Fornecedores & Pais de MPs</h1>
-    <p class="page-subtitle">Gestão de fornecedores e pais das matérias-primas</p>
-    <div class="tab-bar">
-      <button class="tab-btn ${fornecedoresTab==='fornecedor'?'active':''}" onclick="switchFornecedoresTab('fornecedor')">📦 Fornecedores (${fornecedores.length})</button>
-      <button class="tab-btn ${fornecedoresTab==='pai_mp'?'active':''}" onclick="switchFornecedoresTab('pai_mp')">👨‍👩‍👧 Pais de MPs (${paisMP.length})</button>
+    <h1 class="page-title">Fornecedores</h1>
+    <p class="page-subtitle">Gestão de fornecedores e prestadores de serviços</p>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-icon total">📦</div><div class="stat-info"><h3>${list.length}</h3><p>Total Fornecedores</p></div></div>
+      <div class="stat-card"><div class="stat-icon done">✅</div><div class="stat-info"><h3>${contratados}</h3><p>Contratados</p></div></div>
+      <div class="stat-card"><div class="stat-icon pending">⭕</div><div class="stat-info"><h3>${pendentes}</h3><p>Pendentes</p></div></div>
     </div>
-    <div id="fornecedores-content"></div>
+    <div class="filters">
+      <div class="filter-group">
+        <span class="filter-label">Categoria:</span>
+        <select id="forn-cat" onchange="filterFornecedores()">
+          <option value="">Todas</option>
+          ${categories.map(c => `<option value="${c}">${c}</option>`).join('')}
+        </select>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="openFornecedorModal()">+ Novo Fornecedor</button>
+    </div>
+    <div class="fornecedor-grid" id="fornecedores-grid"></div>
   `;
-  renderFornecedoresTab();
-}
-
-function switchFornecedoresTab(tab) {
-  fornecedoresTab = tab;
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
-  renderFornecedoresTab();
-}
-
-function renderFornecedoresTab() {
-  const content = document.getElementById('fornecedores-content');
-  const list = fornecedoresCache.filter(f => (f.type || 'fornecedor') === fornecedoresTab);
-  if (fornecedoresTab === 'fornecedor') {
-    const categories = [...new Set(list.map(f => f.category).filter(Boolean))].sort();
-    const contratados = list.filter(f => f.status === 'contratado').length;
-    const pendentes = list.filter(f => f.status === 'pendente').length;
-    content.innerHTML = `
-      <div class="stats-grid">
-        <div class="stat-card"><div class="stat-icon total">📦</div><div class="stat-info"><h3>${list.length}</h3><p>Total Fornecedores</p></div></div>
-        <div class="stat-card"><div class="stat-icon done">✅</div><div class="stat-info"><h3>${contratados}</h3><p>Contratados</p></div></div>
-        <div class="stat-card"><div class="stat-icon pending">⭕</div><div class="stat-info"><h3>${pendentes}</h3><p>Pendentes</p></div></div>
-      </div>
-      <div class="filters">
-        <div class="filter-group">
-          <span class="filter-label">Categoria:</span>
-          <select id="forn-cat" onchange="filterFornecedores()">
-            <option value="">Todas</option>
-            ${categories.map(c => `<option value="${c}">${c}</option>`).join('')}
-          </select>
-        </div>
-        <button class="btn btn-primary btn-sm" onclick="openFornecedorModal()">+ Novo Fornecedor</button>
-      </div>
-      <div class="fornecedor-grid" id="fornecedores-grid"></div>
-    `;
-    renderFornecedorCards(list);
-  } else {
-    const contatados = list.filter(f => f.status === 'contratado').length;
-    const pendentes = list.filter(f => f.status === 'pendente').length;
-    content.innerHTML = `
-      <div class="stats-grid">
-        <div class="stat-card"><div class="stat-icon total">👨‍👩‍👧</div><div class="stat-info"><h3>${list.length}</h3><p>Total Pais de MPs</p></div></div>
-        <div class="stat-card"><div class="stat-icon done">✅</div><div class="stat-info"><h3>${contatados}</h3><p>Contatados</p></div></div>
-        <div class="stat-card"><div class="stat-icon pending">⭕</div><div class="stat-info"><h3>${pendentes}</h3><p>Pendentes</p></div></div>
-      </div>
-      <div class="filters">
-        <button class="btn btn-primary btn-sm" onclick="openPaiMPModal()">+ Novo Pai de MP</button>
-      </div>
-      <div class="fornecedor-grid" id="fornecedores-grid"></div>
-    `;
-    renderPaiMPCards(list);
-  }
+  renderFornecedorCards(list);
 }
 
 function filterFornecedores() {
   const cat = document.getElementById('forn-cat').value;
-  let list = fornecedoresCache.filter(f => (f.type || 'fornecedor') === fornecedoresTab);
+  let list = fornecedoresCache.filter(f => (f.type || 'fornecedor') === 'fornecedor');
   if (cat) list = list.filter(f => f.category === cat);
   renderFornecedorCards(list);
 }
@@ -1863,6 +1821,29 @@ function renderFornecedorCards(list) {
       </div>
     </div>
   </div>`).join('');
+}
+
+// ============ PAIS DE MPs ============
+async function renderPaisMP() {
+  fornecedoresCache = await api('/fornecedores');
+  const main = document.getElementById('main-content');
+  const list = fornecedoresCache.filter(f => f.type === 'pai_mp');
+  const contatados = list.filter(f => f.status === 'contratado').length;
+  const pendentes = list.filter(f => f.status === 'pendente').length;
+  main.innerHTML = `
+    <h1 class="page-title">Pais de MPs</h1>
+    <p class="page-subtitle">Contatos dos pais/responsáveis das matérias-primas</p>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-icon total">👨‍👩‍👧</div><div class="stat-info"><h3>${list.length}</h3><p>Total Pais de MPs</p></div></div>
+      <div class="stat-card"><div class="stat-icon done">✅</div><div class="stat-info"><h3>${contatados}</h3><p>Contatados</p></div></div>
+      <div class="stat-card"><div class="stat-icon pending">⭕</div><div class="stat-info"><h3>${pendentes}</h3><p>Pendentes</p></div></div>
+    </div>
+    <div class="filters">
+      <button class="btn btn-primary btn-sm" onclick="openPaiMPModal()">+ Novo Pai de MP</button>
+    </div>
+    <div class="fornecedor-grid" id="fornecedores-grid"></div>
+  `;
+  renderPaiMPCards(list);
 }
 
 function renderPaiMPCards(list) {
@@ -1901,7 +1882,7 @@ async function cycleFornecedorStatus(id) {
   const next = order[(order.indexOf(f.status) + 1) % order.length];
   await api(`/fornecedores/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status: next }) });
   f.status = next;
-  renderFornecedoresTab();
+  if (currentPage === 'pais') renderPaisMP(); else renderFornecedores();
   toast(`Status: ${next}`, next === 'contratado' ? 'success' : '');
 }
 
@@ -1983,7 +1964,7 @@ async function saveFornecedor(id, btn) {
   else await api('/fornecedores', { method: 'POST', body: JSON.stringify(data) });
   btn.closest('.modal-overlay').remove();
   toast('Fornecedor salvo!', 'success');
-  renderFornecedores();
+  if (currentPage === 'pais') renderPaisMP(); else renderFornecedores();
 }
 
 async function savePaiMP(id, btn) {
@@ -1999,14 +1980,14 @@ async function savePaiMP(id, btn) {
   else await api('/fornecedores', { method: 'POST', body: JSON.stringify(data) });
   btn.closest('.modal-overlay').remove();
   toast('Pai de MP salvo!', 'success');
-  renderFornecedores();
+  if (currentPage === 'pais') renderPaisMP(); else renderFornecedores();
 }
 
 async function deleteFornecedor(id) {
   if (!confirm('Excluir este registro?')) return;
   await api(`/fornecedores/${id}`, { method: 'DELETE' });
   toast('Registro excluído', 'error');
-  renderFornecedores();
+  if (currentPage === 'pais') renderPaisMP(); else renderFornecedores();
 }
 
 // ============ KIT DAS MATÉRIAS-PRIMAS ============
