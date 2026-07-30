@@ -855,6 +855,9 @@ async function toggleSchedule(id, el) {
 }
 
 // ============ EQUIPES ============
+let equipesSearchText = '';
+let equipesExpanded = new Set();
+
 async function renderEquipes() {
   teamsCache = await api('/teams');
   const allTasks = await api('/tasks');
@@ -862,11 +865,36 @@ async function renderEquipes() {
   const allLembrancinhas = await api('/lembrancinhas');
   const allAlicerces = await api('/alicerces');
   const main = document.getElementById('main-content');
+
+  let filteredTeams = teamsCache;
+  if (equipesSearchText) {
+    const q = equipesSearchText.toLowerCase();
+    filteredTeams = teamsCache.filter(t =>
+      t.name.toLowerCase().includes(q) ||
+      (t.description || '').toLowerCase().includes(q) ||
+      (t.members || []).some(m => (m.name || '').toLowerCase().includes(q))
+    );
+  }
+
   main.innerHTML = `
     <h1 class="page-title">Equipes de Trabalho</h1>
     <p class="page-subtitle">Responsabilidades, membros, tarefas e cronograma de cada equipe</p>
+
+    <div class="equipes-toolbar">
+      <input type="text" class="equipes-search" placeholder="Buscar equipe ou membro..." value="${equipesSearchText}" oninput="filterEquipes(this.value)">
+      <button class="btn btn-primary" onclick="openTeamModal()">+ Nova Equipe</button>
+    </div>
+
+    <div class="stats-grid" style="margin-bottom:16px">
+      <div class="stat-card"><div class="stat-icon total">👥</div><div class="stat-info"><h3>${teamsCache.length}</h3><p>Equipes</p></div></div>
+      <div class="stat-card"><div class="stat-icon done">🧑</div><div class="stat-info"><h3>${teamsCache.reduce((s,t)=>s+(t.members?.length||0),0)}</h3><p>Total Membros</p></div></div>
+      <div class="stat-card"><div class="stat-icon progress">📋</div><div class="stat-info"><h3>${allTasks.filter(t=>t.responsible_team).length}</h3><p>Tarefas Atribuídas</p></div></div>
+      <div class="stat-card"><div class="stat-icon pending">✅</div><div class="stat-info"><h3>${allTasks.filter(t=>t.responsible_team && t.status==='concluido').length}</h3><p>Tarefas Concluídas</p></div></div>
+    </div>
+
+    ${filteredTeams.length === 0 ? '<div class="card" style="text-align:center;padding:40px;color:var(--text-light)">Nenhuma equipe encontrada.</div>' : `
     <div class="team-grid">
-      ${teamsCache.map(t => {
+      ${filteredTeams.map(t => {
         const teamTasks = allTasks.filter(task => task.responsible_team === t.name);
         const teamSchedule = allSchedule.filter(s => (s.responsible_team || '').includes(t.name));
         const teamLembrancinhas = allLembrancinhas.filter(l => l.team === t.name);
@@ -874,12 +902,19 @@ async function renderEquipes() {
         const tasksDone = teamTasks.filter(task => task.status === 'concluido').length;
         const tasksPct = teamTasks.length > 0 ? Math.round((tasksDone / teamTasks.length) * 100) : 0;
         const schedDone = teamSchedule.filter(s => s.status === 'concluido').length;
-        return `<div class="team-card">
+        const expanded = equipesExpanded.has(t.id);
+        return `<div class="team-card ${expanded ? 'expanded' : ''}">
           <div class="team-card-header">
             <h3>${t.name}</h3>
-            <span class="team-count">${t.members?.length || 0} membros</span>
+            <div style="display:flex;gap:4px;align-items:center">
+              <span class="team-count">${t.members?.length || 0} membros</span>
+              <button class="btn-icon" onclick="toggleEquipeExpand(${t.id})" title="${expanded ? 'Recolher' : 'Expandir'}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform:${expanded?'rotate(180deg)':'none'};transition:transform 0.2s"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+            </div>
           </div>
-          <p>${t.description}</p>
+          <p>${t.description || 'Sem descrição'}</p>
+          ${t.responsible ? `<p style="font-size:11px;color:var(--primary);font-weight:600;margin-top:-6px;margin-bottom:8px">👤 Responsável: ${t.responsible}</p>` : ''}
 
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
             <span class="tag tag-team" style="font-size:11px">📋 ${teamTasks.length} tarefas</span>
@@ -898,96 +933,176 @@ async function renderEquipes() {
             </div>
           ` : ''}
 
-          ${teamSchedule.length > 0 ? `
-            <div class="team-section">
-              <div class="team-section-title">📅 No Encontro (${schedDone}/${teamSchedule.length} concluídas)</div>
-              <div class="team-section-content">
-                ${teamSchedule.map(s => `<div class="team-sched-row">
-                  <span class="team-sched-time">${s.time}</span>
-                  <span class="team-sched-activity">${s.activity}</span>
-                  <span class="team-sched-day">${s.day.replace('-feira','')}</span>
-                  <span class="team-sched-dot" style="background:${s.status==='concluido'?'var(--success)':'var(--border)'}"></span>
+          <div class="team-card-actions">
+            <button class="btn btn-secondary btn-sm" onclick="openTeamModal(${t.id})">✏️ Editar</button>
+            <button class="btn btn-secondary btn-sm" onclick="deleteTeam(${t.id}, '${t.name.replace(/'/g,"\\'")}')">🗑️ Excluir</button>
+          </div>
+
+          ${expanded ? `
+            ${teamSchedule.length > 0 ? `
+              <div class="team-section">
+                <div class="team-section-title">📅 No Encontro (${schedDone}/${teamSchedule.length} concluídas)</div>
+                <div class="team-section-content">
+                  ${teamSchedule.map(s => `<div class="team-sched-row">
+                    <span class="team-sched-time">${s.time}</span>
+                    <span class="team-sched-activity">${s.activity}</span>
+                    <span class="team-sched-day">${s.day.replace('-feira','')}</span>
+                    <span class="team-sched-dot" style="background:${s.status==='concluido'?'var(--success)':'var(--border)'}"></span>
+                  </div>`).join('')}
+                </div>
+              </div>
+            ` : ''}
+
+            ${teamTasks.length > 0 ? `
+              <div class="team-section">
+                <div class="team-section-title">📋 Tarefas de Preparação</div>
+                <div class="team-section-content">
+                  ${teamTasks.map(task => `<div class="team-task-row" style="cursor:pointer" onclick="navigateTo('checklist')">
+                    <span class="team-task-dot ${task.status==='concluido'?'done':task.status==='em_andamento'?'in-progress':''}"></span>
+                    <span style="color:var(--text-light);font-weight:600;min-width:28px">[${task.item_number}]</span>
+                    <span style="color:var(--text);flex:1">${task.title}</span>
+                    <span style="color:var(--text-light);font-size:10px;white-space:nowrap">${task.deadline || ''}</span>
+                  </div>`).join('')}
+                </div>
+              </div>
+            ` : ''}
+
+            ${teamLembrancinhas.length > 0 ? `
+              <div class="team-section">
+                <div class="team-section-title">🎁 Lembrancinhas</div>
+                ${teamLembrancinhas.map(l => `<div class="team-mini-row">
+                  <span style="color:var(--text);flex:1">${l.item_name || '—'}</span>
+                  <span style="color:var(--text-light);font-size:10px">${l.quantity_done || 0}/${l.quantity_needed || 0}</span>
+                  <span class="team-mini-badge" style="background:${l.status==='pronto'?'var(--success)':l.status==='em_andamento'?'var(--warning)':'var(--border)'}">${(l.status||'—').replace(/_/g,' ')}</span>
                 </div>`).join('')}
               </div>
-            </div>
-          ` : ''}
+            ` : ''}
 
-          ${teamTasks.length > 0 ? `
-            <div class="team-section">
-              <div class="team-section-title">📋 Tarefas de Preparação</div>
-              <div class="team-section-content">
-                ${teamTasks.map(task => `<div class="team-task-row">
-                  <span class="team-task-dot ${task.status==='concluido'?'done':task.status==='em_andamento'?'in-progress':''}"></span>
-                  <span style="color:var(--text-light);font-weight:600;min-width:28px">[${task.item_number}]</span>
-                  <span style="color:var(--text);flex:1">${task.title}</span>
-                  <span style="color:var(--text-light);font-size:10px;white-space:nowrap">${task.deadline || ''}</span>
+            ${teamAlicerces.length > 0 ? `
+              <div class="team-section">
+                <div class="team-section-title">🏛️ Alicerces/Alvenarias</div>
+                ${teamAlicerces.map(a => `<div class="team-mini-row">
+                  <span style="color:var(--text);flex:1">${a.title}</span>
+                  <span class="team-mini-badge" style="background:${a.status==='concluido'?'var(--success)':a.status==='atribuido'?'var(--warning)':'var(--border)'}">${(a.status||'—').replace(/_/g,' ')}</span>
                 </div>`).join('')}
               </div>
-            </div>
-          ` : ''}
-
-          ${teamLembrancinhas.length > 0 ? `
-            <div class="team-section">
-              <div class="team-section-title">🎁 Lembrancinhas</div>
-              ${teamLembrancinhas.map(l => `<div class="team-mini-row">
-                <span style="color:var(--text);flex:1">${l.item_name || '—'}</span>
-                <span style="color:var(--text-light);font-size:10px">${l.quantity_done || 0}/${l.quantity_needed || 0}</span>
-                <span class="team-mini-badge" style="background:${l.status==='pronto'?'var(--success)':l.status==='em_andamento'?'var(--warning)':'var(--border)'}">${(l.status||'—').replace(/_/g,' ')}</span>
-              </div>`).join('')}
-            </div>
-          ` : ''}
-
-          ${teamAlicerces.length > 0 ? `
-            <div class="team-section">
-              <div class="team-section-title">🏛️ Alicerces/Alvenarias</div>
-              ${teamAlicerces.map(a => `<div class="team-mini-row">
-                <span style="color:var(--text);flex:1">${a.title}</span>
-                <span class="team-mini-badge" style="background:${a.status==='concluido'?'var(--success)':a.status==='atribuido'?'var(--warning)':'var(--border)'}">${(a.status||'—').replace(/_/g,' ')}</span>
-              </div>`).join('')}
-            </div>
+            ` : ''}
           ` : ''}
 
           ${t.members?.length ? `<ul class="team-members-list">${t.members.map(m => `<li>
-            <span><span class="team-member-name">${m.name}</span> ${m.role ? `<span class="team-member-role">(${m.role})</span>` : ''}${m.phone ? ` <span style="font-size:10px;color:var(--text-light)">📞 ${m.phone}</span>` : ''}</span>
-            <button class="btn-icon" onclick="removeMember(${t.id},${m.id})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+            <span style="cursor:pointer" onclick="openMemberModal(${t.id},${m.id})"><span class="team-member-name">${m.name}</span> ${m.role ? `<span class="team-member-role">(${m.role})</span>` : ''}${m.phone ? ` <span style="font-size:10px;color:var(--text-light)">📞 ${m.phone}</span>` : ''}</span>
+            <div style="display:flex;gap:2px">
+              <button class="btn-icon" onclick="openMemberModal(${t.id},${m.id})" title="Editar membro"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="btn-icon" onclick="removeMember(${t.id},${m.id})" title="Remover membro"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+            </div>
           </li>`).join('')}</ul>` : '<p style="font-size:12px;color:var(--text-light);padding-top:8px;border-top:1px solid var(--border)">Nenhum membro cadastrado</p>'}
-          <button class="btn btn-secondary btn-sm" style="margin-top:12px;width:100%" onclick="addMember(${t.id})">+ Adicionar Membro</button>
+          <button class="btn btn-secondary btn-sm" style="margin-top:12px;width:100%" onclick="openMemberModal(${t.id})">+ Adicionar Membro</button>
         </div>`;
       }).join('')}
-    </div>
+    </div>`}
   `;
 }
 
-function addMember(teamId) {
+function filterEquipes(val) {
+  equipesSearchText = val;
+  renderEquipes();
+}
+
+function toggleEquipeExpand(id) {
+  if (equipesExpanded.has(id)) equipesExpanded.delete(id);
+  else equipesExpanded.add(id);
+  renderEquipes();
+}
+
+function openTeamModal(id) {
+  const team = id ? teamsCache.find(t => t.id === id) : null;
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay active';
   overlay.innerHTML = `<div class="modal">
-    <h3>Adicionar Membro</h3>
-    <div class="form-group"><label>Nome</label><input id="m-name"></div>
-    <div class="form-group"><label>Função</label><input id="m-role"></div>
-    <div class="form-row">
-      <div class="form-group"><label>Telefone</label><input id="m-phone"></div>
-      <div class="form-group"><label>Email</label><input id="m-email"></div>
-    </div>
+    <h3>${team ? 'Editar Equipe' : 'Nova Equipe'}</h3>
+    <div class="form-group"><label>Nome</label><input id="t-name" value="${team ? team.name.replace(/"/g,'&quot;') : ''}"></div>
+    <div class="form-group"><label>Descrição</label><textarea id="t-desc" rows="3">${team ? (team.description || '').replace(/</g,'&lt;') : ''}</textarea></div>
+    <div class="form-group"><label>Responsável</label><input id="t-resp" value="${team ? (team.responsible || '').replace(/"/g,'&quot;') : ''}"></div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveMember(${teamId}, this)">Adicionar</button>
+      <button class="btn btn-primary" onclick="saveTeam(${id || 'null'}, this)">${team ? 'Salvar' : 'Criar'}</button>
     </div>
   </div>`;
   document.body.appendChild(overlay);
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
 }
 
-async function saveMember(teamId, btn) {
+async function saveTeam(id, btn) {
+  const data = {
+    name: document.getElementById('t-name').value,
+    description: document.getElementById('t-desc').value,
+    responsible: document.getElementById('t-resp').value,
+  };
+  if (id) {
+    await api(`/teams/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+    toast('Equipe atualizada!', 'success');
+  } else {
+    await api('/teams', { method: 'POST', body: JSON.stringify(data) });
+    toast('Equipe criada!', 'success');
+  }
+  btn.closest('.modal-overlay').remove();
+  renderEquipes();
+}
+
+function deleteTeam(id, name) {
+  showConfirmDialog({
+    icon: '🗑️',
+    title: 'Excluir Equipe',
+    message: 'Tem certeza que deseja excluir?',
+    detail: name,
+    subdetail: 'Todos os membros serão removidos. Esta ação não pode ser desfeita.',
+    confirmText: 'Sim, excluir',
+    cancelText: 'Cancelar',
+    onConfirm: async () => {
+      await api(`/teams/${id}`, { method: 'DELETE' });
+      toast('Equipe excluída', 'error');
+      renderEquipes();
+    }
+  });
+}
+
+function openMemberModal(teamId, memberId) {
+  const team = teamsCache.find(t => t.id === teamId);
+  const member = team?.members?.find(m => m.id === memberId);
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay active';
+  overlay.innerHTML = `<div class="modal">
+    <h3>${member ? 'Editar Membro' : 'Adicionar Membro'}</h3>
+    <div class="form-group"><label>Nome</label><input id="m-name" value="${member ? (member.name || '').replace(/"/g,'&quot;') : ''}"></div>
+    <div class="form-group"><label>Função</label><input id="m-role" value="${member ? (member.role || '').replace(/"/g,'&quot;') : ''}"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Telefone</label><input id="m-phone" value="${member ? (member.phone || '') : ''}"></div>
+      <div class="form-group"><label>Email</label><input id="m-email" value="${member ? (member.email || '') : ''}"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveMemberEdit(${teamId}, ${memberId || 'null'}, this)">Salvar</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+}
+
+async function saveMemberEdit(teamId, memberId, btn) {
   const data = {
     name: document.getElementById('m-name').value,
     role: document.getElementById('m-role').value,
     phone: document.getElementById('m-phone').value,
     email: document.getElementById('m-email').value,
   };
-  await api(`/teams/${teamId}/members`, { method: 'POST', body: JSON.stringify(data) });
+  if (memberId) {
+    await api(`/teams/${teamId}/members/${memberId}`, { method: 'PUT', body: JSON.stringify(data) });
+    toast('Membro atualizado!', 'success');
+  } else {
+    await api(`/teams/${teamId}/members`, { method: 'POST', body: JSON.stringify(data) });
+    toast('Membro adicionado!', 'success');
+  }
   btn.closest('.modal-overlay').remove();
-  toast('Membro adicionado!', 'success');
   renderEquipes();
 }
 

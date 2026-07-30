@@ -1,5 +1,21 @@
 [
   {
+    "version": "1.21.0",
+    "date": "2026-07-30",
+    "title": "Equipes Interativas",
+    "changes": [
+      "Busca em tempo real por nome de equipe, descrição ou membro",
+      "Cards expansíveis/colapsáveis com botão toggle — detalhes sob demanda",
+      "Criar nova equipe diretamente da tela com modal (nome, descrição, responsável)",
+      "Editar equipe existente — nome, descrição e responsável",
+      "Excluir equipe com dialog de confirmação",
+      "Editar membro existente — nome, função, telefone e email",
+      "Membros clicáveis para edição rápida",
+      "Cards de estatísticas no topo — equipes, membros, tarefas atribuídas e concluídas",
+      "Tarefas clicáveis navegando para o checklist"
+    ]
+  },
+  {
     "version": "1.20.1",
     "date": "2026-07-30",
     "title": "Correção do Dashboard",

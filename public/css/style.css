@@ -925,6 +925,46 @@ select:focus, input:focus, textarea:focus { border-color: var(--primary); }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
 /* TEAMS */
+.equipes-toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.equipes-search {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 13px;
+  background: var(--card-bg);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.equipes-search:focus {
+  border-color: var(--primary);
+}
+
+.team-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.team-card.expanded .team-section-content {
+  max-height: 300px;
+}
+
+@media (max-width: 768px) {
+  .equipes-toolbar { flex-direction: column; }
+  .equipes-search { width: 100%; }
+}
+
 .team-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));

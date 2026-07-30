@@ -147,6 +147,12 @@ router.delete('/teams/:teamId/members/:memberId', (req, res) => {
   res.json({ success: true });
 });
 
+router.put('/teams/:teamId/members/:memberId', (req, res) => {
+  const { name, role, phone, email } = req.body;
+  db.prepare('UPDATE team_members SET name=?, role=?, phone=?, email=? WHERE id=? AND team_id=?').run(name, role, phone, email, req.params.memberId, req.params.teamId);
+  res.json({ success: true });
+});
+
 // ============ SCHEDULE ============
 
 router.get('/schedule', (req, res) => {

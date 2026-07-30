@@ -265,6 +265,11 @@ function execute(sql, params) {
     if (t) { t.members_count = data.team_members.filter(m => Number(m.team_id) === Number(params[0])).length; save(); }
     return { changes: t ? 1 : 0 };
   }
+  if (lower.startsWith('update team_members set name')) {
+    const m = data.team_members.find(m => m.id === Number(params[4]) && Number(m.team_id) === Number(params[5]));
+    if (m) { m.name = params[0]; m.role = params[1]; m.phone = params[2]; m.email = params[3]; save(); }
+    return { changes: m ? 1 : 0 };
+  }
   if (lower.startsWith('update encounters set name')) {
     const e = data.encounters.find(e => e.id === Number(params[7]));
     if (e) { e.name = params[0]; e.start_date = params[1]; e.end_date = params[2]; e.location = params[3]; e.theme = params[4]; e.theme_song = params[5]; e.status = params[6]; save(); }
