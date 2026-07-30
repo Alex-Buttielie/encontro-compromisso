@@ -548,18 +548,26 @@ router.delete('/alicerces/:id', (req, res) => {
 
 router.get('/lembretes', (req, res) => {
   let list = db.getAll('lembretes');
-  const { status, priority } = req.query;
+  const { status, priority, category } = req.query;
   if (status) list = list.filter(l => l.status === status);
   if (priority) list = list.filter(l => l.priority === priority);
-  list.sort((a, b) => new Date(a.due_date || 0) - new Date(b.due_date || 0));
+  if (category) list = list.filter(l => l.category === category);
+  list.sort((a, b) => {
+    const catCmp = (a.category || '').localeCompare(b.category || '');
+    if (catCmp !== 0) return catCmp;
+    const priOrder = { alta: 0, media: 1, baixa: 2 };
+    const priCmp = (priOrder[a.priority] || 1) - (priOrder[b.priority] || 1);
+    if (priCmp !== 0) return priCmp;
+    return new Date(a.due_date || 0) - new Date(b.due_date || 0);
+  });
   res.json(list);
 });
 
 router.post('/lembretes', (req, res) => {
-  const { title, description, due_date, priority, related_task_id, status } = req.body;
+  const { title, description, due_date, priority, related_task_id, status, category } = req.body;
   const id = db.insert('lembretes', {
     title, description, due_date, priority: priority || 'media',
-    related_task_id, status: status || 'pendente'
+    related_task_id, status: status || 'pendente', category: category || 'Geral MOs'
   });
   res.json({ id });
 });

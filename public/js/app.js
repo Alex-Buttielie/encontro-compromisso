@@ -1937,39 +1937,177 @@ async function deleteAlicerce(id) {
 // ============ LEMBRETES ============
 let lembretesCache = [];
 let autoLembretesCache = [];
+let lembreteActiveTab = 'all';
+let lembreteFilterStatus = '';
+let lembreteFilterPriority = '';
+let lembreteSearchText = '';
+
+const LEMBRETE_CATEGORIES = [
+  'Geral MOs', 'Espaço Físico', 'Mestres de Obras', 'Traslado', 'Materiais Gráficos',
+  'Material JUMIRE', 'Kits e Crachás', 'Som e Técnica', 'Cozinha e Higiene', 'Capela',
+  'Escolinhas', 'Alicerces e Alvenarias', 'Lembrancinhas', 'Fornecedores', 'Financeiro',
+  'Dinamização', 'RH', 'Montagem'
+];
+
+const LEMBRETE_CATEGORY_ICONS = {
+  'Geral MOs': '📋', 'Espaço Físico': '🏠', 'Mestres de Obras': '👷', 'Traslado': '🚌',
+  'Materiais Gráficos': '🖨️', 'Material JUMIRE': '📦', 'Kits e Crachás': '🎫', 'Som e Técnica': '🔊',
+  'Cozinha e Higiene': '🍲', 'Capela': '⛪', 'Escolinhas': '📚', 'Alicerces e Alvenarias': '🧱',
+  'Lembrancinhas': '🎁', 'Fornecedores': '🤝', 'Financeiro': '💰', 'Dinamização': '🎭',
+  'RH': '👥', 'Montagem': '🔧'
+};
 
 async function renderLembretes() {
   lembretesCache = await api('/lembretes');
   const auto = await api('/lembretes/auto');
   autoLembretesCache = auto.lembretes || [];
   const main = document.getElementById('main-content');
+
+  const total = lembretesCache.length;
+  const done = lembretesCache.filter(l => l.status === 'concluido').length;
+  const pending = total - done;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
   const overdue = autoLembretesCache.filter(l => l.urgency === 'overdue');
   const urgent = autoLembretesCache.filter(l => l.urgency === 'urgent');
   const warning = autoLembretesCache.filter(l => l.urgency === 'warning');
+
+  const cats = {};
+  lembretesCache.forEach(l => {
+    const c = l.category || 'Geral MOs';
+    if (!cats[c]) cats[c] = { total: 0, done: 0 };
+    cats[c].total++;
+    if (l.status === 'concluido') cats[c].done++;
+  });
+
   main.innerHTML = `
     <h1 class="page-title">Lembretes</h1>
-    <p class="page-subtitle">Prazos calculados automaticamente a partir da data do Encontro</p>
+    <p class="page-subtitle">Checklist de preparação para o Encontro — organize e marque o progresso</p>
+
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-icon total">📊</div><div class="stat-info"><h3>${total}</h3><p>Total</p></div></div>
+      <div class="stat-card"><div class="stat-icon done">✅</div><div class="stat-info"><h3>${done}</h3><p>Concluídos</p></div></div>
+      <div class="stat-card"><div class="stat-icon pending">🔔</div><div class="stat-info"><h3>${pending}</h3><p>Pendentes</p></div></div>
+      <div class="stat-card"><div class="stat-icon progress">📈</div><div class="stat-info"><h3>${pct}%</h3><p>Progresso</p></div></div>
+    </div>
+
+    <div class="card">
+      <div class="progress-bar-container" style="margin-bottom:16px">
+        <div class="progress-bar-header"><span>Progresso Geral</span><span><strong>${done}</strong>/${total} (${pct}%)</span></div>
+        <div class="progress-bar-track"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+      </div>
+    </div>
+
     ${auto.message ? `<div class="card" style="text-align:center;color:var(--text-light)">${auto.message}</div>` : `
     <div class="stats-grid">
       <div class="stat-card"><div class="stat-icon pending">🚨</div><div class="stat-info"><h3>${overdue.length}</h3><p>Atrasados</p></div></div>
-      <div class="stat-card"><div class="stat-icon progress">⚠️</div><div class="stat-info"><h3>${urgent.length}</h3><p>Esta Semana</p></div></div>
-      <div class="stat-card"><div class="stat-icon total">📅</div><div class="stat-info"><h3>${warning.length}</h3><p>Próximo Mês</p></div></div>
-      <div class="stat-card"><div class="stat-icon done">📋</div><div class="stat-info"><h3>${lembretesCache.length}</h3><p>Manuais</p></div></div>
+      <div class="stat-card"><div class="stat-icon progress">⚠️</div><div class="stat-info"><h3>${urgent.length}</h3><p>Urgentes</p></div></div>
+      <div class="stat-card"><div class="stat-icon total">📅</div><div class="stat-info"><h3>${warning.length}</h3><p>Atenção</p></div></div>
+      <div class="stat-card"><div class="stat-icon done">📋</div><div class="stat-info"><h3>${autoLembretesCache.length}</h3><p>Automáticos</p></div></div>
     </div>`}
+
     <div class="card">
       <div class="card-title">Lembretes Automáticos (baseados nos prazos do manual)</div>
       <div id="auto-lembretes"></div>
     </div>
+
     <div class="card">
-      <div class="card-title">Lembretes Manuais</div>
-      <div class="filters">
+      <div class="card-title" style="display:flex;justify-content:space-between;align-items:center">
+        <span>Lembretes Manuais por Módulo</span>
         <button class="btn btn-primary btn-sm" onclick="openLembreteModal()">+ Novo Lembrete</button>
       </div>
+
+      <div class="lem-tab-bar" id="lem-tabs">
+        <button class="lem-tab active" data-cat="all" onclick="switchLemTab('all')">
+          <span class="lem-tab-icon">📋</span><span>Todos</span>
+          <span class="lem-tab-count">${total}</span>
+        </button>
+        ${LEMBRETE_CATEGORIES.filter(c => cats[c]).map(c => {
+          const catPct = cats[c].total > 0 ? Math.round((cats[c].done / cats[c].total) * 100) : 0;
+          return `<button class="lem-tab" data-cat="${c}" onclick="switchLemTab('${c}')">
+            <span class="lem-tab-icon">${LEMBRETE_CATEGORY_ICONS[c] || '📌'}</span>
+            <span>${c}</span>
+            <span class="lem-tab-count">${cats[c].done}/${cats[c].total}</span>
+            <span class="lem-tab-pct ${catPct === 100 ? 'done' : catPct >= 50 ? 'half' : ''}">${catPct}%</span>
+          </button>`;
+        }).join('')}
+      </div>
+
+      <div class="lem-filters" id="lem-filters">
+        <input type="text" class="lem-search" placeholder="🔍 Buscar lembrete..." oninput="lemSearch(this.value)" id="lem-search-input">
+        <select onchange="lemFilterStatus(this.value)" id="lem-filter-status">
+          <option value="">Todos Status</option>
+          <option value="pendente">Pendente</option>
+          <option value="concluido">Concluído</option>
+        </select>
+        <select onchange="lemFilterPriority(this.value)" id="lem-filter-priority">
+          <option value="">Todas Prioridades</option>
+          <option value="alta">Alta</option>
+          <option value="media">Média</option>
+          <option value="baixa">Baixa</option>
+        </select>
+      </div>
+
+      <div id="lem-progress-area"></div>
       <div id="manual-lembretes"></div>
     </div>
   `;
+
   renderAutoLembretes(autoLembretesCache);
-  renderManualLembretes(lembretesCache);
+  applyLemFilters();
+}
+
+function switchLemTab(cat) {
+  lembreteActiveTab = cat;
+  document.querySelectorAll('.lem-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.cat === cat);
+  });
+  applyLemFilters();
+}
+
+function lemSearch(text) {
+  lembreteSearchText = text.toLowerCase();
+  applyLemFilters();
+}
+
+function lemFilterStatus(val) {
+  lembreteFilterStatus = val;
+  applyLemFilters();
+}
+
+function lemFilterPriority(val) {
+  lembreteFilterPriority = val;
+  applyLemFilters();
+}
+
+function applyLemFilters() {
+  let list = [...lembretesCache];
+  if (lembreteActiveTab !== 'all') list = list.filter(l => (l.category || 'Geral MOs') === lembreteActiveTab);
+  if (lembreteFilterStatus) list = list.filter(l => l.status === lembreteFilterStatus);
+  if (lembreteFilterPriority) list = list.filter(l => l.priority === lembreteFilterPriority);
+  if (lembreteSearchText) list = list.filter(l =>
+    (l.title || '').toLowerCase().includes(lembreteSearchText) ||
+    (l.description || '').toLowerCase().includes(lembreteSearchText)
+  );
+
+  const progArea = document.getElementById('lem-progress-area');
+  if (progArea && lembreteActiveTab !== 'all') {
+    const t = list.length;
+    const d = list.filter(l => l.status === 'concluido').length;
+    const p = t > 0 ? Math.round((d / t) * 100) : 0;
+    progArea.innerHTML = `
+      <div class="progress-bar-container" style="margin-bottom:12px">
+        <div class="progress-bar-header">
+          <span><strong>${LEMBRETE_CATEGORY_ICONS[lembreteActiveTab] || '📌'} ${lembreteActiveTab}</strong></span>
+          <span><strong>${d}</strong>/${t} (${p}%)</span>
+        </div>
+        <div class="progress-bar-track"><div class="progress-bar-fill" style="width:${p}%"></div></div>
+      </div>`;
+  } else if (progArea) {
+    progArea.innerHTML = '';
+  }
+
+  renderManualLembretes(list);
 }
 
 function renderAutoLembretes(list) {
@@ -2000,26 +2138,36 @@ async function completeAutoLembrete(taskId) {
 
 function renderManualLembretes(list) {
   const container = document.getElementById('manual-lembretes');
-  if (list.length === 0) { container.innerHTML = '<p style="color:var(--text-light);padding:12px">Nenhum lembrete manual.</p>'; return; }
+  if (list.length === 0) {
+    container.innerHTML = '<p style="color:var(--text-light);padding:12px">Nenhum lembrete encontrado com os filtros atuais.</p>';
+    return;
+  }
   const statusBadges = { pendente: 'badge-warning', concluido: 'badge-success' };
   const priorityBadges = { alta: 'badge-danger', media: 'badge-warning', baixa: 'badge-info' };
-  container.innerHTML = list.map(l => `<div class="lembrete-card ${l.status === 'concluido' ? '' : 'info'}">
+  const catIcons = LEMBRETE_CATEGORY_ICONS;
+  container.innerHTML = list.map(l => {
+    const cat = l.category || 'Geral MOs';
+    return `<div class="lembrete-card ${l.status === 'concluido' ? '' : 'info'}">
     <div class="lembrete-icon">${l.status === 'concluido' ? '✅' : '🔔'}</div>
     <div class="lembrete-info">
       <div class="lembrete-title">${l.title}</div>
       ${l.description ? `<div class="lembrete-meta">${l.description}</div>` : ''}
-      ${l.due_date ? `<div class="lembrete-due">Vence em ${new Date(l.due_date).toLocaleDateString('pt-BR')}</div>` : ''}
+      <div class="lembrete-meta" style="margin-top:2px">
+        <span class="lem-cat-badge">${catIcons[cat] || '📌'} ${cat}</span>
+        ${l.due_date ? ` · <span class="lembrete-due" style="display:inline">Vence em ${new Date(l.due_date).toLocaleDateString('pt-BR')}</span>` : ''}
+      </div>
     </div>
     <div style="display:flex;flex-direction:column;align-items:end;gap:4px">
       <span class="badge-sm ${statusBadges[l.status] || 'badge-gray'}">${l.status}</span>
       <span class="badge-sm ${priorityBadges[l.priority] || 'badge-gray'}">${l.priority}</span>
       <div style="display:flex;gap:4px;margin-top:4px">
-        <button class="btn-icon" onclick="toggleLembreteStatus(${l.id})">${l.status === 'concluido' ? '↩️' : '✅'}</button>
-        <button class="btn-icon" onclick="openLembreteModal(${l.id})">✏️</button>
-        <button class="btn-icon" onclick="deleteLembrete(${l.id})">🗑️</button>
+        <button class="btn-icon" onclick="toggleLembreteStatus(${l.id})" title="${l.status === 'concluido' ? 'Reabrir' : 'Concluir'}">${l.status === 'concluido' ? '↩️' : '✅'}</button>
+        <button class="btn-icon" onclick="openLembreteModal(${l.id})" title="Editar">✏️</button>
+        <button class="btn-icon" onclick="deleteLembrete(${l.id})" title="Excluir">🗑️</button>
       </div>
     </div>
-  </div>`).join('');
+  </div>`;
+  }).join('');
 }
 
 async function toggleLembreteStatus(id) {
@@ -2027,12 +2175,15 @@ async function toggleLembreteStatus(id) {
   const next = l.status === 'concluido' ? 'pendente' : 'concluido';
   await api(`/lembretes/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status: next }) });
   l.status = next;
-  renderManualLembretes(lembretesCache);
+  applyLemFilters();
   toast(next === 'concluido' ? 'Lembrete concluído!' : 'Lembrete reaberto', next === 'concluido' ? 'success' : '');
 }
 
 function openLembreteModal(id) {
   const l = id ? lembretesCache.find(l => l.id === id) : null;
+  const catOpts = LEMBRETE_CATEGORIES.map(c =>
+    `<option value="${c}" ${l?.category === c ? 'selected' : ''}>${LEMBRETE_CATEGORY_ICONS[c] || '📌'} ${c}</option>`
+  ).join('');
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay active';
   overlay.innerHTML = `<div class="modal">
@@ -2043,6 +2194,7 @@ function openLembreteModal(id) {
       <div class="form-group"><label>Data</label><input id="lem-date" type="date" value="${l?.due_date || ''}"></div>
       <div class="form-group"><label>Prioridade</label><select id="lem-priority"><option value="baixa" ${l?.priority==='baixa'?'selected':''}>Baixa</option><option value="media" ${l?.priority==='media'?'selected':''}>Média</option><option value="alta" ${l?.priority==='alta'?'selected':''}>Alta</option></select></div>
     </div>
+    <div class="form-group"><label>Módulo / Categoria</label><select id="lem-category">${catOpts}</select></div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancelar</button>
       <button class="btn btn-primary" onclick="saveLembrete(${id || 'null'}, this)">${l ? 'Salvar' : 'Criar'}</button>
@@ -2053,7 +2205,11 @@ function openLembreteModal(id) {
 }
 
 async function saveLembrete(id, btn) {
-  const data = { title: val('lem-title'), description: val('lem-desc'), due_date: val('lem-date'), priority: val('lem-priority') };
+  const data = {
+    title: val('lem-title'), description: val('lem-desc'),
+    due_date: val('lem-date'), priority: val('lem-priority'),
+    category: val('lem-category')
+  };
   if (id) await api(`/lembretes/${id}`, { method: 'PUT', body: JSON.stringify(data) });
   else await api('/lembretes', { method: 'POST', body: JSON.stringify(data) });
   btn.closest('.modal-overlay').remove();

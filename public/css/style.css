@@ -1324,6 +1324,93 @@ select:focus, input:focus, textarea:focus { border-color: var(--primary); }
 .lembrete-due.urgent { color: var(--danger); }
 .lembrete-due.warning { color: var(--warning); }
 
+.lem-tab-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 0;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.lem-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card-bg);
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text);
+  transition: all 0.15s;
+}
+.lem-tab:hover { border-color: var(--primary); background: rgba(44,123,229,0.05); }
+.lem-tab.active { border-color: var(--primary); background: var(--primary); color: #fff; }
+.lem-tab-icon { font-size: 16px; }
+.lem-tab-count {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: rgba(0,0,0,0.08);
+}
+.lem-tab.active .lem-tab-count { background: rgba(255,255,255,0.25); color: #fff; }
+.lem-tab-pct {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 8px;
+  background: rgba(0,0,0,0.06);
+  color: var(--text-light);
+}
+.lem-tab-pct.half { background: rgba(241,196,15,0.2); color: #c79a00; }
+.lem-tab-pct.done { background: rgba(39,174,96,0.2); color: #1e8449; }
+.lem-tab.active .lem-tab-pct { background: rgba(255,255,255,0.2); color: #fff; }
+
+.lem-filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.lem-search {
+  flex: 1;
+  min-width: 200px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  background: var(--card-bg);
+  color: var(--text);
+}
+.lem-filters select {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  background: var(--card-bg);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.lem-cat-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: 10px;
+  background: rgba(44,123,229,0.1);
+  color: var(--primary);
+}
+
+@media (max-width: 768px) {
+  .lem-tab-bar { flex-direction: column; }
+  .lem-tab { width: 100%; justify-content: flex-start; }
+  .lem-filters { flex-direction: column; }
+  .lem-search, .lem-filters select { width: 100%; }
+}
+
 /* PADRINHO STEPS */
 .padrinho-card {
   background: var(--card-bg);
