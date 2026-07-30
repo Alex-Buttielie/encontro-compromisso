@@ -7,6 +7,30 @@ const router = express.Router();
 
 // ============ VERSION ============
 
+const activeUsers = new Map();
+const ACTIVE_TIMEOUT = 2 * 60 * 1000;
+
+function cleanInactiveUsers() {
+  const now = Date.now();
+  for (const [id, ts] of activeUsers) {
+    if (now - ts > ACTIVE_TIMEOUT) activeUsers.delete(id);
+  }
+}
+
+router.post('/heartbeat', (req, res) => {
+  const sessionId = req.body.sessionId || req.headers['x-session-id'];
+  if (sessionId) {
+    activeUsers.set(sessionId, Date.now());
+    cleanInactiveUsers();
+  }
+  res.json({ ok: true });
+});
+
+router.get('/active-users', (req, res) => {
+  cleanInactiveUsers();
+  res.json({ count: activeUsers.size });
+});
+
 router.get('/version', (req, res) => {
   try {
     const changelog = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'CHANGELOG.json'), 'utf-8'));

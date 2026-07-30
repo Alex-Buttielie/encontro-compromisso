@@ -3137,6 +3137,40 @@ currentPage = getPageFromHash();
 updateActiveNav();
 renderPage();
 checkVersionUpdate();
+startActiveUsersTracking();
+
+function getSessionId() {
+  let sid = localStorage.getItem('app_session_id');
+  if (!sid) {
+    sid = 's_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
+    localStorage.setItem('app_session_id', sid);
+  }
+  return sid;
+}
+
+async function sendHeartbeat() {
+  try {
+    await api('/heartbeat', { method: 'POST', body: JSON.stringify({ sessionId: getSessionId() }) });
+  } catch (e) {}
+}
+
+async function updateActiveUsersCount() {
+  try {
+    const data = await api('/active-users');
+    const el = document.getElementById('active-users-count');
+    if (el) el.textContent = data.count;
+  } catch (e) {}
+}
+
+function startActiveUsersTracking() {
+  sendHeartbeat();
+  updateActiveUsersCount();
+  setInterval(sendHeartbeat, 30000);
+  setInterval(updateActiveUsersCount, 10000);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) { sendHeartbeat(); updateActiveUsersCount(); }
+  });
+}
 
 async function checkVersionUpdate() {
   try {

@@ -1,5 +1,15 @@
 [
   {
+    "version": "1.15.0",
+    "date": "2026-07-30",
+    "title": "Usuários Online e Avisos de Versão",
+    "changes": [
+      "Indicador de usuários online em tempo real — mostra quantos estão acessando o sistema agora",
+      "Aviso automático de nova versão — modal com changelog ao atualizar o sistema",
+      "Rotas URL (hash routing) para todas as telas — bookmark e compartilhamento"
+    ]
+  },
+  {
     "version": "1.14.0",
     "date": "2026-07-30",
     "title": "Rotas URL e Novas Funcionalidades",
