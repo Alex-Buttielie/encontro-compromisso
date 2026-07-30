@@ -164,6 +164,8 @@ async function renderDashboard() {
   const paidCount = participants.filter(p => p.paid).length;
   const lemDone = lembrancinhas.filter(l => l.status === 'pronto').length;
   const lemTotal = lembrancinhas.length;
+  const prePct = stats.preTotal > 0 ? Math.round((stats.preDone / stats.preTotal) * 100) : 0;
+  const duringPct = stats.duringTotal > 0 ? Math.round((stats.duringDone / stats.duringTotal) * 100) : 0;
 
   main.innerHTML = `
     <h1 class="page-title">Dashboard</h1>
@@ -180,6 +182,17 @@ async function renderDashboard() {
       <div class="stat-card"><div class="stat-icon done">💰</div><div class="stat-info"><h3>R$ ${fin.balance.toFixed(0)}</h3><p>Saldo Atual</p></div></div>
       <div class="stat-card"><div class="stat-icon progress">🎁</div><div class="stat-info"><h3>${lemDone}/${lemTotal}</h3><p>Lembrancinhas Prontas</p></div></div>
       <div class="stat-card"><div class="stat-icon pending">📅</div><div class="stat-info"><h3>${enc.start_date ? new Date(enc.start_date).toLocaleDateString('pt-BR') : '—'}</h3><p>Data do Encontro</p></div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Progresso por Fase</div>
+      <div class="progress-container">
+        <div class="progress-label"><span>📋 Pré-Encontro (Preparação)</span><span>${stats.preDone}/${stats.preTotal} (${prePct}%)</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${prePct}%"></div></div>
+      </div>
+      <div class="progress-container">
+        <div class="progress-label"><span>🏗️ Durante o Encontro (Execução)</span><span>${stats.duringDone}/${stats.duringTotal} (${duringPct}%)</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${duringPct}%"></div></div>
+      </div>
     </div>
     <div class="card">
       <div class="card-title">Progresso Geral</div>
