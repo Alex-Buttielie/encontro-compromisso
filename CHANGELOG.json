@@ -1,5 +1,15 @@
 [
   {
+    "version": "1.20.0",
+    "date": "2026-07-30",
+    "title": "Correção do Relatório de Preparação",
+    "changes": [
+      "Correção de páginas em branco no relatório de preparação — page breaks condicionais evitam páginas vazias",
+      "Correção de numeração 'NaN' no rodapé — contador de páginas manual substitui doc.page.number inexistente no PDFKit",
+      "Correção aplicada globalmente em todos os relatórios PDF (createReportDoc compartilhado)"
+    ]
+  },
+  {
     "version": "1.19.0",
     "date": "2026-07-30",
     "title": "Dashboard Interativo",

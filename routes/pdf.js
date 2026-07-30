@@ -57,15 +57,18 @@ function createReportDoc() {
 
   doc.text = (value, ...args) => originalText(sanitizePdfText(value), ...args);
 
+  let pageCount = 0;
   let inFooter = false;
   doc.on('pageAdded', () => {
+    pageCount++;
     if (inFooter) return;
     inFooter = true;
-    reportFooter(doc);
+    reportFooter(doc, pageCount);
     inFooter = false;
   });
 
-  reportFooter(doc);
+  pageCount++;
+  reportFooter(doc, pageCount);
   return doc;
 }
 
@@ -93,7 +96,7 @@ function reportHeader(doc, title, subtitle) {
   }
 }
 
-function reportFooter(doc) {
+function reportFooter(doc, pageNum) {
   const bottomY = doc.page.height - 35;
   const origBottomMargin = doc.page.margins.bottom;
   doc.page.margins.bottom = 0;
@@ -102,7 +105,7 @@ function reportFooter(doc) {
     'Meu Coordenador - JUMIRE | Projeto Compromisso Trin',
     50, bottomY, { width: 300 }
   );
-  doc.text(`Pagina ${doc.page.number + 1}`, doc.page.width - 120, bottomY, { width: 70, align: 'right' });
+  doc.text(`Pagina ${pageNum || 1}`, doc.page.width - 120, bottomY, { width: 70, align: 'right' });
   doc.page.margins.bottom = origBottomMargin;
 }
 
@@ -1936,7 +1939,7 @@ function generatePreparationReport() {
   }
 
   // === PROGRESSO POR CATEGORIA ===
-  doc.addPage();
+  if (y > 50) { doc.addPage(); }
   reportHeader(doc, 'Progresso por Categoria', 'Status detalhado de cada area de preparacao');
   y = 155;
 
@@ -1970,7 +1973,7 @@ function generatePreparationReport() {
   }
 
   // === EQUIPES E MEMBROS ===
-  doc.addPage();
+  if (y > 50) { doc.addPage(); }
   reportHeader(doc, 'Equipes e Membros', 'Composicao completa das equipes de trabalho');
   y = 155;
 
@@ -2012,7 +2015,7 @@ function generatePreparationReport() {
   }
 
   // === FINANCEIRO DETALHADO ===
-  doc.addPage();
+  if (y > 50) { doc.addPage(); }
   reportHeader(doc, 'Situacao Financeira', 'Receitas, despesas e saldo por categoria');
   y = 155;
 
@@ -2064,7 +2067,7 @@ function generatePreparationReport() {
   }
 
   // === MATERIAS-PRIMAS ===
-  doc.addPage();
+  if (y > 50) { doc.addPage(); }
   reportHeader(doc, 'Materias-Primas (Inscritos)', 'Lista completa de inscricoes e status de pagamento');
   y = 155;
 
@@ -2093,7 +2096,7 @@ function generatePreparationReport() {
   }
 
   // === FORNECEDORES ===
-  doc.addPage();
+  if (y > 50) { doc.addPage(); }
   reportHeader(doc, 'Fornecedores e Contatos', 'Lista completa de fornecedores e prestadores');
   y = 155;
 
@@ -2118,7 +2121,7 @@ function generatePreparationReport() {
   }
 
   // === ESCOLINHAS / ENCONTROS DE PREPARACAO ===
-  doc.addPage();
+  if (y > 50) { doc.addPage(); }
   reportHeader(doc, 'Escolinhas e Encontros de Preparacao 2026', 'Cronograma de formacao antes do Encontro');
   y = 155;
 
@@ -2170,7 +2173,7 @@ function generatePreparationReport() {
   }
 
   // === AVISOS ===
-  doc.addPage();
+  if (y > 50) { doc.addPage(); }
   reportHeader(doc, 'Mural de Avisos', 'Comunicados e informacoes importantes');
   y = 155;
 
@@ -2207,7 +2210,7 @@ function generatePreparationReport() {
   }
 
   // === LEMBRETES AUTOMATICOS (PRAZOS) ===
-  doc.addPage();
+  if (y > 50) { doc.addPage(); }
   reportHeader(doc, 'Prazos e Lembretes Automaticos', 'Baseados na data do Encontro - calculo automatico');
   y = 155;
 
@@ -2264,7 +2267,7 @@ function generatePreparationReport() {
   }
 
   // === CHECKLIST FINAL ===
-  doc.addPage();
+  if (y > 50) { doc.addPage(); }
   reportHeader(doc, 'Checklist Final de Preparacao', 'Itens criticos a verificar antes do Encontro');
   y = 155;
 
