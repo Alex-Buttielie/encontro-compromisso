@@ -85,14 +85,35 @@ function prettifyPersonName(raw, opts = {}) {
     .trim();
 }
 
-// ============ NAVIGATION ============
+// ============ NAVIGATION (Hash Routing) ============
+const VALID_PAGES = ['dashboard','checklist','cronograma','equipes','encontro','inscritos','padrinhos','pais','fornecedores','escolinhas','alicerces','lembretes','avisos','financeiro','lembrancinhas','kit','relatorios'];
+
+function getPageFromHash() {
+  const hash = window.location.hash.replace('#/', '').replace('#', '');
+  return VALID_PAGES.includes(hash) ? hash : 'dashboard';
+}
+
+function updateActiveNav() {
+  document.querySelectorAll('.nav-item').forEach(n => {
+    n.classList.toggle('active', n.dataset.page === currentPage);
+  });
+}
+
+function navigateTo(page) {
+  window.location.hash = '#/' + page;
+}
+
+window.addEventListener('hashchange', () => {
+  currentPage = getPageFromHash();
+  updateActiveNav();
+  renderPage();
+  closeSidebar();
+  window.scrollTo(0, 0);
+});
+
 document.querySelectorAll('.nav-item').forEach(item => {
   item.addEventListener('click', () => {
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    item.classList.add('active');
-    currentPage = item.dataset.page;
-    renderPage();
-    closeSidebar();
+    navigateTo(item.dataset.page);
   });
 });
 
@@ -3112,4 +3133,6 @@ async function openLembreteDetails(id) {
 }
 
 // INIT
+currentPage = getPageFromHash();
+updateActiveNav();
 renderPage();
