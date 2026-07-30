@@ -2398,12 +2398,16 @@ function generateLembretesReport() {
     y += 30;
   }
 
-  y = infoDivider(doc, y);
-  y += 6;
+  if (autoLembretes.length > 0 || !encStart) {
+    y = infoDivider(doc, y);
+    y += 6;
+  }
 
   // === LEMBRETES AUTOMATICOS ===
-  y = sectionTitle(doc, 'Lembretes Automaticos (Prazos do Manual)', y, COLORS.primary);
-  if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
+  if (autoLembretes.length > 0 || !encStart) {
+    y = sectionTitle(doc, 'Lembretes Automaticos (Prazos do Manual)', y, COLORS.primary);
+    if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
+  }
 
   if (autoLembretes.length === 0) {
     doc.fillColor(COLORS.gray).fontSize(11).font('Helvetica-Oblique').text(encStart ? 'Nenhum prazo pendente. Todas as tarefas com prazo estao concluidas.' : 'Nenhum lembrete automatico disponivel.', 55, y, { width: CONTENT_WIDTH });
@@ -2419,7 +2423,10 @@ function generateLembretesReport() {
 
     for (const l of autoLembretes) {
       if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
-      zebraRow(doc, y, 18);
+      const titleH = calcTextHeight(doc, `[${l.item_number}] ${l.title}`, 200, 9);
+      const teamH = calcTextHeight(doc, l.team || '-', 80, 9);
+      const rowH = Math.max(18, Math.max(titleH, teamH) + 8);
+      zebraRow(doc, y, rowH);
       const dt = fmtDate(l.due_date);
       let urgency = 'Em dia', uColor = COLORS.green;
       if (l.diff_days < 0) { urgency = 'ATRASADO'; uColor = COLORS.red; }
@@ -2430,15 +2437,15 @@ function generateLembretesReport() {
       doc.fillColor(COLORS.dark).font('Helvetica').text(`[${l.item_number}] ${l.title}`, 210, y + 4, { width: 200 });
       doc.fillColor(COLORS.gray).font('Helvetica').text(l.team || '-', 420, y + 4, { width: 80 });
       doc.fillColor(l.diff_days < 0 ? COLORS.red : COLORS.dark).font('Helvetica-Bold').text(String(l.diff_days), 510, y + 4, { width: 50, align: 'right' });
-      y += 18;
+      y += rowH;
     }
     y += 12;
   }
 
   // === LEMBRETES MANUAIS (AGRUPADOS POR MODULO) ===
-  if (y > PAGE_BOTTOM - 50) { doc.addPage(); y = 50; }
+  if (manualLembretes.length > 0 && y > PAGE_BOTTOM - 50) { doc.addPage(); y = 50; }
   y = sectionTitle(doc, 'Lembretes Manuais por Modulo', y, COLORS.secondary);
-  if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
+  if (manualLembretes.length > 0 && y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
 
   if (manualLembretes.length === 0) {
     doc.fillColor(COLORS.gray).fontSize(11).font('Helvetica-Oblique').text('Nenhum lembrete manual cadastrado.', 55, y, { width: CONTENT_WIDTH });
