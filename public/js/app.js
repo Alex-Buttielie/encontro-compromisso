@@ -847,6 +847,10 @@ function renderRelatorios() {
           <div class="btn-pdf-icon" style="background:rgba(241,196,15,0.15);color:var(--warning)">📢</div>
           <div class="btn-pdf-info"><h4>Mural de Avisos</h4><p>Comunicados fixados e prioritários para impressão</p></div>
         </a>
+        <a class="btn-pdf" href="/reports/lembretes" target="_blank">
+          <div class="btn-pdf-icon" style="background:rgba(192,57,43,0.15);color:var(--primary)">🔔</div>
+          <div class="btn-pdf-info"><h4>Relatório de Lembretes</h4><p>Prazos automáticos e lembretes manuais</p></div>
+        </a>
       </div>
     </div>
 
@@ -1090,10 +1094,16 @@ async function renderFinanceiro() {
     <div class="filters">
       <div class="filter-group">
         <span class="filter-label">Tipo:</span>
-        <select id="fin-type" onchange="filterFinance()">
+        <select id="fin-type" onchange="filterFinance(); populateFinanceCategoryDropdown(this.value)">
           <option value="">Todos</option>
           <option value="receita">Receitas</option>
           <option value="despesa">Despesas</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Categoria:</span>
+        <select id="fin-category" onchange="filterFinance()">
+          <option value="">Todas</option>
         </select>
       </div>
       <button class="btn btn-primary btn-sm" onclick="openFinanceModal()">+ Lançamento</button>
@@ -1107,13 +1117,29 @@ async function renderFinanceiro() {
     </div>
   `;
   renderFinanceTable(financeCache);
+  populateFinanceCategoryDropdown();
 }
 
 function filterFinance() {
   const type = document.getElementById('fin-type').value;
+  const category = document.getElementById('fin-category').value;
   let filtered = financeCache;
   if (type) filtered = filtered.filter(f => f.type === type);
+  if (category) filtered = filtered.filter(f => f.category === category);
   renderFinanceTable(filtered);
+}
+
+const FINANCE_CATEGORIES = {
+  receita: ['Inscrições', 'Doações', 'Bazar', 'Camisetas', 'Apadrinhamento', 'Contribuições de Equipes', 'Betoneiras', 'Outros'],
+  despesa: ['Espaço Físico', 'Traslado', 'Alimentação', 'Materiais Gráficos', 'Camisetas', 'Bíblias', 'Capela', 'Som e Técnica', 'Lembrancinhas', 'Decoração', 'Rosas', 'Bazar', 'Higienização', 'Equipamentos', 'Primeiros Socorros', 'Hospedagem', 'Honorários', 'Diversos', 'Outros'],
+};
+
+function populateFinanceCategoryDropdown(selectedType, selectedCategory) {
+  const sel = document.getElementById('fin-category');
+  if (!sel) return;
+  const currentVal = selectedCategory !== undefined ? selectedCategory : sel.value;
+  const cats = selectedType ? (FINANCE_CATEGORIES[selectedType] || []) : [...new Set([...FINANCE_CATEGORIES.receita, ...FINANCE_CATEGORIES.despesa])];
+  sel.innerHTML = '<option value="">Todas</option>' + cats.map(c => `<option value="${c}" ${c === currentVal ? 'selected' : ''}>${c}</option>`).join('');
 }
 
 function renderFinanceTable(list) {
@@ -1158,13 +1184,15 @@ function renderFinanceTable(list) {
 
 function openFinanceModal(id) {
   const f = id ? financeCache.find(f => f.id === id) : null;
+  const fType = f?.type || 'receita';
+  const fCategory = f?.category || '';
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay active';
   overlay.innerHTML = `<div class="modal">
     <h3>${f ? 'Editar Lançamento' : 'Novo Lançamento'}</h3>
     <div class="form-row">
-      <div class="form-group"><label>Tipo</label><select id="f-type"><option value="receita" ${f?.type==='receita'?'selected':''}>Receita</option><option value="despesa" ${f?.type==='despesa'?'selected':''}>Despesa</option></select></div>
-      <div class="form-group"><label>Categoria</label><input id="f-category" value="${f?.category || ''}" placeholder="Ex: Inscrições, Alimentação"></div>
+      <div class="form-group"><label>Tipo</label><select id="f-type" onchange="updateFinanceCategoryOptions()"><option value="receita" ${fType==='receita'?'selected':''}>Receita</option><option value="despesa" ${fType==='despesa'?'selected':''}>Despesa</option></select></div>
+      <div class="form-group"><label>Categoria</label><select id="f-category"><option value="Outros" ${fCategory==='Outros'?'selected':''}>Outros</option></select></div>
     </div>
     <div class="form-group"><label>Descrição</label><input id="f-desc" value="${f?.description || ''}"></div>
     <div class="form-row">
@@ -1180,6 +1208,16 @@ function openFinanceModal(id) {
   </div>`;
   document.body.appendChild(overlay);
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  updateFinanceCategoryOptions(fCategory);
+}
+
+function updateFinanceCategoryOptions(selectedCategory) {
+  const type = document.getElementById('f-type')?.value || 'receita';
+  const sel = document.getElementById('f-category');
+  if (!sel) return;
+  const cats = FINANCE_CATEGORIES[type] || [];
+  const current = selectedCategory || sel.value;
+  sel.innerHTML = cats.map(c => `<option value="${c}" ${c === current ? 'selected' : ''}>${c}</option>`).join('');
 }
 
 async function saveFinance(id, btn) {

@@ -269,15 +269,94 @@ function seed() {
   }
 
   // Seed Finance categories
+  const todayStr = new Date().toISOString().slice(0, 10);
   const financeItems = [
-    { type: 'receita', category: 'Inscrições', description: 'Taxa de inscrição - Matérias-primas', amount: 0, date: new Date().toISOString().slice(0, 10), paid: false, responsible: 'RH' },
-    { type: 'despesa', category: 'Espaço Físico', description: 'Aluguel do Canteiro de Obras', amount: 0, date: new Date().toISOString().slice(0, 10), paid: false, responsible: 'Mestres de Obras' },
-    { type: 'despesa', category: 'Traslado', description: 'Ônibus/transporte para o Encontro', amount: 0, date: new Date().toISOString().slice(0, 10), paid: false, responsible: 'Logística' },
-    { type: 'despesa', category: 'Alimentação', description: 'Compras de alimentação (Sexta a Domingo)', amount: 0, date: new Date().toISOString().slice(0, 10), paid: false, responsible: 'Cozinha' },
-    { type: 'despesa', category: 'Materiais Gráficos', description: 'Impressos, crachás, cordões, cartilhas', amount: 0, date: new Date().toISOString().slice(0, 10), paid: false, responsible: 'Secretaria' },
-    { type: 'despesa', category: 'Capela', description: 'Materiais para Capela (sacrário, ostensório, velas)', amount: 0, date: new Date().toISOString().slice(0, 10), paid: false, responsible: 'Espiritualização' },
-    { type: 'despesa', category: 'Lembrancinhas', description: 'Materiais para confecção de lembrancinhas', amount: 0, date: new Date().toISOString().slice(0, 10), paid: false, responsible: 'Equipes' },
-    { type: 'despesa', category: 'Som e Técnica', description: 'Equipamento de som e técnica', amount: 0, date: new Date().toISOString().slice(0, 10), paid: false, responsible: 'Sonorização' },
+    // RECEITAS
+    { type: 'receita', category: 'Inscrições', description: 'Taxa de inscrição - Matérias-primas', amount: 0, date: todayStr, paid: false, responsible: 'RH' },
+    { type: 'receita', category: 'Doações', description: 'Doações em dinheiro para o Encontro', amount: 0, date: todayStr, paid: false, responsible: 'Mestres de Obras' },
+    { type: 'receita', category: 'Bazar', description: 'Venda de artigos da JUMIRE', amount: 0, date: todayStr, paid: false, responsible: 'Bazar' },
+    { type: 'receita', category: 'Camisetas', description: 'Venda de camisetas do Encontro', amount: 0, date: todayStr, paid: false, responsible: 'Secretaria' },
+    { type: 'receita', category: 'Apadrinhamento', description: 'Contribuição de padrinhos/madrinhas (50-75% da taxa)', amount: 0, date: todayStr, paid: false, responsible: 'RH' },
+    { type: 'receita', category: 'Contribuições de Equipes', description: 'Contribuições das equipes para lembrancinhas', amount: 0, date: todayStr, paid: false, responsible: 'Mestres de Obras' },
+    { type: 'receita', category: 'Betoneiras', description: 'Doações de Betoneiras (cestas básicas, etc.)', amount: 0, date: todayStr, paid: false, responsible: 'Mestres de Obras' },
+
+    // DESPESAS - Infraestrutura
+    { type: 'despesa', category: 'Espaço Físico', description: 'Aluguel do Canteiro de Obras', amount: 0, date: todayStr, paid: false, responsible: 'Mestres de Obras' },
+    { type: 'despesa', category: 'Traslado', description: 'Ônibus para transporte das Matérias-primas', amount: 0, date: todayStr, paid: false, responsible: 'Logística' },
+    { type: 'despesa', category: 'Traslado', description: 'Caminhão de frete (materiais)', amount: 0, date: todayStr, paid: false, responsible: 'Logística' },
+    { type: 'despesa', category: 'Traslado', description: 'Combustível (office boy/girl e carros)', amount: 0, date: todayStr, paid: false, responsible: 'Logística' },
+
+    // DESPESAS - Alimentação
+    { type: 'despesa', category: 'Alimentação', description: 'Compras de alimentação (Sexta a Domingo)', amount: 0, date: todayStr, paid: false, responsible: 'Cozinha' },
+    { type: 'despesa', category: 'Alimentação', description: 'Almoço de domingo (Fornecedores - 300-500 pessoas)', amount: 0, date: todayStr, paid: false, responsible: 'Cozinha' },
+    { type: 'despesa', category: 'Alimentação', description: 'Café extra - Alicerce com os Fornecedores', amount: 0, date: todayStr, paid: false, responsible: 'Cozinha' },
+
+    // DESPESAS - Materiais Gráficos
+    { type: 'despesa', category: 'Materiais Gráficos', description: 'Impressos, crachás, cordões, cartilhas', amount: 0, date: todayStr, paid: false, responsible: 'Secretaria' },
+    { type: 'despesa', category: 'Materiais Gráficos', description: 'Banners (grande e pequeno) do Projeto', amount: 0, date: todayStr, paid: false, responsible: 'Secretaria' },
+    { type: 'despesa', category: 'Materiais Gráficos', description: 'Fotografias (oficial 15x21 e grupos 10x15)', amount: 0, date: todayStr, paid: false, responsible: 'Registro' },
+    { type: 'despesa', category: 'Materiais Gráficos', description: 'Etiquetas para malas e rosas', amount: 0, date: todayStr, paid: false, responsible: 'Secretaria' },
+
+    // DESPESAS - Camisetas e Bíblias
+    { type: 'despesa', category: 'Camisetas', description: 'Confecção de camisetas (Matérias-primas e operários)', amount: 0, date: todayStr, paid: false, responsible: 'Secretaria' },
+    { type: 'despesa', category: 'Camisetas', description: 'Camisetas pretas dos Mestres de Obras', amount: 0, date: todayStr, paid: false, responsible: 'Mestres de Obras' },
+    { type: 'despesa', category: 'Bíblias', description: 'Bíblias (Edição de Bolso da Pastoral ou Aparecida)', amount: 0, date: todayStr, paid: false, responsible: 'Secretaria' },
+
+    // DESPESAS - Capela
+    { type: 'despesa', category: 'Capela', description: 'Materiais para Capela (sacrário, ostensório, velas)', amount: 0, date: todayStr, paid: false, responsible: 'Espiritualização' },
+    { type: 'despesa', category: 'Capela', description: 'Almofadas para capela', amount: 0, date: todayStr, paid: false, responsible: 'Espiritualização' },
+    { type: 'despesa', category: 'Capela', description: 'Vasos com flores e tecidos litúrgicos', amount: 0, date: todayStr, paid: false, responsible: 'Espiritualização' },
+
+    // DESPESAS - Som e Técnica
+    { type: 'despesa', category: 'Som e Técnica', description: 'Equipamento de som (sala, capela, externo)', amount: 0, date: todayStr, paid: false, responsible: 'Sonorização' },
+    { type: 'despesa', category: 'Som e Técnica', description: 'Datashow, telão e computador', amount: 0, date: todayStr, paid: false, responsible: 'Sonorização' },
+    { type: 'despesa', category: 'Som e Técnica', description: 'Refletores (4 a 6 pontos de luz)', amount: 0, date: todayStr, paid: false, responsible: 'Sonorização' },
+    { type: 'despesa', category: 'Som e Técnica', description: 'Máquina de fumaça com glicerina', amount: 0, date: todayStr, paid: false, responsible: 'Sonorização' },
+    { type: 'despesa', category: 'Som e Técnica', description: 'Cabos, extensões, adaptadores, baterias/pilhas', amount: 0, date: todayStr, paid: false, responsible: 'Sonorização' },
+
+    // DESPESAS - Lembrancinhas
+    { type: 'despesa', category: 'Lembrancinhas', description: 'Materiais para confecção de lembrancinhas', amount: 0, date: todayStr, paid: false, responsible: 'Equipes' },
+    { type: 'despesa', category: 'Lembrancinhas', description: 'Lembrancinhas para Construtores (13 canecas)', amount: 0, date: todayStr, paid: false, responsible: 'Secretaria' },
+    { type: 'despesa', category: 'Lembrancinhas', description: 'Lembrancinhas dos Mestres de Obras (chaveiro tijolinho)', amount: 0, date: todayStr, paid: false, responsible: 'Mestres de Obras' },
+    { type: 'despesa', category: 'Lembrancinhas', description: 'Kit da Matéria-prima (bloco, caneta, squeeze, etc.)', amount: 0, date: todayStr, paid: false, responsible: 'Auxiliares' },
+
+    // DESPESAS - Decoração e Montagem
+    { type: 'despesa', category: 'Decoração', description: 'TNT, lonas, balões, faixas e cartazes', amount: 0, date: todayStr, paid: false, responsible: 'Logística' },
+    { type: 'despesa', category: 'Decoração', description: 'Materiais de montagem (fita, cola, arame, tesouras, pincéis)', amount: 0, date: todayStr, paid: false, responsible: 'Logística' },
+    { type: 'despesa', category: 'Decoração', description: 'Materiais para Noite de Massas/Jantar de Gala', amount: 0, date: todayStr, paid: false, responsible: 'Logística' },
+    { type: 'despesa', category: 'Decoração', description: 'Placas com nomes dos ambientes e alicerces', amount: 0, date: todayStr, paid: false, responsible: 'Auxiliares' },
+
+    // DESPESAS - Rosas
+    { type: 'despesa', category: 'Rosas', description: 'Botões de rosa (Matérias-primas + equipes)', amount: 0, date: todayStr, paid: false, responsible: 'Serviços Gerais' },
+
+    // DESPESAS - Bazar
+    { type: 'despesa', category: 'Bazar', description: 'Artigos da JUMIRE para venda', amount: 0, date: todayStr, paid: false, responsible: 'Bazar' },
+    { type: 'despesa', category: 'Bazar', description: 'Troco para o bazar', amount: 0, date: todayStr, paid: false, responsible: 'Bazar' },
+
+    // DESPESAS - Higienização
+    { type: 'despesa', category: 'Higienização', description: 'Produtos de limpeza (água sanitária, detergente, etc.)', amount: 0, date: todayStr, paid: false, responsible: 'Serviços Gerais' },
+    { type: 'despesa', category: 'Higienização', description: 'Papel higiênico, sacos de lixo, guardanapos', amount: 0, date: todayStr, paid: false, responsible: 'Serviços Gerais' },
+    { type: 'despesa', category: 'Higienização', description: 'Pratos, talheres e copos (ou descartáveis)', amount: 0, date: todayStr, paid: false, responsible: 'Refeitório' },
+
+    // DESPESAS - Equipamentos
+    { type: 'despesa', category: 'Equipamentos', description: 'Refresqueira (aluguel)', amount: 0, date: todayStr, paid: false, responsible: 'Cozinha' },
+    { type: 'despesa', category: 'Equipamentos', description: 'Maquete-templo e Sacrário-templo', amount: 0, date: todayStr, paid: false, responsible: 'Espiritualização' },
+    { type: 'despesa', category: 'Equipamentos', description: 'Cruz para O Crucificado (com suporte)', amount: 0, date: todayStr, paid: false, responsible: 'Dinamização' },
+    { type: 'despesa', category: 'Equipamentos', description: 'Materiais da dinamização (coroa de espinhos, figurinos, cenários)', amount: 0, date: todayStr, paid: false, responsible: 'Dinamização' },
+
+    // DESPESAS - Saúde
+    { type: 'despesa', category: 'Primeiros Socorros', description: 'Caixa de remédios e primeiros socorros', amount: 0, date: todayStr, paid: false, responsible: 'Estagiários' },
+
+    // DESPESAS - Pessoas
+    { type: 'despesa', category: 'Hospedagem', description: 'Hospedagem de Supervisores e Construtores', amount: 0, date: todayStr, paid: false, responsible: 'Mestres de Obras' },
+    { type: 'despesa', category: 'Honorários', description: 'Traslado de Supervisores e Construtores', amount: 0, date: todayStr, paid: false, responsible: 'Mestres de Obras' },
+
+    // DESPESAS - Diversos
+    { type: 'despesa', category: 'Diversos', description: 'Folhetos de missa para Missa de Encerramento', amount: 0, date: todayStr, paid: false, responsible: 'Mestres de Obras' },
+    { type: 'despesa', category: 'Diversos', description: 'Papel Kraft para mural das Betoneiras', amount: 0, date: todayStr, paid: false, responsible: 'Auxiliares' },
+    { type: 'despesa', category: 'Diversos', description: 'Saquinhos e etiquetas (malas, celulares, cartinhas)', amount: 0, date: todayStr, paid: false, responsible: 'Estagiários' },
+    { type: 'despesa', category: 'Diversos', description: 'TNT/tecido xadrez para piquenique', amount: 0, date: todayStr, paid: false, responsible: 'Logística' },
+    { type: 'despesa', category: 'Diversos', description: 'Foguetes (chegada das Matérias-primas)', amount: 0, date: todayStr, paid: false, responsible: 'Logística' },
   ];
   for (const f of financeItems) {
     db.insert('finance', f);
@@ -287,13 +366,25 @@ function seed() {
   const fornecedores = [
     { name: '', category: 'Espaço Físico', service: 'Aluguel do Canteiro de Obras', phone: '', email: '', whatsapp: '', contact_person: '', status: 'contatado', notes: '', estimated_cost: 0, actual_cost: 0, type: 'fornecedor' },
     { name: '', category: 'Traslado', service: 'Ônibus para o Encontro', phone: '', email: '', whatsapp: '', contact_person: '', status: 'contatado', notes: '', estimated_cost: 0, actual_cost: 0, type: 'fornecedor' },
+    { name: '', category: 'Traslado', service: 'Caminhão de frete', phone: '', email: '', whatsapp: '', contact_person: '', status: 'contatado', notes: '', estimated_cost: 0, actual_cost: 0, type: 'fornecedor' },
     { name: '', category: 'Alimentação', service: 'Supermercado / Atacadão', phone: '', email: '', whatsapp: '', contact_person: '', status: 'contatado', notes: '', estimated_cost: 0, actual_cost: 0, type: 'fornecedor' },
     { name: '', category: 'Alimentação', service: 'Açougue / Frutas e Verduras', phone: '', email: '', whatsapp: '', contact_person: '', status: 'contatado', notes: '', estimated_cost: 0, actual_cost: 0, type: 'fornecedor' },
     { name: '', category: 'Materiais Gráficos', service: 'Gráfica (crachás, cartilhas, impressos)', phone: '', email: '', whatsapp: '', contact_person: '', status: 'contatado', notes: '', estimated_cost: 0, actual_cost: 0, type: 'fornecedor' },
+    { name: '', category: 'Materiais Gráficos', service: 'Banners e placas', phone: '', email: '', whatsapp: '', contact_person: '', status: 'contatado', notes: '', estimated_cost: 0, actual_cost: 0, type: 'fornecedor' },
+    { name: '', category: 'Camisetas', service: 'Confecção de camisetas', phone: '', email: '', whatsapp: '', contact_person: '', status: 'contatado', notes: '', estimated_cost: 0, actual_cost: 0, type: 'fornecedor' },
+    { name: '', category: 'Bíblias', service: 'Loja JUMIRE / Pastoral', phone: '', email: '', whatsapp: '', contact_person: '', status: 'contatado', notes: 'Edição de Bolso da Pastoral ou Aparecida', estimated_cost: 0, actual_cost: 0, type: 'fornecedor' },
     { name: '', category: 'Som e Técnica', service: 'Equipamento de som e iluminação', phone: '', email: '', whatsapp: '', contact_person: '', status: 'contatado', notes: '', estimated_cost: 0, actual_cost: 0, type: 'fornecedor' },
+    { name: '', category: 'Som e Técnica', service: 'Datashow, telão e computador', phone: '', email: '', whatsapp: '', contact_person: '', status: 'contatado', notes: '', estimated_cost: 0, actual_cost: 0, type: 'fornecedor' },
+    { name: '', category: 'Som e Técnica', service: 'Refletores (aluguel)', phone: '', email: '', whatsapp: '', contact_person: '', status: 'contatado', notes: 'Alugar da Secretaria JUMIRE', estimated_cost: 0, actual_cost: 0, type: 'fornecedor' },
     { name: '', category: 'Capela', service: 'Sacrário, ostensório, velas (Paróquia)', phone: '', email: '', whatsapp: '', contact_person: '', status: 'contatado', notes: 'Verificar disponibilidade com o Padre', estimated_cost: 0, actual_cost: 0, type: 'fornecedor' },
     { name: '', category: 'Lembrancinhas', service: 'Materiais para confecção', phone: '', email: '', whatsapp: '', contact_person: '', status: 'contatado', notes: '', estimated_cost: 0, actual_cost: 0, type: 'fornecedor' },
+    { name: '', category: 'Decoração', service: 'TNT, lonas, balões, faixas', phone: '', email: '', whatsapp: '', contact_person: '', status: 'contatado', notes: '', estimated_cost: 0, actual_cost: 0, type: 'fornecedor' },
     { name: '', category: 'Rosas', service: 'Rosas para o Momento Betoneira', phone: '', email: '', whatsapp: '', contact_person: '', status: 'contatado', notes: 'Uma rosa por matéria-prima + extras', estimated_cost: 0, actual_cost: 0, type: 'fornecedor' },
+    { name: '', category: 'Bazar', service: 'Artigos da JUMIRE', phone: '', email: '', whatsapp: '', contact_person: '', status: 'contatado', notes: 'Solicitar à Secretaria JUMIRE', estimated_cost: 0, actual_cost: 0, type: 'fornecedor' },
+    { name: '', category: 'Higienização', service: 'Produtos de limpeza e higiene', phone: '', email: '', whatsapp: '', contact_person: '', status: 'contatado', notes: '', estimated_cost: 0, actual_cost: 0, type: 'fornecedor' },
+    { name: '', category: 'Equipamentos', service: 'Refresqueira (aluguel)', phone: '', email: '', whatsapp: '', contact_person: '', status: 'contatado', notes: 'Alugar da Secretaria JUMIRE', estimated_cost: 0, actual_cost: 0, type: 'fornecedor' },
+    { name: '', category: 'Primeiros Socorros', service: 'Farmácia - remédios e primeiros socorros', phone: '', email: '', whatsapp: '', contact_person: '', status: 'contatado', notes: '', estimated_cost: 0, actual_cost: 0, type: 'fornecedor' },
+    { name: '', category: 'Hospedagem', service: 'Hotel/pousada para Supervisores e Construtores', phone: '', email: '', whatsapp: '', contact_person: '', status: 'contatado', notes: '', estimated_cost: 0, actual_cost: 0, type: 'fornecedor' },
   ];
   for (const f of fornecedores) {
     db.insert('fornecedores', f);

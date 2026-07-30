@@ -9,13 +9,13 @@ Sistema web para organização, preparação e execução do Encontro Compromiss
 - **Cronograma**: Programação completa de Sexta a Domingo com 71 atividades (horários, locais e equipes responsáveis) com status de 3 estados (pendente → em andamento → concluído)
 - **Equipes**: 19 equipes de trabalho com descrições, membros e progresso de tarefas
 - **Matérias-primas**: Cadastro de inscritos (Ficha de Inscrição Final do manual) com controle de pagamentos, grupos, quartos, restrições alimentares, medicações, necessidades especiais, padrinhos e controle de presença no Encontro
-- **Financeiro**: Controle de receitas e despesas com resumo (saldo, pendentes a receber/pagar) e categorias pré-cadastradas (Inscrições, Espaço Físico, Traslado, Alimentação, Materiais Gráficos, Capela, Lembrancinhas, Som e Técnica)
+- **Financeiro**: Controle de receitas e despesas com resumo (saldo, pendentes a receber/pagar), filtro por tipo e categoria, e 55 lançamentos pré-cadastrados em 19 categorias diversas (Receitas: Inscrições, Doações, Bazar, Camisetas, Apadrinhamento, Contribuições de Equipes, Betoneiras; Despesas: Espaço Físico, Traslado, Alimentação, Materiais Gráficos, Camisetas, Bíblias, Capela, Som e Técnica, Lembrancinhas, Decoração, Rosas, Bazar, Higienização, Equipamentos, Primeiros Socorros, Hospedagem, Honorários, Diversos). Dropdown de categorias dinâmico no modal de lançamento
 - **Lembrancinhas**: Controle de confecção por equipe com status (não iniciado → em andamento → pronto), quantidades e data de entrega. 10 itens pré-cadastrados baseados nas responsabilidades de cada equipe
 - **Escolinhas de Preparação**: Agendamento e acompanhamento das reuniões periódicas (Equipes Extras, Cozinha, Implantação, Missa de Entrega) com timeline visual. 10 escolinhas pré-cadastradas conforme o manual
 - **Alicerces e Alvenarias**: Gestão das 13 pistas de reflexão do Encontro (7 Alicerces + 6 Alvenarias) com atribuição de construtores, dia/horário e status. Conteúdo extraído do manual
 - **Lembretes Inteligentes**: Prazos calculados automaticamente a partir da data do Encontro. As 64 tarefas do manual têm prazos relativos (ex: "-9 meses", "-1 mês") que são convertidos em datas reais e classificados por urgência (atrasado, urgente, atenção, em dia). Permite também lembretes manuais personalizados
 - **Padrinhos & Madrinhas**: Acompanhamento dos 5 passos do padrinho (1º Contato → Convite → Confirmação → Reunião → Acompanhamento) para cada matéria-prima, com tracking visual do progresso de cada etapa
-- **Fornecedores**: Agenda de contatos e cotações por categoria (Espaço Físico, Traslado, Alimentação, Materiais Gráficos, Som e Técnica, Capela, Lembrancinhas, Rosas). 9 fornecedores pré-cadastrados com status (contatado → pendente → contratado → cancelado) e controle de custos estimado vs real
+- **Fornecedores**: Agenda de contatos e cotações por categoria (Espaço Físico, Traslado, Alimentação, Materiais Gráficos, Camisetas, Bíblias, Som e Técnica, Capela, Lembrancinhas, Decoração, Rosas, Bazar, Higienização, Equipamentos, Primeiros Socorros, Hospedagem). 21 fornecedores pré-cadastrados com status (contatado → pendente → contratado → cancelado) e controle de custos estimado vs real
 - **Kit das Matérias-primas**: Controle interativo de conferência e entrega dos kits do RH (10 itens por matéria-prima) com tracking de kit conferido, squeeze personalizada e kit entregue
 - **Avisos & Comunicados**: Mural de comunicações do coordenador para equipes e participantes, com fixação de avisos importantes, público-alvo (todos, equipes, matérias-primas, coordenação) e níveis de prioridade
 - **Dados do Encontro**: Informações gerais (nome, datas, local, tema, música tema) — a data define a contagem regressiva no Dashboard e ativa os lembretes automáticos
@@ -32,6 +32,7 @@ Sistema web para organização, preparação e execução do Encontro Compromiss
   - Relatório Financeiro (receitas, despesas, saldo e lançamentos por categoria)
   - Lista de Fornecedores (contatos, cotações e status por categoria)
   - Mural de Avisos (comunicados para impressão)
+  - Relatório de Lembretes (prazos automáticos e lembretes manuais)
   - Relatórios por Categoria (Espaço Físico, Traslado, Cozinha, Capela, etc.)
 
 ## Stack

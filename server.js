@@ -4,7 +4,7 @@ const {
   generateFullReport, generateCategoryReport, generateTeamReport, generateTeamScheduleReport,
   generateScheduleReport, generateParticipantsReport, generateFinanceReport, generateAlicercesReport,
   generateLembrancinhasReport, generateFornecedoresReport, generateAvisosReport, generateKitReport,
-  generateCoordinatorGuideReport, generatePreparationReport
+  generateCoordinatorGuideReport, generatePreparationReport, generateLembretesReport
 } = require('./routes/pdf');
 const apiRouter = require('./routes/api');
 const { seed } = require('./data/seed');
@@ -114,6 +114,13 @@ app.get('/reports/preparation', async (req, res) => {
   const pdf = await generatePreparationReport();
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', 'attachment; filename="relatorio-preparacao.pdf"');
+  res.send(pdf);
+});
+
+app.get('/reports/lembretes', async (req, res) => {
+  const pdf = await generateLembretesReport();
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', 'attachment; filename="relatorio-lembretes.pdf"');
   res.send(pdf);
 });
 

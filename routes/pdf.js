@@ -57,8 +57,12 @@ function createReportDoc() {
 
   doc.text = (value, ...args) => originalText(sanitizePdfText(value), ...args);
 
+  let inFooter = false;
   doc.on('pageAdded', () => {
+    if (inFooter) return;
+    inFooter = true;
     reportFooter(doc);
+    inFooter = false;
   });
 
   reportFooter(doc);
@@ -91,12 +95,15 @@ function reportHeader(doc, title, subtitle) {
 
 function reportFooter(doc) {
   const bottomY = doc.page.height - 35;
+  const origBottomMargin = doc.page.margins.bottom;
+  doc.page.margins.bottom = 0;
   doc.strokeColor(COLORS.divider).lineWidth(0.5).moveTo(50, bottomY - 5).lineTo(doc.page.width - 50, bottomY - 5).stroke();
   doc.fillColor(COLORS.grayLight).fontSize(7).font('Helvetica').text(
     'Meu Coordenador - JUMIRE | Projeto Compromisso Trin',
     50, bottomY, { width: 300 }
   );
   doc.text(`Pagina ${doc.page.number + 1}`, doc.page.width - 120, bottomY, { width: 70, align: 'right' });
+  doc.page.margins.bottom = origBottomMargin;
 }
 
 function sectionTitle(doc, title, y, color) {
@@ -2061,7 +2068,154 @@ function generatePreparationReport() {
   return new Promise(resolve => { doc.on('end', () => resolve(Buffer.concat(buffers))); });
 }
 
+function generateLembretesReport() {
+  const doc = createReportDoc();
+  const buffers = [];
+  doc.on('data', buffers.push.bind(buffers));
+
+  const enc = getEncounter();
+  const encStart = enc.start_date;
+  const encInfo = enc.name ? `${enc.name} - ${fmtDate(enc.start_date)} a ${fmtDate(enc.end_date)}` : '';
+  reportHeader(doc, 'Relatorio de Lembretes', `Gerado em ${new Date().toLocaleString('pt-BR')}${encInfo ? ' | ' + encInfo : ''}`);
+
+  let y = 155;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const manualLembretes = db.getAll('lembretes').sort((a, b) => {
+    const sCmp = (a.status === 'concluido' ? 1 : 0) - (b.status === 'concluido' ? 1 : 0);
+    if (sCmp !== 0) return sCmp;
+    if (a.due_date && b.due_date) return a.due_date.localeCompare(b.due_date);
+    if (a.due_date) return -1;
+    if (b.due_date) return 1;
+    return 0;
+  });
+
+  let autoLembretes = [];
+  if (encStart) {
+    const encDate = new Date(encStart + 'T00:00:00');
+    const tasks = db.getAll('tasks');
+    for (const t of tasks) {
+      if (t.status === 'concluido' || !t.deadline) continue;
+      const m = t.deadline.match(/(-?\d+)\s*mes/i);
+      const d = t.deadline.match(/(-?\d+)\s*dia/i);
+      const w = t.deadline.match(/(-?\d+)\s*sem/i);
+      let offsetMonths = 0, offsetDays = 0;
+      if (m) offsetMonths = parseInt(m[1]);
+      else if (d) offsetDays = parseInt(d[1]);
+      else if (w) offsetDays = parseInt(w[1]) * 7;
+      else continue;
+      const due = new Date(encDate);
+      due.setMonth(due.getMonth() + offsetMonths);
+      due.setDate(due.getDate() + offsetDays);
+      const diffDays = Math.ceil((due - today) / 86400000);
+      autoLembretes.push({
+        title: t.title, category: t.category, team: t.responsible_team,
+        due_date: due.toISOString().slice(0, 10), diff_days: diffDays,
+        priority: t.priority, item_number: t.item_number, deadline: t.deadline
+      });
+    }
+    autoLembretes.sort((a, b) => a.diff_days - b.diff_days);
+  }
+
+  const overdue = autoLembretes.filter(l => l.diff_days < 0);
+  const urgent = autoLembretes.filter(l => l.diff_days >= 0 && l.diff_days <= 7);
+  const warning = autoLembretes.filter(l => l.diff_days > 7 && l.diff_days <= 30);
+  const info = autoLembretes.filter(l => l.diff_days > 30);
+  const manualPending = manualLembretes.filter(l => l.status !== 'concluido');
+  const manualDone = manualLembretes.filter(l => l.status === 'concluido');
+
+  summaryCard(doc, 'Atrasados', overdue.length, 50, y, 100, 55, COLORS.red);
+  summaryCard(doc, 'Urgentes', urgent.length, 160, y, 100, 55, COLORS.orange);
+  summaryCard(doc, 'Atencao', warning.length, 270, y, 100, 55, COLORS.secondary);
+  summaryCard(doc, 'Em Dia', info.length, 380, y, 100, 55, COLORS.green);
+  y += 70;
+
+  summaryCard(doc, 'Auto Total', autoLembretes.length, 50, y, 100, 45, COLORS.secondary);
+  summaryCard(doc, 'Manuais Pend', manualPending.length, 160, y, 100, 45, COLORS.orange);
+  summaryCard(doc, 'Manuais Concl', manualDone.length, 270, y, 100, 45, COLORS.green);
+  summaryCard(doc, 'Total Geral', autoLembretes.length + manualLembretes.length, 380, y, 100, 45, COLORS.primary);
+  y += 65;
+
+  if (!encStart) {
+    if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
+    doc.fillColor(COLORS.gray).fontSize(11).font('Helvetica-Oblique').text('Defina a data do Encontro para gerar lembretes automaticos baseados nos prazos do manual.', 50, y, { width: CONTENT_WIDTH });
+    y += 30;
+  }
+
+  y = infoDivider(doc, y);
+  y += 6;
+
+  // === LEMBRETES AUTOMATICOS ===
+  y = sectionTitle(doc, 'Lembretes Automaticos (Prazos do Manual)', y, COLORS.primary);
+  if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
+
+  if (autoLembretes.length === 0) {
+    doc.fillColor(COLORS.gray).fontSize(11).font('Helvetica-Oblique').text(encStart ? 'Nenhum prazo pendente. Todas as tarefas com prazo estao concluidas.' : 'Nenhum lembrete automatico disponivel.', 55, y, { width: CONTENT_WIDTH });
+    y += 25;
+  } else {
+    y = tableHeader(doc, [
+      { label: 'Prazo', x: 54, w: 70 },
+      { label: 'Urgencia', x: 130, w: 70 },
+      { label: 'Tarefa', x: 210, w: 200 },
+      { label: 'Equipe', x: 420, w: 80 },
+      { label: 'Dias', x: 510, w: 50, align: 'right' },
+    ], y);
+
+    for (const l of autoLembretes) {
+      if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+      zebraRow(doc, y, 18);
+      const dt = fmtDate(l.due_date);
+      let urgency = 'Em dia', uColor = COLORS.green;
+      if (l.diff_days < 0) { urgency = 'ATRASADO'; uColor = COLORS.red; }
+      else if (l.diff_days <= 7) { urgency = 'URGENTE'; uColor = COLORS.orange; }
+      else if (l.diff_days <= 30) { urgency = 'ATENCAO'; uColor = COLORS.secondary; }
+      doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(dt, 56, y + 4, { width: 70 });
+      doc.fillColor(uColor).font('Helvetica-Bold').text(urgency, 130, y + 4, { width: 70 });
+      doc.fillColor(COLORS.dark).font('Helvetica').text(`[${l.item_number}] ${l.title}`, 210, y + 4, { width: 200 });
+      doc.fillColor(COLORS.gray).font('Helvetica').text(l.team || '-', 420, y + 4, { width: 80 });
+      doc.fillColor(l.diff_days < 0 ? COLORS.red : COLORS.dark).font('Helvetica-Bold').text(String(l.diff_days), 510, y + 4, { width: 50, align: 'right' });
+      y += 18;
+    }
+    y += 12;
+  }
+
+  // === LEMBRETES MANUAIS ===
+  if (y > PAGE_BOTTOM - 50) { doc.addPage(); y = 50; }
+  y = sectionTitle(doc, 'Lembretes Manuais', y, COLORS.secondary);
+  if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
+
+  if (manualLembretes.length === 0) {
+    doc.fillColor(COLORS.gray).fontSize(11).font('Helvetica-Oblique').text('Nenhum lembrete manual cadastrado.', 55, y, { width: CONTENT_WIDTH });
+    y += 25;
+  } else {
+    y = tableHeader(doc, [
+      { label: 'Titulo', x: 54, w: 180 },
+      { label: 'Descricao', x: 240, w: 160 },
+      { label: 'Prazo', x: 405, w: 65 },
+      { label: 'Prioridade', x: 475, w: 60 },
+      { label: 'Status', x: 540, w: 50, align: 'right' },
+    ], y);
+
+    for (const l of manualLembretes) {
+      if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+      zebraRow(doc, y, 20);
+      doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica-Bold').text(l.title || '-', 56, y + 4, { width: 180 });
+      doc.fillColor(COLORS.gray).font('Helvetica').text(l.description || '-', 240, y + 4, { width: 160 });
+      doc.fillColor(COLORS.dark).font('Helvetica').text(l.due_date ? fmtDate(l.due_date) : '-', 405, y + 4, { width: 65 });
+      const pColor = l.priority === 'alta' ? COLORS.red : l.priority === 'media' ? COLORS.orange : COLORS.gray;
+      doc.fillColor(pColor).font('Helvetica-Bold').text(priorityLabel(l.priority), 475, y + 4, { width: 60 });
+      const sColor = l.status === 'concluido' ? COLORS.green : l.status === 'em_andamento' ? COLORS.orange : COLORS.gray;
+      doc.fillColor(sColor).font('Helvetica-Bold').text(l.status === 'concluido' ? 'OK' : l.status === 'em_andamento' ? 'Em curso' : 'Pendente', 540, y + 4, { width: 50, align: 'right' });
+      y += 20;
+    }
+  }
+
+  doc.end();
+  return new Promise(resolve => { doc.on('end', () => resolve(Buffer.concat(buffers))); });
+}
+
 module.exports = { generateFullReport, generateCategoryReport, generateTeamReport, generateTeamScheduleReport,
   generateScheduleReport, generateParticipantsReport, generateFinanceReport, generateAlicercesReport,
   generateLembrancinhasReport, generateFornecedoresReport, generateAvisosReport, generateKitReport,
-  generateCoordinatorGuideReport, generatePreparationReport };
+  generateCoordinatorGuideReport, generatePreparationReport, generateLembretesReport };
