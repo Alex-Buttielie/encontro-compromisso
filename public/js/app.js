@@ -227,68 +227,110 @@ async function renderDashboard() {
 
 // ============ CHECKLIST ============
 let currentPhaseTab = 'pre';
+let currentSort = 'deadline';
+let collapsedCategories = new Set();
 
 async function renderChecklist() {
   tasksCache = await api('/tasks');
   const main = document.getElementById('main-content');
   const preCount = tasksCache.filter(t => (t.phase || 'pre') === 'pre').length;
   const duringCount = tasksCache.filter(t => t.phase === 'during').length;
+  const preDone = tasksCache.filter(t => (t.phase || 'pre') === 'pre' && t.status === 'concluido').length;
+  const duringDone = tasksCache.filter(t => t.phase === 'during' && t.status === 'concluido').length;
+  const prePct = preCount > 0 ? Math.round((preDone / preCount) * 100) : 0;
+  const duringPct = duringCount > 0 ? Math.round((duringDone / duringCount) * 100) : 0;
   main.innerHTML = `
     <h1 class="page-title">Checklist do Encontro</h1>
     <p class="page-subtitle">Tarefas divididas por fase: preparação antes do Encontro e execução durante o Encontro.</p>
-    <div class="phase-tabs" style="display:flex;gap:0;margin-bottom:16px;border-bottom:2px solid var(--border)">
-      <button class="phase-tab ${currentPhaseTab==='pre'?'active':''}" onclick="switchPhaseTab('pre')" style="padding:10px 20px;border:none;background:none;cursor:pointer;font-size:14px;font-weight:600;border-bottom:3px solid ${currentPhaseTab==='pre'?'var(--primary)':'transparent'};color:${currentPhaseTab==='pre'?'var(--primary)':'var(--text-light)'};margin-bottom:-2px">
-        📋 Pré-Encontro <span class="badge" style="margin-left:6px">${preCount}</span>
-      </button>
-      <button class="phase-tab ${currentPhaseTab==='during'?'active':''}" onclick="switchPhaseTab('during')" style="padding:10px 20px;border:none;background:none;cursor:pointer;font-size:14px;font-weight:600;border-bottom:3px solid ${currentPhaseTab==='during'?'var(--primary)':'transparent'};color:${currentPhaseTab==='during'?'var(--primary)':'var(--text-light)'};margin-bottom:-2px">
-        🏗️ Durante o Encontro <span class="badge" style="margin-left:6px">${duringCount}</span>
-      </button>
-    </div>
-    <div class="filters">
-      <input type="text" class="search-box" id="task-search" placeholder="Buscar tarefa..." oninput="filterTasks()">
-      <div class="filter-group">
-        <span class="filter-label">Status:</span>
-        <select id="filter-status" onchange="filterTasks()">
-          <option value="">Todos</option>
-          <option value="pendente">Pendente</option>
-          <option value="em_andamento">Em Andamento</option>
-          <option value="concluido">Concluído</option>
-        </select>
+
+    <div class="checklist-overview">
+      <div class="checklist-phase-card ${currentPhaseTab==='pre'?'active':''}" onclick="switchPhaseTab('pre')">
+        <div class="checklist-phase-icon">📋</div>
+        <div class="checklist-phase-info">
+          <div class="checklist-phase-name">Pré-Encontro</div>
+          <div class="checklist-phase-stats">${preDone}/${preCount} concluídas</div>
+        </div>
+        <div class="checklist-phase-ring">
+          <div class="ring-progress" style="--pct:${prePct}"><span>${prePct}%</span></div>
+        </div>
       </div>
-      <div class="filter-group">
-        <span class="filter-label">Equipe:</span>
-        <select id="filter-team" onchange="filterTasks()">
-          <option value="">Todas</option>
+      <div class="checklist-phase-card ${currentPhaseTab==='during'?'active':''}" onclick="switchPhaseTab('during')">
+        <div class="checklist-phase-icon">🏗️</div>
+        <div class="checklist-phase-info">
+          <div class="checklist-phase-name">Durante o Encontro</div>
+          <div class="checklist-phase-stats">${duringDone}/${duringCount} concluídas</div>
+        </div>
+        <div class="checklist-phase-ring">
+          <div class="ring-progress" style="--pct:${duringPct}"><span>${duringPct}%</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="checklist-toolbar">
+      <div class="checklist-toolbar-left">
+        <input type="text" class="search-box" id="task-search" placeholder="🔍 Buscar tarefa..." oninput="filterTasks()">
+        <select id="filter-status" onchange="filterTasks()" class="checklist-select">
+          <option value="">📊 Status: Todos</option>
+          <option value="pendente">⭕ Pendente</option>
+          <option value="em_andamento">🔄 Em Andamento</option>
+          <option value="concluido">✅ Concluído</option>
+        </select>
+        <select id="filter-priority" onchange="filterTasks()" class="checklist-select">
+          <option value="">🎯 Prioridade: Todas</option>
+          <option value="alta">🔴 Alta</option>
+          <option value="media">🟡 Média</option>
+          <option value="baixa">⚪ Baixa</option>
+        </select>
+        <select id="filter-team" onchange="filterTasks()" class="checklist-select">
+          <option value="">👥 Equipe: Todas</option>
+        </select>
+        <select id="filter-sort" onchange="changeSort()" class="checklist-select">
+          <option value="deadline">📅 Por Prazo</option>
+          <option value="priority">🔴 Por Prioridade</option>
+          <option value="category">📁 Por Categoria</option>
+          <option value="status">📊 Por Status</option>
         </select>
       </div>
       <button class="btn btn-primary btn-sm" onclick="openTaskModal()">+ Nova Tarefa</button>
     </div>
+
     <div id="task-phase-content"></div>
   `;
   const teams = [...new Set(tasksCache.map(t => t.responsible_team).filter(Boolean))].sort();
   const teamSelect = document.getElementById('filter-team');
   teams.forEach(t => { const o = document.createElement('option'); o.value = t; o.textContent = t; teamSelect.appendChild(o); });
+  const sortSelect = document.getElementById('filter-sort');
+  if (sortSelect) sortSelect.value = currentSort;
   renderChecklistSections(tasksCache);
 }
 
 function switchPhaseTab(phase) {
   currentPhaseTab = phase;
+  collapsedCategories.clear();
   renderChecklistSections(tasksCache);
-  document.querySelectorAll('.phase-tab').forEach(btn => {
-    const isActive = btn.textContent.includes(phase === 'pre' ? 'Pré-Encontro' : 'Durante o Encontro');
-    btn.style.borderBottom = isActive ? '3px solid var(--primary)' : '3px solid transparent';
-    btn.style.color = isActive ? 'var(--primary)' : 'var(--text-light)';
+  document.querySelectorAll('.checklist-phase-card').forEach(card => {
+    card.classList.remove('active');
   });
+  const cards = document.querySelectorAll('.checklist-phase-card');
+  if (phase === 'pre' && cards[0]) cards[0].classList.add('active');
+  if (phase === 'during' && cards[1]) cards[1].classList.add('active');
+}
+
+function changeSort() {
+  currentSort = document.getElementById('filter-sort').value;
+  filterTasks();
 }
 
 function filterTasks() {
-  const search = document.getElementById('task-search').value.toLowerCase();
-  const status = document.getElementById('filter-status').value;
-  const team = document.getElementById('filter-team').value;
+  const search = document.getElementById('task-search')?.value.toLowerCase() || '';
+  const status = document.getElementById('filter-status')?.value || '';
+  const team = document.getElementById('filter-team')?.value || '';
+  const priority = document.getElementById('filter-priority')?.value || '';
   let filtered = tasksCache;
   if (search) filtered = filtered.filter(t => t.title.toLowerCase().includes(search) || (t.description || '').toLowerCase().includes(search));
   if (status) filtered = filtered.filter(t => t.status === status);
   if (team) filtered = filtered.filter(t => t.responsible_team === team);
+  if (priority) filtered = filtered.filter(t => t.priority === priority);
   renderChecklistSections(filtered);
 }
 
@@ -315,6 +357,23 @@ function isMOTask(task) {
   return team === 'mo' || team === 'mos' || team === "mo's" || team.includes('mestre de obra');
 }
 
+const PRIORITY_WEIGHT = { alta: 0, media: 1, baixa: 2 };
+const STATUS_WEIGHT = { em_andamento: 0, pendente: 1, concluido: 2 };
+
+function sortTasks(items) {
+  const sorted = [...items];
+  if (currentSort === 'priority') {
+    sorted.sort((a, b) => (PRIORITY_WEIGHT[a.priority] || 9) - (PRIORITY_WEIGHT[b.priority] || 9));
+  } else if (currentSort === 'status') {
+    sorted.sort((a, b) => (STATUS_WEIGHT[a.status] || 9) - (STATUS_WEIGHT[b.status] || 9));
+  } else if (currentSort === 'category') {
+    sorted.sort((a, b) => (a.category || '').localeCompare(b.category || ''));
+  } else {
+    sorted.sort((a, b) => (a.deadline || 'zzz').localeCompare(b.deadline || 'zzz'));
+  }
+  return sorted;
+}
+
 function renderChecklistSections(tasks) {
   const phaseTasks = tasks.filter(t => (t.phase || 'pre') === currentPhaseTab);
   const moTasks = phaseTasks.filter(isMOTask);
@@ -322,42 +381,82 @@ function renderChecklistSections(tasks) {
   const container = document.getElementById('task-phase-content');
   if (!container) return;
   const phaseLabel = currentPhaseTab === 'pre' ? 'Pré-Encontro' : 'Durante o Encontro';
+  const total = phaseTasks.length;
+  const done = phaseTasks.filter(t => t.status === 'concluido').length;
+  const inProg = phaseTasks.filter(t => t.status === 'em_andamento').length;
+  const pend = phaseTasks.filter(t => t.status === 'pendente').length;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
   container.innerHTML = `
-    <div class="card" style="margin-bottom:12px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center">
-      <div style="font-size:13px;color:var(--text-light)">
-        <strong>${phaseLabel}:</strong> ${phaseTasks.length} tarefas &nbsp;|&nbsp;
-        <strong>MO's:</strong> ${moTasks.length} &nbsp;|&nbsp;
-        <strong>Equipes:</strong> ${teamSpecificTasks.length}
+    <div class="checklist-summary-bar">
+      <div class="checklist-summary-stats">
+        <div class="checklist-stat"><span class="stat-num">${total}</span><span class="stat-label">Total</span></div>
+        <div class="checklist-stat stat-done"><span class="stat-num">${done}</span><span class="stat-label">Concluídas</span></div>
+        <div class="checklist-stat stat-progress"><span class="stat-num">${inProg}</span><span class="stat-label">Em Andamento</span></div>
+        <div class="checklist-stat stat-pending"><span class="stat-num">${pend}</span><span class="stat-label">Pendentes</span></div>
       </div>
-      <button class="btn btn-secondary btn-sm" onclick="goToEquipesFromChecklist()">Ver responsabilidades por equipe</button>
+      <div class="checklist-summary-progress">
+        <div class="checklist-progress-bar">
+          <div class="checklist-progress-fill" style="width:${pct}%"></div>
+        </div>
+        <span class="checklist-progress-pct">${pct}%</span>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="goToEquipesFromChecklist()">Ver por equipe →</button>
     </div>
-    <h3 style="margin:16px 0 8px;color:var(--primary)">Responsabilidades Gerais (MO's)</h3>
-    <div id="task-categories-mos"></div>
-    <h3 style="margin:20px 0 8px;color:var(--primary)">Tarefas Específicas por Equipe</h3>
-    <div id="task-categories-teams"></div>
+
+    <div class="checklist-section">
+      <div class="checklist-section-header">
+        <h3>👷 Responsabilidades Gerais (MO's)</h3>
+        <span class="checklist-section-count">${moTasks.length} tarefas</span>
+      </div>
+      <div id="task-categories-mos"></div>
+    </div>
+
+    <div class="checklist-section">
+      <div class="checklist-section-header">
+        <h3>👥 Tarefas Específicas por Equipe</h3>
+        <span class="checklist-section-count">${teamSpecificTasks.length} tarefas</span>
+      </div>
+      <div id="task-categories-teams"></div>
+    </div>
   `;
   renderTaskCategories(moTasks, 'task-categories-mos', `Nenhuma tarefa de MO encontrada para ${phaseLabel} com os filtros atuais.`);
   renderTaskCategories(teamSpecificTasks, 'task-categories-teams', `Nenhuma tarefa específica de equipe encontrada para ${phaseLabel} com os filtros atuais.`);
 }
 
 function renderTaskCategories(tasks, containerId = 'task-categories', emptyMessage = 'Nenhuma tarefa encontrada.') {
-  const categories = [...new Set(tasks.map(t => t.category))];
   const container = document.getElementById(containerId);
   if (!container) return;
   if (tasks.length === 0) {
-    container.innerHTML = `<div class="card" style="color:var(--text-light)">${emptyMessage}</div>`;
+    container.innerHTML = `<div class="checklist-empty">${emptyMessage}</div>`;
     return;
   }
+  const categories = [...new Set(tasks.map(t => t.category))].sort();
   container.innerHTML = categories.map(cat => {
-    const items = tasks.filter(t => t.category === cat);
+    const items = sortTasks(tasks.filter(t => t.category === cat));
     const done = items.filter(t => t.status === 'concluido').length;
-    return `<div class="task-category">
-      <div class="task-category-header" onclick="toggleCategory(this)">
-        <span>${cat}</span>
-        <span style="display:flex;align-items:center;gap:8px">
-          <span class="badge">${done}/${items.length}</span>
-          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-        </span>
+    const inProg = items.filter(t => t.status === 'em_andamento').length;
+    const pend = items.filter(t => t.status === 'pendente').length;
+    const catPct = items.length > 0 ? Math.round((done / items.length) * 100) : 0;
+    const isCollapsed = collapsedCategories.has(containerId + '::' + cat);
+    const catColor = catPct === 100 ? 'var(--success)' : catPct >= 50 ? 'var(--warning)' : 'var(--danger)';
+    return `<div class="task-category ${isCollapsed ? 'collapsed' : ''}">
+      <div class="task-category-header" onclick="toggleCategory(this, '${containerId}', '${(cat || '').replace(/'/g, "\\'")}')">
+        <div class="task-category-left">
+          <svg class="chevron ${isCollapsed ? 'collapsed' : ''}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          <span class="task-category-name">${cat}</span>
+        </div>
+        <div class="task-category-right">
+          <div class="task-category-mini-stats">
+            ${pend > 0 ? `<span class="mini-stat mini-pend" title="Pendentes">${pend}</span>` : ''}
+            ${inProg > 0 ? `<span class="mini-stat mini-prog" title="Em Andamento">${inProg}</span>` : ''}
+            ${done > 0 ? `<span class="mini-stat mini-done" title="Concluídas">${done}</span>` : ''}
+          </div>
+          <div class="task-category-progress">
+            <div class="cat-progress-bar"><div class="cat-progress-fill" style="width:${catPct}%;background:${catColor}"></div></div>
+          </div>
+          <span class="task-category-pct" style="color:${catColor}">${catPct}%</span>
+        </div>
       </div>
       <div class="task-list">${items.map(t => renderTaskItem(t)).join('')}</div>
     </div>`;
@@ -366,15 +465,19 @@ function renderTaskCategories(tasks, containerId = 'task-categories', emptyMessa
 
 function renderTaskItem(t) {
   const checkboxClass = t.status === 'concluido' ? 'checked' : t.status === 'em_andamento' ? 'in-progress' : '';
+  const priorityIcon = t.priority === 'alta' ? '🔴' : t.priority === 'media' ? '🟡' : '⚪';
   return `<div class="task-item status-${t.status}">
-    <div class="task-checkbox ${checkboxClass}" onclick="cycleTaskStatus(${t.id})"></div>
+    <div class="task-checkbox ${checkboxClass}" onclick="cycleTaskStatus(${t.id})" title="Clique para mudar status"></div>
     <div class="task-body">
-      <div class="task-title">[${t.item_number}] ${t.title}</div>
+      <div class="task-title-line">
+        <span class="task-num">[${t.item_number}]</span>
+        <span class="task-title">${t.title}</span>
+      </div>
       ${t.description ? `<div class="task-desc">${t.description}</div>` : ''}
       <div class="task-meta">
-        ${t.responsible_team ? `<span class="tag tag-team" style="cursor:pointer" onclick="filterByTeam('${t.responsible_team.replace(/'/g,"\\'")}')">${t.responsible_team}</span>` : ''}
+        ${t.responsible_team ? `<span class="tag tag-team" style="cursor:pointer" onclick="filterByTeam('${t.responsible_team.replace(/'/g,"\\'")}')">👥 ${t.responsible_team}</span>` : ''}
         ${t.deadline ? `<span class="tag tag-deadline">⏰ ${t.deadline}</span>` : ''}
-        <span class="tag tag-priority-${t.priority}">${priorityLabel(t.priority)}</span>
+        <span class="tag tag-priority-${t.priority}">${priorityIcon} ${priorityLabel(t.priority)}</span>
       </div>
     </div>
     <div class="task-actions">
@@ -388,11 +491,20 @@ function renderTaskItem(t) {
   </div>`;
 }
 
-function toggleCategory(header) {
+function toggleCategory(header, containerId, catName) {
   const list = header.nextElementSibling;
   const chevron = header.querySelector('.chevron');
-  list.classList.toggle('collapsed');
-  chevron.classList.toggle('collapsed');
+  const category = header.closest('.task-category');
+  const key = containerId + '::' + catName;
+  if (collapsedCategories.has(key)) {
+    collapsedCategories.delete(key);
+    category.classList.remove('collapsed');
+    chevron.classList.remove('collapsed');
+  } else {
+    collapsedCategories.add(key);
+    category.classList.add('collapsed');
+    chevron.classList.add('collapsed');
+  }
 }
 
 async function cycleTaskStatus(id) {
