@@ -18,111 +18,43 @@ app.use(express.static(path.join(__dirname, 'public')));
 // API routes
 app.use('/api', apiRouter);
 
+// PDF report helper
+function sendPdf(res, pdf, filename) {
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+  res.setHeader('Content-Length', pdf.length);
+  res.setHeader('Cache-Control', 'no-cache');
+  res.send(pdf);
+}
+
+function reportRoute(fn, filename) {
+  return async (req, res) => {
+    try {
+      const pdf = await fn(req);
+      sendPdf(res, pdf, filename);
+    } catch (err) {
+      console.error('PDF generation error:', err.message);
+      res.status(500).type('text/html').send('<h1>Erro ao gerar PDF</h1><p>' + err.message + '</p>');
+    }
+  };
+}
+
 // PDF routes
-app.get('/reports/full', async (req, res) => {
-  const pdf = await generateFullReport();
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', 'attachment; filename="relatorio-geral-compromisso-trin.pdf"');
-  res.send(pdf);
-});
-
-app.get('/reports/category/:category', async (req, res) => {
-  const pdf = await generateCategoryReport(decodeURIComponent(req.params.category));
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `attachment; filename="relatorio-${req.params.category}.pdf"`);
-  res.send(pdf);
-});
-
-app.get('/reports/teams', async (req, res) => {
-  const pdf = await generateTeamReport();
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', 'attachment; filename="relatorio-equipes.pdf"');
-  res.send(pdf);
-});
-
-app.get('/reports/team-schedule', async (req, res) => {
-  const pdf = await generateTeamScheduleReport();
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', 'attachment; filename="programa-por-equipe.pdf"');
-  res.send(pdf);
-});
-
-app.get('/reports/schedule', async (req, res) => {
-  const pdf = await generateScheduleReport();
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', 'attachment; filename="roteiro-do-encontro.pdf"');
-  res.send(pdf);
-});
-
-app.get('/reports/participants', async (req, res) => {
-  const pdf = await generateParticipantsReport();
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', 'attachment; filename="lista-materias-primas.pdf"');
-  res.send(pdf);
-});
-
-app.get('/reports/finance', async (req, res) => {
-  const pdf = await generateFinanceReport();
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', 'attachment; filename="relatorio-financeiro.pdf"');
-  res.send(pdf);
-});
-
-app.get('/reports/alicerces', async (req, res) => {
-  const pdf = await generateAlicercesReport();
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', 'attachment; filename="mapa-alicerces-alvenarias.pdf"');
-  res.send(pdf);
-});
-
-app.get('/reports/lembrancinhas', async (req, res) => {
-  const pdf = await generateLembrancinhasReport();
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', 'attachment; filename="lista-lembrancinhas.pdf"');
-  res.send(pdf);
-});
-
-app.get('/reports/fornecedores', async (req, res) => {
-  const pdf = await generateFornecedoresReport();
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', 'attachment; filename="lista-fornecedores.pdf"');
-  res.send(pdf);
-});
-
-app.get('/reports/avisos', async (req, res) => {
-  const pdf = await generateAvisosReport();
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', 'attachment; filename="mural-avisos.pdf"');
-  res.send(pdf);
-});
-
-app.get('/reports/kit', async (req, res) => {
-  const pdf = await generateKitReport();
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', 'attachment; filename="kit-materia-prima.pdf"');
-  res.send(pdf);
-});
-
-app.get('/reports/coordinator-guide', async (req, res) => {
-  const pdf = await generateCoordinatorGuideReport();
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', 'attachment; filename="guia-do-coordenador.pdf"');
-  res.send(pdf);
-});
-
-app.get('/reports/preparation', async (req, res) => {
-  const pdf = await generatePreparationReport();
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', 'attachment; filename="relatorio-preparacao.pdf"');
-  res.send(pdf);
-});
-
-app.get('/reports/lembretes', async (req, res) => {
-  const pdf = await generateLembretesReport();
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', 'attachment; filename="relatorio-lembretes.pdf"');
-  res.send(pdf);
-});
+app.get('/reports/full', reportRoute(() => generateFullReport(), 'relatorio-geral-compromisso-trin.pdf'));
+app.get('/reports/category/:category', reportRoute(req => generateCategoryReport(decodeURIComponent(req.params.category)), 'relatorio-categoria.pdf'));
+app.get('/reports/teams', reportRoute(() => generateTeamReport(), 'relatorio-equipes.pdf'));
+app.get('/reports/team-schedule', reportRoute(() => generateTeamScheduleReport(), 'programa-por-equipe.pdf'));
+app.get('/reports/schedule', reportRoute(() => generateScheduleReport(), 'roteiro-do-encontro.pdf'));
+app.get('/reports/participants', reportRoute(() => generateParticipantsReport(), 'lista-materias-primas.pdf'));
+app.get('/reports/finance', reportRoute(() => generateFinanceReport(), 'relatorio-financeiro.pdf'));
+app.get('/reports/alicerces', reportRoute(() => generateAlicercesReport(), 'mapa-alicerces-alvenarias.pdf'));
+app.get('/reports/lembrancinhas', reportRoute(() => generateLembrancinhasReport(), 'lista-lembrancinhas.pdf'));
+app.get('/reports/fornecedores', reportRoute(() => generateFornecedoresReport(), 'lista-fornecedores.pdf'));
+app.get('/reports/avisos', reportRoute(() => generateAvisosReport(), 'mural-avisos.pdf'));
+app.get('/reports/kit', reportRoute(() => generateKitReport(), 'kit-materia-prima.pdf'));
+app.get('/reports/coordinator-guide', reportRoute(() => generateCoordinatorGuideReport(), 'guia-do-coordenador.pdf'));
+app.get('/reports/preparation', reportRoute(() => generatePreparationReport(), 'relatorio-preparacao.pdf'));
+app.get('/reports/lembretes', reportRoute(() => generateLembretesReport(), 'relatorio-lembretes.pdf'));
 
 // SPA fallback
 app.get('*', (req, res) => {
