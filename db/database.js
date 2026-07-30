@@ -5,12 +5,12 @@ const DB_FILE = path.join(__dirname, 'encontro.json');
 
 const TABLES = ['tasks', 'teams', 'schedule', 'encounters', 'team_members',
   'participants', 'finance', 'lembrancinhas', 'escolinhas', 'alicerces',
-  'lembretes', 'padrinhos', 'fornecedores', 'avisos'];
+  'lembretes', 'padrinhos', 'fornecedores', 'avisos', 'migrations'];
 
 let data = {
   tasks: [], teams: [], schedule: [], encounters: [], team_members: [],
   participants: [], finance: [], lembrancinhas: [], escolinhas: [], alicerces: [],
-  lembretes: [], padrinhos: [], fornecedores: [], avisos: [],
+  lembretes: [], padrinhos: [], fornecedores: [], avisos: [], migrations: [],
   _seq: {}
 };
 for (const t of TABLES) data._seq[t] = 0;

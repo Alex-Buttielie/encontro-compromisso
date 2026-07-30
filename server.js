@@ -7,7 +7,7 @@ const {
   generateCoordinatorGuideReport, generatePreparationReport, generateLembretesReport
 } = require('./routes/pdf');
 const apiRouter = require('./routes/api');
-const { seed } = require('./data/seed');
+const { runMigrations } = require('./migrations/run');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -61,8 +61,8 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Seed database on startup
-seed();
+// Run pending migrations on startup (Flyway-style)
+runMigrations();
 
 app.listen(PORT, () => {
   console.log(`\n  ========================================`);
