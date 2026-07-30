@@ -1,5 +1,15 @@
 [
   {
+    "version": "1.16.0",
+    "date": "2026-07-30",
+    "title": "Detalhes de Lembretes Automáticos",
+    "changes": [
+      "Modal de detalhes para lembretes automáticos — mostra categoria, equipe, prazo, vencimento, status, prioridade e observações da tarefa vinculada",
+      "Botão de detalhes (ícone de olho) em cada lembrete automático",
+      "Ação de concluir tarefa diretamente do modal de detalhes"
+    ]
+  },
+  {
     "version": "1.15.0",
     "date": "2026-07-30",
     "title": "Usuários Online e Avisos de Versão",

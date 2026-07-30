@@ -2347,10 +2347,67 @@ function renderAutoLembretes(list) {
     </div>
     <div style="display:flex;flex-direction:column;align-items:end;gap:4px">
       <span class="badge-sm ${l.urgency === 'overdue' ? 'badge-danger' : l.urgency === 'urgent' ? 'badge-warning' : 'badge-info'}">${labels[l.urgency]}</span>
-      <button class="btn-icon" onclick="completeAutoLembrete(${l.task_id})" title="Marcar tarefa como concluída">✅</button>
+      <div style="display:flex;gap:4px">
+        <button class="btn-icon" onclick="openAutoLembreteDetails(${l.task_id})" title="Ver detalhes">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+        <button class="btn-icon" onclick="completeAutoLembrete(${l.task_id})" title="Marcar tarefa como concluída">✅</button>
+      </div>
     </div>
   </div>`).join('');
   container.innerHTML = countBar + cards;
+}
+
+async function openAutoLembreteDetails(taskId) {
+  const l = autoLembretesCache.find(a => a.task_id === taskId);
+  if (!l) return;
+  if (tasksCache.length === 0) {
+    try { tasksCache = await api('/tasks'); } catch(e) {}
+  }
+  const t = tasksCache.find(t => Number(t.id) === Number(taskId));
+  const urgencyLabels = { overdue: 'Atrasado', urgent: 'Urgente', warning: 'Atenção', info: 'Em dia' };
+  const urgencyColors = { overdue: 'var(--danger)', urgent: 'var(--warning)', warning: 'var(--info)', info: 'var(--success)' };
+  const priorityColors = { alta: 'var(--danger)', media: 'var(--warning)', baixa: 'var(--text-light)' };
+  const dueDate = l.due_date ? new Date(l.due_date + 'T00:00:00').toLocaleDateString('pt-BR') : '-';
+  const diffText = l.diff_days < 0 ? Math.abs(l.diff_days) + ' dias atrasado' : l.diff_days === 0 ? 'Vence hoje!' : 'Faltam ' + l.diff_days + ' dias';
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay active';
+  overlay.innerHTML = `<div class="modal modal-details">
+    <div class="details-header">
+      <div class="details-header-left">
+        <span class="details-badge" style="background:${urgencyColors[l.urgency] || 'var(--text-light)'}">${urgencyLabels[l.urgency] || '-'}</span>
+        <span class="details-badge" style="background:${priorityColors[l.priority] || 'var(--text-light)'}">${priorityLabel(l.priority)}</span>
+        ${l.item_number ? '<span class="details-num">[' + l.item_number + ']</span>' : ''}
+      </div>
+      <button class="btn-icon" onclick="this.closest('.modal-overlay').remove()" title="Fechar">✕</button>
+    </div>
+    <h3 class="details-title">${l.title}</h3>
+    ${t && t.description ? '<div class="details-description">' + t.description + '</div>' : '<div class="details-description details-empty">Sem descrição</div>'}
+
+    <div class="details-grid">
+      <div class="detail-row"><span class="detail-label">📁 Categoria</span><span class="detail-value">${l.category || '-'}</span></div>
+      <div class="detail-row"><span class="detail-label">👥 Equipe</span><span class="detail-value">${l.responsible_team || 'N/A'}</span></div>
+      <div class="detail-row"><span class="detail-label">⏰ Prazo do Manual</span><span class="detail-value">${l.deadline || '-'}</span></div>
+      <div class="detail-row"><span class="detail-label">📅 Data de Vencimento</span><span class="detail-value">${dueDate}</span></div>
+      <div class="detail-row"><span class="detail-label">⏳ Status</span><span class="detail-value" style="color:${urgencyColors[l.urgency]}">${diffText}</span></div>
+      <div class="detail-row"><span class="detail-label">📊 Prioridade</span><span class="detail-value">${priorityLabel(l.priority)}</span></div>
+    </div>
+
+    ${t && t.notes ? '<div class="detail-section"><div class="detail-section-title">📝 Observações</div><div class="detail-section-body">' + t.notes + '</div></div>' : ''}
+
+    <div class="detail-section">
+      <div class="detail-section-title">ℹ️ Sobre Lembretes Automáticos</div>
+      <div class="detail-section-body">Este lembrete foi gerado automaticamente com base no prazo do manual em relação à data do Encontro. Para remover este lembrete, marque a tarefa vinculada como concluída.</div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Fechar</button>
+      <button class="btn btn-primary" onclick="this.closest('.modal-overlay').remove(); completeAutoLembrete(${taskId})">✅ Marcar como Concluída</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
 }
 
 async function completeAutoLembrete(taskId) {
