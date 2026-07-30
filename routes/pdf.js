@@ -154,11 +154,13 @@ function generateFullReport() {
   reportHeader(doc, 'Relatorio Geral de Preparacao', `Gerado em ${new Date().toLocaleString('pt-BR')}${encInfo ? ' | ' + encInfo : ''}`);
 
   const allTasks = db.getAll('tasks');
+  const preTasks = allTasks.filter(t => (t.phase || 'pre') === 'pre');
+  const duringTasks = allTasks.filter(t => t.phase === 'during');
   const stats = {
-    total: allTasks.length,
-    done: allTasks.filter(t => t.status === 'concluido').length,
-    in_progress: allTasks.filter(t => t.status === 'em_andamento').length,
-    pending: allTasks.filter(t => t.status === 'pendente').length,
+    total: preTasks.length,
+    done: preTasks.filter(t => t.status === 'concluido').length,
+    in_progress: preTasks.filter(t => t.status === 'em_andamento').length,
+    pending: preTasks.filter(t => t.status === 'pendente').length,
   };
 
   let y = 145;
@@ -181,12 +183,12 @@ function generateFullReport() {
   progressBar(doc, pct, 50, y, CONTENT_WIDTH);
   y += 25;
 
-  // Tasks by category
-  const categories = [...new Set(allTasks.map(t => t.category))].sort();
+  // Tasks by category (Pre-Encontro)
+  const categories = [...new Set(preTasks.map(t => t.category))].sort();
   for (const cat of categories) {
     if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
     y = sectionTitle(doc, cat, y, COLORS.primary);
-    const items = allTasks.filter(t => t.category === cat).sort((a, b) => parseFloat(a.item_number) - parseFloat(b.item_number));
+    const items = preTasks.filter(t => t.category === cat).sort((a, b) => parseFloat(a.item_number) - parseFloat(b.item_number));
     const catDone = items.filter(t => t.status === 'concluido').length;
     const catPct = items.length > 0 ? Math.round((catDone / items.length) * 100) : 0;
     doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica').text(`${catDone}/${items.length} (${catPct}%)`, 500, y - 14, { width: 60, align: 'right' });
@@ -262,6 +264,39 @@ function generateFullReport() {
     y += 8;
   }
 
+  // === DURANTE O ENCONTRO ===
+  if (duringTasks.length > 0) {
+    doc.addPage();
+    y = 50;
+    reportHeader(doc, 'Tarefas Durante o Encontro', 'Execucao nos dias do Encontro (Sexta a Domingo)');
+    y = 145;
+    const duringCats = [...new Set(duringTasks.map(t => t.category))].sort();
+    for (const cat of duringCats) {
+      if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
+      y = sectionTitle(doc, cat, y, COLORS.primary);
+      const items = duringTasks.filter(t => t.category === cat).sort((a, b) => parseFloat(a.item_number) - parseFloat(b.item_number));
+      const catDone = items.filter(t => t.status === 'concluido').length;
+      doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica').text(`${catDone}/${items.length}`, 500, y - 14, { width: 60, align: 'right' });
+      y += 8;
+      for (const t of items) {
+        if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+        zebraRow(doc, y, 28);
+        const statusColor = t.status === 'concluido' ? COLORS.green : t.status === 'em_andamento' ? COLORS.orange : COLORS.gray;
+        doc.fillColor(statusColor).circle(55, y + 5, 4).fill();
+        doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica-Bold').text(`[${t.item_number}] ${t.title}`, 68, y, { width: 390 });
+        y += 14;
+        if (t.description) {
+          doc.fontSize(9).font('Helvetica').fillColor(COLORS.gray).text(t.description, 68, y, { width: 390 });
+          y += Math.ceil(doc.widthOfString(t.description, { width: 390 }) / 390) * 12 + 4;
+        }
+        doc.fillColor(COLORS.secondary).fontSize(8).font('Helvetica-Bold').text(t.responsible_team || '-', 470, y - 14, { width: 90 });
+        statusBadge(doc, t.status, 470, y - 14);
+        y += 14;
+      }
+      y += 8;
+    }
+  }
+
   doc.end();
   return new Promise(resolve => { doc.on('end', () => resolve(Buffer.concat(buffers))); });
 }
@@ -274,7 +309,9 @@ function generateCategoryReport(category) {
   reportHeader(doc, `Relatorio: ${category}`, `Gerado em ${new Date().toLocaleString('pt-BR')}`);
 
   let y = 145;
-  const items = db.getAll('tasks').filter(t => t.category === category).sort((a, b) => parseFloat(a.item_number) - parseFloat(b.item_number));
+  const allItems = db.getAll('tasks').filter(t => t.category === category).sort((a, b) => parseFloat(a.item_number) - parseFloat(b.item_number));
+  const items = allItems.filter(t => (t.phase || 'pre') === 'pre');
+  const duringItems = allItems.filter(t => t.phase === 'during');
   const total = items.length;
   const done = items.filter(t => t.status === 'concluido').length;
   const inProgress = items.filter(t => t.status === 'em_andamento').length;
@@ -315,6 +352,37 @@ function generateCategoryReport(category) {
     y += 6;
   }
 
+  // === DURANTE O ENCONTRO ===
+  if (duringItems.length > 0) {
+    if (y > PAGE_BOTTOM - 60) { doc.addPage(); y = 50; }
+    y += 10;
+    y = sectionTitle(doc, 'Durante o Encontro', y, COLORS.primary);
+    const dDone = duringItems.filter(t => t.status === 'concluido').length;
+    const dPct = duringItems.length > 0 ? Math.round((dDone / duringItems.length) * 100) : 0;
+    doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica').text(`${dDone}/${duringItems.length} (${dPct}%)`, 500, y - 14, { width: 60, align: 'right' });
+    y += 8;
+    for (const t of duringItems) {
+      if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+      zebraRow(doc, y, 30);
+      const statusColor = t.status === 'concluido' ? COLORS.green : t.status === 'em_andamento' ? COLORS.orange : COLORS.gray;
+      doc.fillColor(statusColor).circle(55, y + 5, 4).fill();
+      doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica-Bold').text(`[${t.item_number}] ${t.title}`, 68, y, { width: 390 });
+      y += 16;
+      if (t.description) {
+        doc.fontSize(9).font('Helvetica').fillColor(COLORS.gray).text(t.description, 68, y, { width: 390 });
+        y += Math.ceil(doc.widthOfString(t.description, { width: 390 }) / 390) * 12 + 4;
+      }
+      doc.fontSize(8).font('Helvetica').fillColor(COLORS.gray).text(`Equipe: ${t.responsible_team || 'N/A'} | Prioridade: ${priorityLabel(t.priority)}`, 68, y, { width: 390 });
+      statusBadge(doc, t.status, 470, y - 2);
+      y += 22;
+      if (t.notes) {
+        doc.fontSize(8).font('Helvetica-Oblique').fillColor(COLORS.gray).text(`Obs: ${t.notes}`, 68, y, { width: 420 });
+        y += 12;
+      }
+      y += 6;
+    }
+  }
+
   doc.end();
   return new Promise(resolve => { doc.on('end', () => resolve(Buffer.concat(buffers))); });
 }
@@ -328,12 +396,19 @@ function generateTeamReport() {
 
   let y = 145;
   const allTasksForTeams = db.getAll('tasks');
+  const preTasks = allTasksForTeams.filter(t => (t.phase || 'pre') === 'pre');
+  const duringTasks = allTasksForTeams.filter(t => t.phase === 'during');
   const teams = db.getAll('teams').sort((a, b) => a.name.localeCompare(b.name)).map(t => {
-    const teamTasks = allTasksForTeams.filter(tk => tk.responsible_team === t.name);
+    const teamPre = preTasks.filter(tk => tk.responsible_team === t.name);
+    const teamDuring = duringTasks.filter(tk => tk.responsible_team === t.name);
     return {
       name: t.name, description: t.description, id: t.id,
-      total_tasks: teamTasks.length,
-      done_tasks: teamTasks.filter(tk => tk.status === 'concluido').length
+      pre_tasks: teamPre.length,
+      pre_done: teamPre.filter(tk => tk.status === 'concluido').length,
+      during_tasks: teamDuring.length,
+      during_done: teamDuring.filter(tk => tk.status === 'concluido').length,
+      total_tasks: teamPre.length + teamDuring.length,
+      done_tasks: teamPre.filter(tk => tk.status === 'concluido').length + teamDuring.filter(tk => tk.status === 'concluido').length
     };
   });
 
@@ -356,8 +431,10 @@ function generateTeamReport() {
     }
 
     const pct = team.total_tasks > 0 ? Math.round((team.done_tasks / team.total_tasks) * 100) : 0;
-    doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica-Bold').text(`${team.done_tasks}/${team.total_tasks} tarefas (${pct}%)`, 50, y);
-    y += 14;
+    doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica-Bold').text(`Total: ${team.done_tasks}/${team.total_tasks} (${pct}%)`, 50, y);
+    y += 12;
+    doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica').text(`Pre-Encontro: ${team.pre_done}/${team.pre_tasks}  |  Durante: ${team.during_done}/${team.during_tasks}`, 50, y);
+    y += 12;
     progressBar(doc, pct, 50, y, CONTENT_WIDTH);
     y += 18;
 
@@ -404,6 +481,8 @@ function generateTeamScheduleReport() {
       .filter(s => s.responsible_team === team.name)
       .sort((a, b) => (dayOrder[a.day] || 9) - (dayOrder[b.day] || 9) || (a.time || '').localeCompare(b.time || ''));
     const teamTasks = tasks.filter(t => t.responsible_team === team.name);
+    const teamPreTasks = teamTasks.filter(t => (t.phase || 'pre') === 'pre');
+    const teamDuringTasks = teamTasks.filter(t => t.phase === 'during');
 
     if (teamSchedule.length === 0 && teamTasks.length === 0) continue;
 
@@ -452,16 +531,36 @@ function generateTeamScheduleReport() {
       y += 14;
     }
 
-    // Preparation tasks
-    if (teamTasks.length > 0) {
+    // Pre-Encontro tasks
+    if (teamPreTasks.length > 0) {
       y += 8;
       if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
-      doc.fillColor(COLORS.secondary).fontSize(10).font('Helvetica-Bold').text('Tarefas de Preparacao', 50, y);
+      doc.fillColor(COLORS.secondary).fontSize(10).font('Helvetica-Bold').text('Tarefas de Preparacao (Pre-Encontro)', 50, y);
       y += 16;
-      const done = teamTasks.filter(t => t.status === 'concluido').length;
-      doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica').text(`${done}/${teamTasks.length} concluidas`, 50, y);
+      const done = teamPreTasks.filter(t => t.status === 'concluido').length;
+      doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica').text(`${done}/${teamPreTasks.length} concluidas`, 50, y);
       y += 12;
-      for (const t of teamTasks) {
+      for (const t of teamPreTasks) {
+        if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+        zebraRow(doc, y, 16);
+        const stColor = t.status === 'concluido' ? COLORS.green : t.status === 'em_andamento' ? COLORS.orange : COLORS.gray;
+        doc.fillColor(stColor).circle(55, y + 4, 3).fill();
+        doc.fillColor(COLORS.dark).fontSize(8).font('Helvetica').text(`[${t.item_number}] ${t.title}`, 65, y + 2, { width: 400 });
+        doc.fillColor(COLORS.gray).fontSize(7).font('Helvetica').text(t.deadline || '', 470, y + 2, { width: 80 });
+        y += 16;
+      }
+    }
+
+    // Durante o Encontro tasks
+    if (teamDuringTasks.length > 0) {
+      y += 8;
+      if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
+      doc.fillColor(COLORS.primary).fontSize(10).font('Helvetica-Bold').text('Tarefas Durante o Encontro', 50, y);
+      y += 16;
+      const done = teamDuringTasks.filter(t => t.status === 'concluido').length;
+      doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica').text(`${done}/${teamDuringTasks.length} concluidas`, 50, y);
+      y += 12;
+      for (const t of teamDuringTasks) {
         if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
         zebraRow(doc, y, 16);
         const stColor = t.status === 'concluido' ? COLORS.green : t.status === 'em_andamento' ? COLORS.orange : COLORS.gray;
@@ -1301,10 +1400,10 @@ function generateCoordinatorGuideReport() {
 
   // ============ CHECKLIST DE TAREFAS PENDENTES ============
   doc.addPage();
-  reportHeader(doc, 'Tarefas Pendentes', 'Checklist - O que ainda falta fazer');
+  reportHeader(doc, 'Tarefas do Encontro', 'Checklist - Execucao durante o Encontro');
   y = 145;
 
-  const tasks = db.getAll('tasks');
+  const tasks = db.getAll('tasks').filter(t => t.phase === 'during');
   const pending = tasks.filter(t => t.status !== 'concluido');
   const inProgress = pending.filter(t => t.status === 'em_andamento');
   const notStarted = pending.filter(t => t.status === 'pendente');
@@ -1468,7 +1567,7 @@ function generatePreparationReport() {
   doc.addPage();
   reportHeader(doc, 'Sumario Executivo da Preparacao', `Gerado em ${todayStr} | ${daysToEnc}`);
 
-  const tasks = db.getAll('tasks').sort((a, b) => {
+  const tasks = db.getAll('tasks').filter(t => (t.phase || 'pre') === 'pre').sort((a, b) => {
     const catCmp = (a.category || '').localeCompare(b.category || '');
     if (catCmp !== 0) return catCmp;
     return parseFloat(a.item_number) - parseFloat(b.item_number);

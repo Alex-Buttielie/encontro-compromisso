@@ -133,14 +133,30 @@ router.put('/encounter/:id', (req, res) => {
 // ============ STATS ============
 
 router.get('/stats', (req, res) => {
-  const total = db.prepare('SELECT COUNT(*) as count FROM tasks').get().count;
-  const done = db.prepare("SELECT COUNT(*) as count FROM tasks WHERE status='concluido'").get().count;
-  const inProgress = db.prepare("SELECT COUNT(*) as count FROM tasks WHERE status='em_andamento'").get().count;
-  const pending = db.prepare("SELECT COUNT(*) as count FROM tasks WHERE status='pendente'").get().count;
-  const byCategory = db.prepare("SELECT category, COUNT(*) as total, SUM(CASE WHEN status='concluido' THEN 1 ELSE 0 END) as done FROM tasks GROUP BY category ORDER BY category").all();
-  const byTeam = db.prepare("SELECT responsible_team as team, COUNT(*) as total, SUM(CASE WHEN status='concluido' THEN 1 ELSE 0 END) as done FROM tasks GROUP BY responsible_team ORDER BY responsible_team").all();
-  const byPriority = db.prepare("SELECT priority, COUNT(*) as total, SUM(CASE WHEN status='concluido' THEN 1 ELSE 0 END) as done FROM tasks GROUP BY priority").all();
-  res.json({ total, done, inProgress, pending, byCategory, byTeam, byPriority });
+  const allTasks = db.getAll('tasks');
+  const preTasks = allTasks.filter(t => (t.phase || 'pre') === 'pre');
+  const duringTasks = allTasks.filter(t => t.phase === 'during');
+  const total = allTasks.length;
+  const done = allTasks.filter(t => t.status === 'concluido').length;
+  const inProgress = allTasks.filter(t => t.status === 'em_andamento').length;
+  const pending = allTasks.filter(t => t.status === 'pendente').length;
+  const preTotal = preTasks.length;
+  const preDone = preTasks.filter(t => t.status === 'concluido').length;
+  const duringTotal = duringTasks.length;
+  const duringDone = duringTasks.filter(t => t.status === 'concluido').length;
+  const byCategory = [...new Set(allTasks.map(t => t.category))].map(cat => {
+    const items = allTasks.filter(t => t.category === cat);
+    return { category: cat, total: items.length, done: items.filter(t => t.status === 'concluido').length };
+  }).sort((a, b) => a.category.localeCompare(b.category));
+  const byTeam = [...new Set(allTasks.map(t => t.responsible_team).filter(Boolean))].map(team => {
+    const items = allTasks.filter(t => t.responsible_team === team);
+    return { team, total: items.length, done: items.filter(t => t.status === 'concluido').length };
+  }).sort((a, b) => a.team.localeCompare(b.team));
+  const byPriority = ['baixa', 'media', 'alta'].map(p => {
+    const items = allTasks.filter(t => t.priority === p);
+    return { priority: p, total: items.length, done: items.filter(t => t.status === 'concluido').length };
+  });
+  res.json({ total, done, inProgress, pending, preTotal, preDone, duringTotal, duringDone, byCategory, byTeam, byPriority });
 });
 
 // ============ PARTICIPANTS (Matérias-primas) ============
