@@ -162,7 +162,8 @@ async function renderDashboard() {
   const fin = await api('/finance/summary');
   const participants = await api('/participants');
   const lembrancinhas = await api('/lembrancinhas');
-  const autoLembretes = await api('/lembretes/auto').catch(() => []);
+  const autoResp = await api('/lembretes/auto').catch(() => ({ lembretes: [] }));
+  const autoLembretes = Array.isArray(autoResp) ? autoResp : (autoResp.lembretes || []);
   const pct = stats.total > 0 ? Math.round((stats.done / stats.total) * 100) : 0;
   const main = document.getElementById('main-content');
 

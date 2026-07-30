@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.20.1",
+    "date": "2026-07-30",
+    "title": "Correção do Dashboard",
+    "changes": [
+      "Correção de crash no dashboard — endpoint /lembretes/auto retorna objeto { lembretes: [...] } e não array direto, causando erro ao chamar .filter() e .slice()"
+    ]
+  },
+  {
     "version": "1.20.0",
     "date": "2026-07-30",
     "title": "Correção do Relatório de Preparação",
