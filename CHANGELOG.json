@@ -1,5 +1,20 @@
 [
   {
+    "version": "1.22.2",
+    "date": "2026-07-30",
+    "title": "Dashboard Mobile",
+    "changes": [
+      "Dashboard responsivo para celular — stats grid 2x2 com cards compactos em linha",
+      "Abas de fase (Geral/Pré/Durante) com scroll horizontal touch-friendly",
+      "Charts em coluna única com altura reduzida no mobile",
+      "Contagem regressiva compacta com unidades flexíveis",
+      "Barras de progresso mais finas e fontes reduzidas no mobile",
+      "Cards de tarefas urgentes compactos no mobile",
+      "Re-renderização automática ao rotacionar tela ou redimensionar janela",
+      "Breakpoint em 480px: stats grid 1 coluna, charts ainda mais compactos"
+    ]
+  },
+  {
     "version": "1.22.0",
     "date": "2026-07-30",
     "title": "Orçamento e Doações",

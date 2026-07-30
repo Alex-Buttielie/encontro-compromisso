@@ -111,6 +111,17 @@ window.addEventListener('hashchange', () => {
   window.scrollTo(0, 0);
 });
 
+let resizeTimer = null;
+window.addEventListener('resize', () => {
+  if (resizeTimer) clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    if (currentPage === 'dashboard') renderDashboard();
+  }, 300);
+});
+window.addEventListener('orientationchange', () => {
+  setTimeout(() => { if (currentPage === 'dashboard') renderDashboard(); }, 300);
+});
+
 document.querySelectorAll('.nav-item').forEach(item => {
   item.addEventListener('click', () => {
     navigateTo(item.dataset.page);
@@ -158,6 +169,8 @@ let dashboardCharts = {};
 let dashboardInterval = null;
 let dashboardPhase = 'all';
 
+function isMobile() { return window.innerWidth <= 768; }
+
 async function renderDashboard() {
   const stats = await api('/stats');
   const enc = await api('/encounter');
@@ -180,6 +193,7 @@ async function renderDashboard() {
   const duringPct = stats.duringTotal > 0 ? Math.round((stats.duringDone / stats.duringTotal) * 100) : 0;
 
   const urgentLembretes = (autoLembretes || []).filter(l => l.urgency === 'overdue' || l.urgency === 'urgent').slice(0, 5);
+  const mobile = isMobile();
 
   main.innerHTML = `
     <h1 class="page-title">Dashboard</h1>
@@ -187,33 +201,33 @@ async function renderDashboard() {
 
     <div id="countdown-container"></div>
 
-    <div class="dashboard-tabs">
+    <div class="dashboard-tabs ${mobile ? 'mobile' : ''}">
       <button class="dashboard-tab ${dashboardPhase==='all'?'active':''}" onclick="switchDashboardPhase('all')">Geral</button>
       <button class="dashboard-tab ${dashboardPhase==='pre'?'active':''}" onclick="switchDashboardPhase('pre')">Pré-Encontro</button>
       <button class="dashboard-tab ${dashboardPhase==='during'?'active':''}" onclick="switchDashboardPhase('during')">Durante</button>
     </div>
 
-    <div class="stats-grid">
+    <div class="stats-grid ${mobile ? 'mobile' : ''}">
       <div class="stat-card clickable" onclick="navigateTo('checklist')"><div class="stat-icon total">📋</div><div class="stat-info"><h3 id="dash-total">${stats.total}</h3><p>Total de Tarefas</p></div></div>
       <div class="stat-card clickable" onclick="navigateTo('checklist')"><div class="stat-icon done">✅</div><div class="stat-info"><h3 id="dash-done">${stats.done}</h3><p>Concluídas</p></div></div>
       <div class="stat-card clickable" onclick="navigateTo('checklist')"><div class="stat-icon progress">⏳</div><div class="stat-info"><h3 id="dash-progress">${stats.inProgress}</h3><p>Em Andamento</p></div></div>
       <div class="stat-card clickable" onclick="navigateTo('checklist')"><div class="stat-icon pending">⭕</div><div class="stat-info"><h3 id="dash-pending">${stats.pending}</h3><p>Pendentes</p></div></div>
     </div>
-    <div class="stats-grid">
-      <div class="stat-card clickable" onclick="navigateTo('inscritos')"><div class="stat-icon total">👥</div><div class="stat-info"><h3>${participants.length}</h3><p>Matérias-primas (${paidCount} pagas)</p></div></div>
+    <div class="stats-grid ${mobile ? 'mobile' : ''}">
+      <div class="stat-card clickable" onclick="navigateTo('inscritos')"><div class="stat-icon total">👥</div><div class="stat-info"><h3>${participants.length}</h3><p>MP's (${paidCount} pagas)</p></div></div>
       <div class="stat-card clickable" onclick="navigateTo('financeiro')"><div class="stat-icon done">💰</div><div class="stat-info"><h3>R$ ${fin.balance.toFixed(0)}</h3><p>Saldo Atual</p></div></div>
-      <div class="stat-card clickable" onclick="navigateTo('lembrancinhas')"><div class="stat-icon progress">🎁</div><div class="stat-info"><h3>${lemDone}/${lemTotal}</h3><p>Lembrancinhas Prontas</p></div></div>
-      <div class="stat-card clickable" onclick="navigateTo('encontro')"><div class="stat-icon pending">📅</div><div class="stat-info"><h3>${enc.start_date ? new Date(enc.start_date).toLocaleDateString('pt-BR') : '—'}</h3><p>Data do Encontro</p></div></div>
+      <div class="stat-card clickable" onclick="navigateTo('lembrancinhas')"><div class="stat-icon progress">🎁</div><div class="stat-info"><h3>${lemDone}/${lemTotal}</h3><p>Lembrancinhas</p></div></div>
+      <div class="stat-card clickable" onclick="navigateTo('encontro')"><div class="stat-icon pending">📅</div><div class="stat-info"><h3>${enc.start_date ? new Date(enc.start_date).toLocaleDateString('pt-BR') : '—'}</h3><p>Data Encontro</p></div></div>
     </div>
 
-    <div class="dashboard-charts">
+    <div class="dashboard-charts ${mobile ? 'mobile' : ''}">
       <div class="card chart-card">
         <div class="card-title">📊 Status das Tarefas</div>
-        <canvas id="chart-status" height="200"></canvas>
+        <canvas id="chart-status" height="${mobile ? 160 : 200}"></canvas>
       </div>
       <div class="card chart-card">
         <div class="card-title">📈 Progresso por Equipe</div>
-        <canvas id="chart-teams" height="200"></canvas>
+        <canvas id="chart-teams" height="${mobile ? 160 : 200}"></canvas>
       </div>
     </div>
 
@@ -237,14 +251,14 @@ async function renderDashboard() {
       </div>
     </div>
 
-    <div class="dashboard-charts">
+    <div class="dashboard-charts ${mobile ? 'mobile' : ''}">
       <div class="card chart-card">
         <div class="card-title">📁 Progresso por Categoria</div>
-        <canvas id="chart-categories" height="200"></canvas>
+        <canvas id="chart-categories" height="${mobile ? 160 : 200}"></canvas>
       </div>
       <div class="card chart-card">
         <div class="card-title">⚡ Prioridades</div>
-        <canvas id="chart-priority" height="200"></canvas>
+        <canvas id="chart-priority" height="${mobile ? 160 : 200}"></canvas>
       </div>
     </div>
 

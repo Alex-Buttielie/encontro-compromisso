@@ -1726,8 +1726,6 @@ select:focus, input:focus, textarea:focus { border-color: var(--primary); }
   .chart-card { min-height: 220px; }
   .dashboard-tab { padding: 6px 14px; font-size: 12px; }
 }
-
-/* TABLE */
 .data-table {
   width: 100%;
   border-collapse: collapse;
@@ -2314,6 +2312,187 @@ select:focus, input:focus, textarea:focus { border-color: var(--primary); }
   .fin-overview-grid { grid-template-columns: 1fr; }
   .fin-events-grid { grid-template-columns: 1fr; }
   .fin-event-stats { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* DASHBOARD MOBILE */
+.dashboard-tabs.mobile {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.dashboard-tabs.mobile::-webkit-scrollbar { display: none; }
+
+.dashboard-tabs.mobile .dashboard-tab {
+  padding: 7px 14px;
+  font-size: 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.stats-grid.mobile {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.stats-grid.mobile .stat-card {
+  padding: 12px 10px;
+  gap: 8px;
+  flex-direction: row;
+  align-items: center;
+}
+
+.stats-grid.mobile .stat-icon {
+  width: 36px;
+  height: 36px;
+  font-size: 16px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.stats-grid.mobile .stat-info h3 {
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.stats-grid.mobile .stat-info p {
+  font-size: 10px;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dashboard-charts.mobile {
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.dashboard-charts.mobile .chart-card {
+  min-height: 200px;
+  padding: 14px 12px;
+}
+
+.dashboard-charts.mobile .chart-card .card-title {
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.dashboard-charts.mobile .chart-card canvas {
+  max-height: 180px;
+}
+
+/* Countdown mobile compact */
+@media (max-width: 768px) {
+  .countdown {
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .countdown-unit {
+    padding: 8px 10px;
+    min-width: 56px;
+  }
+
+  .countdown-number {
+    font-size: 22px;
+  }
+
+  .countdown-label {
+    font-size: 9px;
+  }
+
+  .countdown-card .card-title {
+    font-size: 14px;
+  }
+
+  /* Progress bars compact */
+  .progress-container {
+    margin-bottom: 10px;
+  }
+
+  .progress-label {
+    font-size: 11px;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .progress-label span:last-child {
+    font-size: 11px;
+  }
+
+  .progress-bar {
+    height: 8px;
+  }
+
+  /* Urgent tasks compact */
+  .lembrete-card {
+    padding: 10px 8px;
+    gap: 8px;
+  }
+
+  .lembrete-icon {
+    font-size: 18px;
+  }
+
+  .lembrete-title {
+    font-size: 12px;
+  }
+
+  .lembrete-meta {
+    font-size: 10px;
+  }
+
+  .lembrete-due {
+    font-size: 11px;
+  }
+
+  /* Dashboard cards tighter spacing */
+  #main-content > .card {
+    margin-bottom: 12px;
+    padding: 14px 12px;
+  }
+
+  #main-content > .card > .card-title {
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid.mobile {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-grid.mobile .stat-card {
+    flex-direction: row;
+    justify-content: flex-start;
+  }
+
+  .dashboard-charts.mobile .chart-card {
+    min-height: 180px;
+  }
+
+  .dashboard-charts.mobile .chart-card canvas {
+    max-height: 160px;
+  }
+
+  .countdown-unit {
+    flex: 1;
+    min-width: 0;
+    padding: 6px 4px;
+  }
+
+  .countdown-number {
+    font-size: 18px;
+  }
 }
 
 /* BUDGET & DONATIONS */
