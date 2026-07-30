@@ -2316,8 +2316,8 @@ function renderAutoLembretes(list) {
   const icons = { overdue: '🚨', urgent: '⚠️', warning: '📅', info: 'ℹ️' };
   const labels = { overdue: 'Atrasado', urgent: 'Urgente', warning: 'Atenção', info: 'Em dia' };
   const showingAll = list.length === autoLembretesCache.length;
-  container.innerHTML = `${!showingAll ? `<div style="font-size:11px;color:var(--text-light);padding:4px 12px">Mostrando ${list.length} de ${autoLembretesCache.length} lembretes</div>` : ''}
-  ${list.map(l => `<div class="lembrete-card ${l.urgency}">
+  const countBar = showingAll ? '' : '<div style="font-size:11px;color:var(--text-light);padding:4px 12px">Mostrando ' + list.length + ' de ' + autoLembretesCache.length + ' lembretes</div>';
+  const cards = list.map(l => `<div class="lembrete-card ${l.urgency}">
     <div class="lembrete-icon">${icons[l.urgency]}</div>
     <div class="lembrete-info">
       <div class="lembrete-title">${l.title}</div>
@@ -2329,6 +2329,7 @@ function renderAutoLembretes(list) {
       <button class="btn-icon" onclick="completeAutoLembrete(${l.task_id})" title="Marcar tarefa como concluída">✅</button>
     </div>
   </div>`).join('');
+  container.innerHTML = countBar + cards;
 }
 
 async function completeAutoLembrete(taskId) {
