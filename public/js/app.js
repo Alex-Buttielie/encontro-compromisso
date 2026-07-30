@@ -86,7 +86,7 @@ function prettifyPersonName(raw, opts = {}) {
 }
 
 // ============ NAVIGATION (Hash Routing) ============
-const VALID_PAGES = ['dashboard','checklist','cronograma','equipes','encontro','inscritos','padrinhos','pais','fornecedores','escolinhas','alicerces','lembretes','avisos','financeiro','lembrancinhas','kit','relatorios'];
+const VALID_PAGES = ['dashboard','checklist','cronograma','equipes','encontro','inscritos','padrinhos','pais','fornecedores','escolinhas','alicerces','lembretes','avisos','financeiro','lembrancinhas','kit','relatorios','orcamento','doacoes'];
 
 function getPageFromHash() {
   const hash = window.location.hash.replace('#/', '').replace('#', '');
@@ -149,6 +149,8 @@ function renderPage() {
   else if (currentPage === 'avisos') renderAvisos();
   else if (currentPage === 'kit') renderKit();
   else if (currentPage === 'relatorios') renderRelatorios();
+  else if (currentPage === 'orcamento') renderOrcamento();
+  else if (currentPage === 'doacoes') renderDoacoes();
 }
 
 // ============ DASHBOARD ============
@@ -3575,4 +3577,384 @@ function showVersionModal(info) {
   </div>`;
   document.body.appendChild(overlay);
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+}
+
+// ============ ORÇAMENTO ============
+let budgetCache = [];
+let budgetSummaryCache = null;
+let budgetFilterCategory = '';
+let budgetFilterStatus = '';
+
+const BUDGET_CATEGORIES = ['Alimentação', 'Limpeza', 'Decoração', 'Materiais Diversos', 'Logística', 'Espaço Físico', 'Som e Técnica', 'Primeiros Socorros', 'Capela', 'Hospedagem', 'Honorários', 'Outros'];
+const BUDGET_STATUSES = ['orcado', 'comprado', 'recebido', 'cancelado'];
+const BUDGET_STATUS_LABELS = { orcado: 'Orçado', comprado: 'Comprado', recebido: 'Recebido', cancelado: 'Cancelado' };
+const BUDGET_STATUS_COLORS = { orcado: 'var(--text-light)', comprado: 'var(--success)', recebido: 'var(--primary)', cancelado: 'var(--danger)' };
+
+async function renderOrcamento() {
+  budgetCache = await api('/budget');
+  budgetSummaryCache = await api('/budget/summary');
+  const main = document.getElementById('main-content');
+  const s = budgetSummaryCache;
+  main.innerHTML = `
+    <h1 class="page-title">Orçamento do Encontro</h1>
+    <p class="page-subtitle">Planeje e acompanhe todos os custos: materiais, comida, limpeza, decoração e mais</p>
+
+    <div class="stats-grid" style="margin-bottom:16px">
+      <div class="stat-card"><div class="stat-icon total">📋</div><div class="stat-info"><h3>${s.itemCount}</h3><p>Itens Orçados</p></div></div>
+      <div class="stat-card"><div class="stat-icon done">💰</div><div class="stat-info"><h3>R$ ${s.totalEstimated.toFixed(0)}</h3><p>Orçamento Total</p></div></div>
+      <div class="stat-card"><div class="stat-icon progress">🛒</div><div class="stat-info"><h3>R$ ${s.totalActual.toFixed(0)}</h3><p>Gasto Realizado</p></div></div>
+      <div class="stat-card"><div class="stat-icon pending">🎁</div><div class="stat-info"><h3>R$ ${s.totalDonations.toFixed(0)}</h3><p>Doações em Dinheiro</p></div></div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">Resumo Financeiro Consolidado</div>
+      <div class="budget-summary-grid">
+        <div class="budget-summary-item"><span>Orçamento Total Estimado</span><strong>R$ ${s.totalEstimated.toFixed(2)}</strong></div>
+        <div class="budget-summary-item"><span>(-) Doações em Dinheiro</span><strong style="color:var(--success)">- R$ ${s.totalDonations.toFixed(2)}</strong></div>
+        <div class="budget-summary-item"><span>(-) Receitas do Financeiro</span><strong style="color:var(--success)">- R$ ${s.financeIncome.toFixed(2)}</strong></div>
+        <div class="budget-summary-item"><span>(=) Orçamento Líquido</span><strong>R$ ${s.netBudget.toFixed(2)}</strong></div>
+        <div class="budget-summary-item"><span>(+) Gasto Real (orçamento)</span><strong style="color:var(--danger)">R$ ${s.totalActual.toFixed(2)}</strong></div>
+        <div class="budget-summary-item"><span>(+) Despesas do Financeiro</span><strong style="color:var(--danger)">R$ ${s.financeExpenses.toFixed(2)}</strong></div>
+        <div class="budget-summary-item total"><span>(=) Saldo Restante</span><strong style="color:${s.remaining >= 0 ? 'var(--success)' : 'var(--danger)'}">R$ ${s.remaining.toFixed(2)}</strong></div>
+      </div>
+    </div>
+
+    <div class="filters">
+      <div class="filter-group">
+        <span class="filter-label">Categoria:</span>
+        <select id="budget-filter-cat" onchange="filterBudget()">
+          <option value="">Todas</option>
+          ${BUDGET_CATEGORIES.map(c => `<option value="${c}" ${budgetFilterCategory===c?'selected':''}>${c}</option>`).join('')}
+        </select>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Status:</span>
+        <select id="budget-filter-status" onchange="filterBudget()">
+          <option value="">Todos</option>
+          ${BUDGET_STATUSES.map(st => `<option value="${st}" ${budgetFilterStatus===st?'selected':''}>${BUDGET_STATUS_LABELS[st]}</option>`).join('')}
+        </select>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="openBudgetModal()">+ Item</button>
+    </div>
+
+    <div class="card">
+      <table class="data-table" id="budget-table">
+        <thead><tr><th>Categoria</th><th>Item</th><th>Qtd</th><th>Unit.</th><th>Custo Unit.</th><th>Total Est.</th><th>Custo Real</th><th>Status</th><th>Fornecedor</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div id="budget-cards"></div>
+    </div>
+  `;
+  renderBudgetTable();
+}
+
+function filterBudget() {
+  budgetFilterCategory = document.getElementById('budget-filter-cat').value;
+  budgetFilterStatus = document.getElementById('budget-filter-status').value;
+  renderBudgetTable();
+}
+
+function renderBudgetTable() {
+  let list = budgetCache;
+  if (budgetFilterCategory) list = list.filter(b => b.category === budgetFilterCategory);
+  if (budgetFilterStatus) list = list.filter(b => b.status === budgetFilterStatus);
+
+  const tbody = document.querySelector('#budget-table tbody');
+  const cards = document.getElementById('budget-cards');
+  if (!tbody) return;
+
+  if (list.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-light);padding:20px">Nenhum item no orçamento.</td></tr>';
+    cards.innerHTML = '<div class="empty-state"><p>Nenhum item.</p></div>';
+    return;
+  }
+
+  tbody.innerHTML = list.map(b => `<tr>
+    <td>${b.category || '—'}</td>
+    <td>${b.item_name || '—'}</td>
+    <td>${b.quantity || 0} ${b.unit || ''}</td>
+    <td>${b.unit || '—'}</td>
+    <td>R$ ${(b.estimated_unit_cost || 0).toFixed(2)}</td>
+    <td style="font-weight:600">R$ ${((b.quantity || 0) * (b.estimated_unit_cost || 0)).toFixed(2)}</td>
+    <td style="color:${(b.actual_cost || 0) > 0 ? 'var(--danger)' : 'var(--text-light)'}">${(b.actual_cost || 0) > 0 ? 'R$ ' + b.actual_cost.toFixed(2) : '—'}</td>
+    <td><span class="badge-sm" style="background:${BUDGET_STATUS_COLORS[b.status] || 'var(--border)'};color:#fff">${BUDGET_STATUS_LABELS[b.status] || b.status}</span></td>
+    <td>${b.supplier || '—'}</td>
+    <td>
+      <button class="btn-icon" onclick="openBudgetModal(${b.id})">✏️</button>
+      <button class="btn-icon" onclick="deleteBudgetItem(${b.id})">🗑️</button>
+    </td>
+  </tr>`).join('');
+
+  cards.innerHTML = list.map(b => `<div class="budget-item-card">
+    <div class="budget-item-top">
+      <span class="badge-sm" style="background:${BUDGET_STATUS_COLORS[b.status] || 'var(--border)'};color:#fff">${BUDGET_STATUS_LABELS[b.status] || b.status}</span>
+      <span style="font-weight:600">R$ ${((b.quantity || 0) * (b.estimated_unit_cost || 0)).toFixed(2)}</span>
+    </div>
+    <div style="font-weight:600;margin:4px 0">${b.item_name || '—'}</div>
+    <div style="font-size:11px;color:var(--text-light)">
+      📁 ${b.category || '—'} · 📦 ${b.quantity || 0} ${b.unit || ''} · R$ ${(b.estimated_unit_cost || 0).toFixed(2)}/un
+      ${b.supplier ? ' · 🏪 ' + b.supplier : ''}
+      ${(b.actual_cost || 0) > 0 ? ' · 💰 R$ ' + b.actual_cost.toFixed(2) : ''}
+    </div>
+    <div class="budget-item-actions">
+      <button class="btn-icon" onclick="openBudgetModal(${b.id})">✏️</button>
+      <button class="btn-icon" onclick="deleteBudgetItem(${b.id})">🗑️</button>
+    </div>
+  </div>`).join('');
+}
+
+function openBudgetModal(id) {
+  const b = id ? budgetCache.find(b => b.id === id) : null;
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay active';
+  overlay.innerHTML = `<div class="modal">
+    <h3>${b ? 'Editar Item' : 'Novo Item de Orçamento'}</h3>
+    <div class="form-row">
+      <div class="form-group"><label>Categoria</label><select id="b-category">${BUDGET_CATEGORIES.map(c => `<option value="${c}" ${b?.category===c?'selected':''}>${c}</option>`).join('')}</select></div>
+      <div class="form-group"><label>Status</label><select id="b-status">${BUDGET_STATUSES.map(st => `<option value="${st}" ${b?.status===st?'selected':''}>${BUDGET_STATUS_LABELS[st]}</option>`).join('')}</select></div>
+    </div>
+    <div class="form-group"><label>Item</label><input id="b-name" value="${b ? (b.item_name || '').replace(/"/g,'&quot;') : ''}"></div>
+    <div class="form-group"><label>Descrição</label><input id="b-desc" value="${b ? (b.description || '').replace(/"/g,'&quot;') : ''}"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Quantidade</label><input id="b-qty" type="number" step="0.01" value="${b?.quantity || ''}"></div>
+      <div class="form-group"><label>Unidade</label><input id="b-unit" value="${b?.unit || 'un'}"></div>
+      <div class="form-group"><label>Custo Unit. Estimado (R$)</label><input id="b-est" type="number" step="0.01" value="${b?.estimated_unit_cost || ''}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Custo Real (R$)</label><input id="b-actual" type="number" step="0.01" value="${b?.actual_cost || ''}"></div>
+      <div class="form-group"><label>Fornecedor</label><input id="b-supplier" value="${b ? (b.supplier || '').replace(/"/g,'&quot;') : ''}"></div>
+    </div>
+    <div class="form-group"><label>Observações</label><input id="b-notes" value="${b ? (b.notes || '').replace(/"/g,'&quot;') : ''}"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveBudgetItem(${id || 'null'}, this)">${b ? 'Salvar' : 'Adicionar'}</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+}
+
+async function saveBudgetItem(id, btn) {
+  const data = {
+    category: val('b-category'),
+    item_name: val('b-name'),
+    description: val('b-desc'),
+    quantity: parseFloat(val('b-qty')) || 0,
+    unit: val('b-unit'),
+    estimated_unit_cost: parseFloat(val('b-est')) || 0,
+    actual_cost: parseFloat(val('b-actual')) || 0,
+    status: val('b-status'),
+    supplier: val('b-supplier'),
+    notes: val('b-notes'),
+  };
+  if (id) await api(`/budget/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+  else await api('/budget', { method: 'POST', body: JSON.stringify(data) });
+  btn.closest('.modal-overlay').remove();
+  toast('Item salvo!', 'success');
+  renderOrcamento();
+}
+
+function deleteBudgetItem(id) {
+  showConfirmDialog({
+    icon: '🗑️',
+    title: 'Excluir Item',
+    message: 'Tem certeza que deseja excluir este item do orçamento?',
+    confirmText: 'Sim, excluir',
+    cancelText: 'Cancelar',
+    onConfirm: async () => {
+      await api(`/budget/${id}`, { method: 'DELETE' });
+      toast('Item excluído', 'error');
+      renderOrcamento();
+    }
+  });
+}
+
+// ============ DOAÇÕES ============
+let donationsCache = [];
+let donationsFilterType = '';
+
+async function renderDoacoes() {
+  donationsCache = await api('/donations');
+  budgetSummaryCache = await api('/budget/summary');
+  const main = document.getElementById('main-content');
+  const s = budgetSummaryCache;
+  const totalMoney = donationsCache.filter(d => d.type === 'dinheiro').reduce((s, d) => s + (d.value || 0), 0);
+  const totalMaterial = donationsCache.filter(d => d.type === 'material').length;
+  const consolidated = donationsCache.filter(d => d.consolidated).length;
+
+  main.innerHTML = `
+    <h1 class="page-title">Doações Recebidas</h1>
+    <p class="page-subtitle">Cadastre doações em dinheiro ou materiais — consolide automaticamente no financeiro</p>
+
+    <div class="stats-grid" style="margin-bottom:16px">
+      <div class="stat-card"><div class="stat-icon total">🎁</div><div class="stat-info"><h3>${donationsCache.length}</h3><p>Total de Doações</p></div></div>
+      <div class="stat-card"><div class="stat-icon done">💰</div><div class="stat-info"><h3>R$ ${totalMoney.toFixed(0)}</h3><p>Doações em Dinheiro</p></div></div>
+      <div class="stat-card"><div class="stat-icon progress">📦</div><div class="stat-info"><h3>${totalMaterial}</h3><p>Doações de Materiais</p></div></div>
+      <div class="stat-card"><div class="stat-icon pending">✅</div><div class="stat-info"><h3>${consolidated}</h3><p>Consolidadas no Financeiro</p></div></div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">Impacto no Orçamento</div>
+      <div class="budget-summary-grid">
+        <div class="budget-summary-item"><span>Orçamento Total Estimado</span><strong>R$ ${s.totalEstimated.toFixed(2)}</strong></div>
+        <div class="budget-summary-item"><span>(-) Doações em Dinheiro</span><strong style="color:var(--success)">- R$ ${s.totalDonations.toFixed(2)}</strong></div>
+        <div class="budget-summary-item"><span>(-) Receitas do Financeiro</span><strong style="color:var(--success)">- R$ ${s.financeIncome.toFixed(2)}</strong></div>
+        <div class="budget-summary-item total"><span>(=) Orçamento Líquido a Gastar</span><strong>R$ ${s.netBudget.toFixed(2)}</strong></div>
+      </div>
+    </div>
+
+    <div class="filters">
+      <div class="filter-group">
+        <span class="filter-label">Tipo:</span>
+        <select id="don-filter-type" onchange="filterDonations()">
+          <option value="">Todos</option>
+          <option value="dinheiro" ${donationsFilterType==='dinheiro'?'selected':''}>Dinheiro</option>
+          <option value="material" ${donationsFilterType==='material'?'selected':''}>Material</option>
+        </select>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="openDonationModal()">+ Doação</button>
+    </div>
+
+    <div class="card">
+      <table class="data-table" id="don-table">
+        <thead><tr><th>Data</th><th>Doador</th><th>Tipo</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Consolidado?</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div id="don-cards"></div>
+    </div>
+  `;
+  renderDonationsTable();
+}
+
+function filterDonations() {
+  donationsFilterType = document.getElementById('don-filter-type').value;
+  renderDonationsTable();
+}
+
+function renderDonationsTable() {
+  let list = donationsCache;
+  if (donationsFilterType) list = list.filter(d => d.type === donationsFilterType);
+
+  const tbody = document.querySelector('#don-table tbody');
+  const cards = document.getElementById('don-cards');
+  if (!tbody) return;
+
+  if (list.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-light);padding:20px">Nenhuma doação cadastrada.</td></tr>';
+    cards.innerHTML = '<div class="empty-state"><p>Nenhuma doação.</p></div>';
+    return;
+  }
+
+  tbody.innerHTML = list.map(d => `<tr>
+    <td>${d.date ? new Date(d.date).toLocaleDateString('pt-BR') : '—'}</td>
+    <td>${d.donor_name || 'Anônimo'}</td>
+    <td><span class="badge-sm ${d.type==='dinheiro'?'badge-success':'badge-info'}">${d.type==='dinheiro'?'💰 Dinheiro':'📦 Material'}</span></td>
+    <td>${d.description || '—'}</td>
+    <td>${d.category || '—'}</td>
+    <td style="font-weight:600;color:${d.type==='dinheiro'?'var(--success)':'var(--text-light)'}">${d.type==='dinheiro' ? 'R$ ' + (d.value || 0).toFixed(2) : '—'}</td>
+    <td>${d.consolidated ? '<span class="badge-sm badge-success">✅ Sim</span>' : '<span class="badge-sm badge-warning">Pendente</span>'}</td>
+    <td>
+      <button class="btn-icon" onclick="openDonationModal(${d.id})">✏️</button>
+      <button class="btn-icon" onclick="deleteDonation(${d.id})">🗑️</button>
+    </td>
+  </tr>`).join('');
+
+  cards.innerHTML = list.map(d => `<div class="budget-item-card ${d.type==='dinheiro'?'income':'material'}">
+    <div class="budget-item-top">
+      <span class="badge-sm ${d.type==='dinheiro'?'badge-success':'badge-info'}">${d.type==='dinheiro'?'💰 Dinheiro':'📦 Material'}</span>
+      ${d.type==='dinheiro' ? `<span style="font-weight:600;color:var(--success)">R$ ${(d.value||0).toFixed(2)}</span>` : ''}
+      ${d.consolidated ? '<span class="badge-sm badge-success">✅ Consolidado</span>' : ''}
+    </div>
+    <div style="font-weight:600;margin:4px 0">${d.donor_name || 'Anônimo'}</div>
+    <div style="font-size:11px;color:var(--text-light)">
+      📁 ${d.category || 'Geral'} · 📅 ${d.date ? new Date(d.date).toLocaleDateString('pt-BR') : '—'}
+      ${d.description ? ' · ' + d.description : ''}
+    </div>
+    <div class="budget-item-actions">
+      <button class="btn-icon" onclick="openDonationModal(${d.id})">✏️</button>
+      <button class="btn-icon" onclick="deleteDonation(${d.id})">🗑️</button>
+    </div>
+  </div>`).join('');
+}
+
+function openDonationModal(id) {
+  const d = id ? donationsCache.find(d => d.id === id) : null;
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay active';
+  overlay.innerHTML = `<div class="modal">
+    <h3>${d ? 'Editar Doação' : 'Nova Doação'}</h3>
+    <div class="form-row">
+      <div class="form-group"><label>Doador</label><input id="d-donor" value="${d ? (d.donor_name || '').replace(/"/g,'&quot;') : ''}"></div>
+      <div class="form-group"><label>Tipo</label><select id="d-type" onchange="toggleDonationFields()"><option value="dinheiro" ${d?.type==='dinheiro'?'selected':''}>💰 Dinheiro</option><option value="material" ${d?.type==='material'?'selected':''}>📦 Material</option></select></div>
+    </div>
+    <div class="form-group"><label>Descrição</label><input id="d-desc" value="${d ? (d.description || '').replace(/"/g,'&quot;') : ''}" placeholder="Ex: 50kg de arroz, doação para transporte..."></div>
+    <div class="form-row">
+      <div class="form-group"><label>Categoria</label><input id="d-cat" value="${d ? (d.category || '').replace(/"/g,'&quot;') : 'Geral'}"></div>
+      <div class="form-group"><label>Data</label><input id="d-date" type="date" value="${d?.date || ''}"></div>
+    </div>
+    <div class="form-group" id="d-value-group"><label>Valor (R$)</label><input id="d-value" type="number" step="0.01" value="${d?.value || ''}"></div>
+    <div class="form-group" id="d-consolidate-group">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+        <input type="checkbox" id="d-consolidate" ${d?.consolidated ? 'checked' : ''} ${d ? 'disabled' : ''}>
+        <span>Consolidar no Financeiro (criar receita automaticamente)</span>
+      </label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveDonation(${id || 'null'}, this)">${d ? 'Salvar' : 'Adicionar'}</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  toggleDonationFields();
+}
+
+function toggleDonationFields() {
+  const type = document.getElementById('d-type')?.value;
+  const valueGroup = document.getElementById('d-value-group');
+  const consolidateGroup = document.getElementById('d-consolidate-group');
+  if (type === 'material') {
+    if (valueGroup) valueGroup.style.display = 'none';
+    if (consolidateGroup) consolidateGroup.style.display = 'none';
+  } else {
+    if (valueGroup) valueGroup.style.display = '';
+    if (consolidateGroup) consolidateGroup.style.display = '';
+  }
+}
+
+async function saveDonation(id, btn) {
+  const type = val('d-type');
+  const data = {
+    donor_name: val('d-donor'),
+    type: type,
+    description: val('d-desc'),
+    category: val('d-cat'),
+    date: val('d-date'),
+    value: type === 'dinheiro' ? (parseFloat(val('d-value')) || 0) : 0,
+  };
+  if (id) {
+    await api(`/donations/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+    toast('Doação atualizada!', 'success');
+  } else {
+    data.consolidate_finance = type === 'dinheiro' && document.getElementById('d-consolidate')?.checked;
+    await api('/donations', { method: 'POST', body: JSON.stringify(data) });
+    toast('Doação cadastrada!', 'success');
+  }
+  btn.closest('.modal-overlay').remove();
+  renderDoacoes();
+}
+
+function deleteDonation(id) {
+  showConfirmDialog({
+    icon: '🗑️',
+    title: 'Excluir Doação',
+    message: 'Tem certeza que deseja excluir esta doação?',
+    confirmText: 'Sim, excluir',
+    cancelText: 'Cancelar',
+    onConfirm: async () => {
+      await api(`/donations/${id}`, { method: 'DELETE' });
+      toast('Doação excluída', 'error');
+      renderDoacoes();
+    }
+  });
 }

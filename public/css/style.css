@@ -2315,3 +2315,87 @@ select:focus, input:focus, textarea:focus { border-color: var(--primary); }
   .fin-events-grid { grid-template-columns: 1fr; }
   .fin-event-stats { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* BUDGET & DONATIONS */
+.budget-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.budget-summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: var(--bg);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.budget-summary-item span {
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.budget-summary-item strong {
+  font-size: 14px;
+}
+
+.budget-summary-item.total {
+  grid-column: 1 / -1;
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.budget-summary-item.total span {
+  color: rgba(255,255,255,0.9);
+  font-weight: 600;
+}
+
+.budget-summary-item.total strong {
+  color: #fff;
+  font-size: 18px;
+}
+
+.budget-item-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+.budget-item-card.income {
+  border-left: 3px solid var(--success);
+}
+
+.budget-item-card.material {
+  border-left: 3px solid var(--primary);
+}
+
+.budget-item-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.budget-item-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+  justify-content: flex-end;
+}
+
+.badge-info {
+  background: var(--primary);
+  color: #fff;
+}
+
+@media (max-width: 768px) {
+  .budget-summary-grid { grid-template-columns: 1fr; }
+  .budget-summary-item.total { grid-column: 1; }
+}

@@ -885,4 +885,137 @@ router.delete('/avisos/:id', (req, res) => {
   res.json({ success: true });
 });
 
+// ============ BUDGET (Orçamento do Encontro) ============
+
+router.get('/budget', (req, res) => {
+  let list = db.getAll('budget_items');
+  const { category, status } = req.query;
+  if (category) list = list.filter(b => b.category === category);
+  if (status) list = list.filter(b => b.status === status);
+  list.sort((a, b) => (a.category || '').localeCompare(b.category || '') || (a.item_name || '').localeCompare(b.item_name || ''));
+  res.json(list);
+});
+
+router.post('/budget', (req, res) => {
+  const { category, item_name, description, quantity, unit, estimated_unit_cost, actual_cost, status, supplier, notes } = req.body;
+  const id = db.insert('budget_items', {
+    category: category || 'Diversos',
+    item_name: item_name || '',
+    description: description || '',
+    quantity: parseFloat(quantity) || 0,
+    unit: unit || 'un',
+    estimated_unit_cost: parseFloat(estimated_unit_cost) || 0,
+    actual_cost: parseFloat(actual_cost) || 0,
+    status: status || 'orcado',
+    supplier: supplier || '',
+    notes: notes || ''
+  });
+  res.json({ id });
+});
+
+router.put('/budget/:id', (req, res) => {
+  db.update('budget_items', req.params.id, { ...req.body, updated_at: new Date().toISOString() });
+  res.json({ success: true });
+});
+
+router.delete('/budget/:id', (req, res) => {
+  db.remove('budget_items', req.params.id);
+  res.json({ success: true });
+});
+
+router.get('/budget/summary', (req, res) => {
+  const items = db.getAll('budget_items');
+  const donations = db.getAll('donations');
+  const finance = db.getAll('finance');
+
+  const totalEstimated = items.reduce((s, b) => s + ((b.quantity || 0) * (b.estimated_unit_cost || 0)), 0);
+  const totalActual = items.reduce((s, b) => s + (b.actual_cost || 0), 0);
+  const totalDonations = donations.filter(d => d.type === 'dinheiro').reduce((s, d) => s + (d.value || 0), 0);
+  const totalMaterialDonations = donations.filter(d => d.type === 'material').length;
+  const financeExpenses = finance.filter(f => f.type === 'despesa' && f.paid).reduce((s, f) => s + (f.amount || 0), 0);
+  const financeIncome = finance.filter(f => f.type === 'receita' && f.paid).reduce((s, f) => s + (f.amount || 0), 0);
+
+  const netBudget = totalEstimated - totalDonations - financeIncome;
+  const spentTotal = totalActual + financeExpenses;
+  const remaining = netBudget - spentTotal + totalDonations;
+
+  const byCategory = {};
+  for (const b of items) {
+    const cat = b.category || 'Outros';
+    if (!byCategory[cat]) byCategory[cat] = { estimated: 0, actual: 0, count: 0, done: 0 };
+    byCategory[cat].estimated += (b.quantity || 0) * (b.estimated_unit_cost || 0);
+    byCategory[cat].actual += b.actual_cost || 0;
+    byCategory[cat].count++;
+    if (b.status === 'comprado' || b.status === 'recebido') byCategory[cat].done++;
+  }
+
+  const statusCounts = {
+    orcado: items.filter(b => b.status === 'orcado').length,
+    comprado: items.filter(b => b.status === 'comprado').length,
+    recebido: items.filter(b => b.status === 'recebido').length,
+    cancelado: items.filter(b => b.status === 'cancelado').length,
+  };
+
+  res.json({
+    totalEstimated, totalActual, totalDonations, totalMaterialDonations,
+    financeExpenses, financeIncome,
+    netBudget, spentTotal, remaining,
+    byCategory, statusCounts,
+    itemCount: items.length, donationCount: donations.length
+  });
+});
+
+// ============ DONATIONS (Doações) ============
+
+router.get('/donations', (req, res) => {
+  let list = db.getAll('donations');
+  const { type } = req.query;
+  if (type) list = list.filter(d => d.type === type);
+  list.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+  res.json(list);
+});
+
+router.post('/donations', (req, res) => {
+  const { donor_name, type, description, value, date, category, linked_budget_item, consolidate_finance } = req.body;
+  const id = db.insert('donations', {
+    donor_name: donor_name || 'Anônimo',
+    type: type || 'dinheiro',
+    description: description || '',
+    value: parseFloat(value) || 0,
+    date: date || new Date().toISOString().slice(0, 10),
+    category: category || 'Geral',
+    linked_budget_item: linked_budget_item || null,
+    consolidated: false
+  });
+
+  if (consolidate_finance && type === 'dinheiro' && parseFloat(value) > 0) {
+    db.insert('finance', {
+      type: 'receita',
+      category: 'Doações',
+      description: `Doação - ${donor_name || 'Anônimo'}${description ? ' (' + description + ')' : ''}`,
+      amount: parseFloat(value) || 0,
+      date: date || new Date().toISOString().slice(0, 10),
+      paid: true,
+      responsible: 'Sistema (Doação)'
+    });
+    db.update('donations', id, { consolidated: true });
+  }
+
+  if (linked_budget_item && type === 'material') {
+    db.update('budget_items', linked_budget_item, { status: 'recebido', actual_cost: 0 });
+  }
+
+  res.json({ id });
+});
+
+router.put('/donations/:id', (req, res) => {
+  db.update('donations', req.params.id, { ...req.body, updated_at: new Date().toISOString() });
+  res.json({ success: true });
+});
+
+router.delete('/donations/:id', (req, res) => {
+  db.remove('donations', req.params.id);
+  res.json({ success: true });
+});
+
 module.exports = router;

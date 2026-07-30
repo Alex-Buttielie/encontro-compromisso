@@ -1,5 +1,22 @@
 [
   {
+    "version": "1.22.0",
+    "date": "2026-07-30",
+    "title": "Orçamento e Doações",
+    "changes": [
+      "Módulo de Orçamento do Encontro — cadastre itens por categoria (alimentação, limpeza, decoração, materiais, logística, etc.)",
+      "Cada item tem quantidade, unidade, custo unitário estimado, custo real, fornecedor e status (orçado/comprado/recebido/cancelado)",
+      "Resumo financeiro consolidado — orçamento total, doações em dinheiro, receitas do financeiro, orçamento líquido, gasto real e saldo restante",
+      "Filtros por categoria e status na tabela de orçamento",
+      "Módulo de Doações — cadastre doações em dinheiro ou materiais",
+      "Consolidação automática: doações em dinheiro podem criar receita no Financeiro com checkbox",
+      "Doações de materiais podem ser vinculadas a itens do orçamento (status recebido)",
+      "Impacto das doações no orçamento exibido em tempo real",
+      "Cards de estatísticas em ambos os módulos",
+      "Seed inicial com 19 itens de orçamento e 3 doações de exemplo"
+    ]
+  },
+  {
     "version": "1.21.0",
     "date": "2026-07-30",
     "title": "Equipes Interativas",
