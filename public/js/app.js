@@ -152,35 +152,23 @@ function renderPage() {
 }
 
 // ============ DASHBOARD ============
+let dashboardCharts = {};
+let dashboardInterval = null;
+let dashboardPhase = 'all';
+
 async function renderDashboard() {
   const stats = await api('/stats');
   const enc = await api('/encounter');
   const fin = await api('/finance/summary');
   const participants = await api('/participants');
   const lembrancinhas = await api('/lembrancinhas');
+  const autoLembretes = await api('/lembretes/auto').catch(() => []);
   const pct = stats.total > 0 ? Math.round((stats.done / stats.total) * 100) : 0;
   const main = document.getElementById('main-content');
 
-  let countdownHTML = '';
-  if (enc && enc.start_date) {
-    const target = new Date(enc.start_date + 'T00:00:00');
-    const now = new Date();
-    const diff = target - now;
-    if (diff > 0) {
-      const days = Math.floor(diff / 86400000);
-      const hours = Math.floor((diff % 86400000) / 3600000);
-      const mins = Math.floor((diff % 3600000) / 60000);
-      countdownHTML = `<div class="card countdown-card" style="text-align:center;background:linear-gradient(135deg,rgba(192,57,43,0.05),rgba(212,160,23,0.05));border:1px solid rgba(192,57,43,0.15)">
-        <div class="card-title" style="border:none;text-align:center">⏰ Contagem Regressiva</div>
-        <div class="countdown">
-          <div class="countdown-unit"><div class="countdown-number">${days}</div><div class="countdown-label">Dias</div></div>
-          <div class="countdown-unit"><div class="countdown-number">${hours}</div><div class="countdown-label">Horas</div></div>
-          <div class="countdown-unit"><div class="countdown-number">${mins}</div><div class="countdown-label">Min</div></div>
-        </div>
-        <p style="color:var(--text-light);font-size:13px;margin-top:8px">${enc.name || 'Encontro Compromisso Trin'} — ${new Date(enc.start_date).toLocaleDateString('pt-BR')}</p>
-      </div>`;
-    }
-  }
+  if (dashboardInterval) { clearInterval(dashboardInterval); dashboardInterval = null; }
+  Object.values(dashboardCharts).forEach(c => { if (c && c.destroy) c.destroy(); });
+  dashboardCharts = {};
 
   const paidCount = participants.filter(p => p.paid).length;
   const lemDone = lembrancinhas.filter(l => l.status === 'pronto').length;
@@ -188,22 +176,44 @@ async function renderDashboard() {
   const prePct = stats.preTotal > 0 ? Math.round((stats.preDone / stats.preTotal) * 100) : 0;
   const duringPct = stats.duringTotal > 0 ? Math.round((stats.duringDone / stats.duringTotal) * 100) : 0;
 
+  const urgentLembretes = (autoLembretes || []).filter(l => l.urgency === 'overdue' || l.urgency === 'urgent').slice(0, 5);
+
   main.innerHTML = `
     <h1 class="page-title">Dashboard</h1>
     <p class="page-subtitle">Visão geral da preparação do Encontro Compromisso Trin</p>
-    ${countdownHTML}
+
+    <div id="countdown-container"></div>
+
+    <div class="dashboard-tabs">
+      <button class="dashboard-tab ${dashboardPhase==='all'?'active':''}" onclick="switchDashboardPhase('all')">Geral</button>
+      <button class="dashboard-tab ${dashboardPhase==='pre'?'active':''}" onclick="switchDashboardPhase('pre')">Pré-Encontro</button>
+      <button class="dashboard-tab ${dashboardPhase==='during'?'active':''}" onclick="switchDashboardPhase('during')">Durante</button>
+    </div>
+
     <div class="stats-grid">
-      <div class="stat-card"><div class="stat-icon total">📋</div><div class="stat-info"><h3>${stats.total}</h3><p>Total de Tarefas</p></div></div>
-      <div class="stat-card"><div class="stat-icon done">✅</div><div class="stat-info"><h3>${stats.done}</h3><p>Concluídas</p></div></div>
-      <div class="stat-card"><div class="stat-icon progress">⏳</div><div class="stat-info"><h3>${stats.inProgress}</h3><p>Em Andamento</p></div></div>
-      <div class="stat-card"><div class="stat-icon pending">⭕</div><div class="stat-info"><h3>${stats.pending}</h3><p>Pendentes</p></div></div>
+      <div class="stat-card clickable" onclick="navigateTo('checklist')"><div class="stat-icon total">📋</div><div class="stat-info"><h3 id="dash-total">${stats.total}</h3><p>Total de Tarefas</p></div></div>
+      <div class="stat-card clickable" onclick="navigateTo('checklist')"><div class="stat-icon done">✅</div><div class="stat-info"><h3 id="dash-done">${stats.done}</h3><p>Concluídas</p></div></div>
+      <div class="stat-card clickable" onclick="navigateTo('checklist')"><div class="stat-icon progress">⏳</div><div class="stat-info"><h3 id="dash-progress">${stats.inProgress}</h3><p>Em Andamento</p></div></div>
+      <div class="stat-card clickable" onclick="navigateTo('checklist')"><div class="stat-icon pending">⭕</div><div class="stat-info"><h3 id="dash-pending">${stats.pending}</h3><p>Pendentes</p></div></div>
     </div>
     <div class="stats-grid">
-      <div class="stat-card"><div class="stat-icon total">👥</div><div class="stat-info"><h3>${participants.length}</h3><p>Matérias-primas (${paidCount} pagas)</p></div></div>
-      <div class="stat-card"><div class="stat-icon done">💰</div><div class="stat-info"><h3>R$ ${fin.balance.toFixed(0)}</h3><p>Saldo Atual</p></div></div>
-      <div class="stat-card"><div class="stat-icon progress">🎁</div><div class="stat-info"><h3>${lemDone}/${lemTotal}</h3><p>Lembrancinhas Prontas</p></div></div>
-      <div class="stat-card"><div class="stat-icon pending">📅</div><div class="stat-info"><h3>${enc.start_date ? new Date(enc.start_date).toLocaleDateString('pt-BR') : '—'}</h3><p>Data do Encontro</p></div></div>
+      <div class="stat-card clickable" onclick="navigateTo('inscritos')"><div class="stat-icon total">👥</div><div class="stat-info"><h3>${participants.length}</h3><p>Matérias-primas (${paidCount} pagas)</p></div></div>
+      <div class="stat-card clickable" onclick="navigateTo('financeiro')"><div class="stat-icon done">💰</div><div class="stat-info"><h3>R$ ${fin.balance.toFixed(0)}</h3><p>Saldo Atual</p></div></div>
+      <div class="stat-card clickable" onclick="navigateTo('lembrancinhas')"><div class="stat-icon progress">🎁</div><div class="stat-info"><h3>${lemDone}/${lemTotal}</h3><p>Lembrancinhas Prontas</p></div></div>
+      <div class="stat-card clickable" onclick="navigateTo('encontro')"><div class="stat-icon pending">📅</div><div class="stat-info"><h3>${enc.start_date ? new Date(enc.start_date).toLocaleDateString('pt-BR') : '—'}</h3><p>Data do Encontro</p></div></div>
     </div>
+
+    <div class="dashboard-charts">
+      <div class="card chart-card">
+        <div class="card-title">📊 Status das Tarefas</div>
+        <canvas id="chart-status" height="200"></canvas>
+      </div>
+      <div class="card chart-card">
+        <div class="card-title">📈 Progresso por Equipe</div>
+        <canvas id="chart-teams" height="200"></canvas>
+      </div>
+    </div>
+
     <div class="card">
       <div class="card-title">Progresso por Fase</div>
       <div class="progress-container">
@@ -215,6 +225,7 @@ async function renderDashboard() {
         <div class="progress-bar"><div class="progress-fill ${duringPct >= 75 ? '' : duringPct >= 40 ? 'warn' : 'danger'}" style="width:${duringPct}%"></div></div>
       </div>
     </div>
+
     <div class="card">
       <div class="card-title">Progresso Geral</div>
       <div class="progress-container">
@@ -222,30 +233,176 @@ async function renderDashboard() {
         <div class="progress-bar"><div class="progress-fill ${pct >= 75 ? '' : pct >= 40 ? 'warn' : 'danger'}" style="width:${pct}%"></div></div>
       </div>
     </div>
-    <div class="card">
-      <div class="card-title">Progresso por Categoria</div>
-      ${stats.byCategory.map(c => {
-        const cp = c.total > 0 ? Math.round((c.done / c.total) * 100) : 0;
-        const cls = cp >= 75 ? '' : cp >= 40 ? 'warn' : 'danger';
-        return `<div class="progress-container">
-          <div class="progress-label"><span>${c.category}</span><span>${c.done}/${c.total} (${cp}%)</span></div>
-          <div class="progress-bar"><div class="progress-fill ${cls}" style="width:${cp}%"></div></div>
-        </div>`;
-      }).join('')}
+
+    <div class="dashboard-charts">
+      <div class="card chart-card">
+        <div class="card-title">📁 Progresso por Categoria</div>
+        <canvas id="chart-categories" height="200"></canvas>
+      </div>
+      <div class="card chart-card">
+        <div class="card-title">⚡ Prioridades</div>
+        <canvas id="chart-priority" height="200"></canvas>
+      </div>
     </div>
+
+    ${urgentLembretes.length > 0 ? `
     <div class="card">
-      <div class="card-title">Progresso por Equipe</div>
-      ${stats.byTeam.map(t => {
-        const tp = t.total > 0 ? Math.round((t.done / t.total) * 100) : 0;
-        const cls = tp >= 75 ? '' : tp >= 40 ? 'warn' : 'danger';
-        return `<div class="progress-container">
-          <div class="progress-label"><span>${t.team || 'N/A'}</span><span>${t.done}/${t.total} (${tp}%)</span></div>
-          <div class="progress-bar"><div class="progress-fill ${cls}" style="width:${tp}%"></div></div>
-        </div>`;
-      }).join('')}
-    </div>
+      <div class="card-title">🚨 Tarefas Urgentes</div>
+      <div id="dash-urgent">
+        ${urgentLembretes.map(l => `<div class="lembrete-card ${l.urgency}" style="cursor:pointer" onclick="openAutoLembreteDetails(${l.task_id})">
+          <div class="lembrete-icon">${l.urgency === 'overdue' ? '🚨' : '⚠️'}</div>
+          <div class="lembrete-info">
+            <div class="lembrete-title">${l.title}</div>
+            <div class="lembrete-meta">${l.category} — ${l.responsible_team || 'N/A'}</div>
+            <div class="lembrete-due ${l.urgency}">${l.diff_days < 0 ? Math.abs(l.diff_days) + ' dias atrasado' : 'Vence em ' + l.diff_days + ' dias'}</div>
+          </div>
+        </div>`).join('')}
+      </div>
+      <div style="margin-top:12px;text-align:right">
+        <button class="btn btn-secondary" onclick="navigateTo('lembretes')">Ver todos os lembretes →</button>
+      </div>
+    </div>` : ''}
   `;
+
+  renderCountdown(enc);
+  renderDashboardCharts(stats);
   updateSidebarProgress(pct);
+
+  dashboardInterval = setInterval(() => renderCountdown(enc), 60000);
+}
+
+function switchDashboardPhase(phase) {
+  dashboardPhase = phase;
+  renderDashboard();
+}
+
+function renderCountdown(enc) {
+  const container = document.getElementById('countdown-container');
+  if (!container || !enc || !enc.start_date) { if (container) container.innerHTML = ''; return; }
+  const target = new Date(enc.start_date + 'T00:00:00');
+  const now = new Date();
+  const diff = target - now;
+  if (diff <= 0) { container.innerHTML = ''; return; }
+  const days = Math.floor(diff / 86400000);
+  const hours = Math.floor((diff % 86400000) / 3600000);
+  const mins = Math.floor((diff % 3600000) / 60000);
+  const secs = Math.floor((diff % 60000) / 1000);
+  container.innerHTML = `<div class="card countdown-card" style="text-align:center;background:linear-gradient(135deg,rgba(192,57,43,0.05),rgba(212,160,23,0.05));border:1px solid rgba(192,57,43,0.15)">
+    <div class="card-title" style="border:none;text-align:center">⏰ Contagem Regressiva</div>
+    <div class="countdown">
+      <div class="countdown-unit"><div class="countdown-number">${days}</div><div class="countdown-label">Dias</div></div>
+      <div class="countdown-unit"><div class="countdown-number">${hours}</div><div class="countdown-label">Horas</div></div>
+      <div class="countdown-unit"><div class="countdown-number">${mins}</div><div class="countdown-label">Min</div></div>
+      <div class="countdown-unit"><div class="countdown-number">${secs}</div><div class="countdown-label">Seg</div></div>
+    </div>
+    <p style="color:var(--text-light);font-size:13px;margin-top:8px">${enc.name || 'Encontro Compromisso Trin'} — ${new Date(enc.start_date).toLocaleDateString('pt-BR')}</p>
+  </div>`;
+}
+
+function renderDashboardCharts(stats) {
+  const phaseFilter = dashboardPhase === 'pre' ? 'pre' : dashboardPhase === 'during' ? 'during' : null;
+
+  let byCategory = stats.byCategory;
+  let byTeam = stats.byTeam;
+  let byPriority = stats.byPriority;
+  let total = stats.total, done = stats.done, inProgress = stats.inProgress, pending = stats.pending;
+
+  if (phaseFilter) {
+    const tasks = tasksCache.length > 0 ? tasksCache : null;
+    if (tasks) {
+      const filtered = tasks.filter(t => (t.phase || 'pre') === phaseFilter);
+      total = filtered.length;
+      done = filtered.filter(t => t.status === 'concluido').length;
+      inProgress = filtered.filter(t => t.status === 'em_andamento').length;
+      pending = filtered.filter(t => t.status === 'pendente').length;
+    }
+  }
+
+  const statusEl = document.getElementById('chart-status');
+  if (statusEl) {
+    dashboardCharts.status = new Chart(statusEl, {
+      type: 'doughnut',
+      data: {
+        labels: ['Concluídas', 'Em Andamento', 'Pendentes'],
+        datasets: [{
+          data: [done, inProgress, pending],
+          backgroundColor: ['#27ae60', '#f39c12', '#e74c3c'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { padding: 12, font: { size: 12 } } } }
+      }
+    });
+  }
+
+  const teamsEl = document.getElementById('chart-teams');
+  if (teamsEl && byTeam.length > 0) {
+    dashboardCharts.teams = new Chart(teamsEl, {
+      type: 'bar',
+      data: {
+        labels: byTeam.map(t => t.team),
+        datasets: [
+          { label: 'Concluídas', data: byTeam.map(t => t.done), backgroundColor: '#27ae60' },
+          { label: 'Pendentes', data: byTeam.map(t => t.total - t.done), backgroundColor: '#e74c3c' }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: { legend: { position: 'bottom' } },
+        scales: { x: { stacked: true, beginAtZero: true }, y: { stacked: true } }
+      }
+    });
+  }
+
+  const catEl = document.getElementById('chart-categories');
+  if (catEl && byCategory.length > 0) {
+    dashboardCharts.categories = new Chart(catEl, {
+      type: 'bar',
+      data: {
+        labels: byCategory.map(c => c.category.length > 20 ? c.category.substring(0, 18) + '…' : c.category),
+        datasets: [{
+          label: 'Concluídas',
+          data: byCategory.map(c => c.done),
+          backgroundColor: '#27ae60'
+        }, {
+          label: 'Total',
+          data: byCategory.map(c => c.total),
+          backgroundColor: 'rgba(52,152,219,0.3)'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' } },
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+  }
+
+  const priEl = document.getElementById('chart-priority');
+  if (priEl && byPriority.length > 0) {
+    dashboardCharts.priority = new Chart(priEl, {
+      type: 'doughnut',
+      data: {
+        labels: byPriority.map(p => p.priority === 'alta' ? 'Alta' : p.priority === 'media' ? 'Média' : 'Baixa'),
+        datasets: [{
+          data: byPriority.map(p => p.total),
+          backgroundColor: ['#e74c3c', '#f39c12', '#3498db'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { padding: 12, font: { size: 12 } } } }
+      }
+    });
+  }
 }
 
 // ============ CHECKLIST ============

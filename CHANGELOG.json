@@ -1,5 +1,18 @@
 [
   {
+    "version": "1.19.0",
+    "date": "2026-07-30",
+    "title": "Dashboard Interativo",
+    "changes": [
+      "Gráficos Chart.js no dashboard — pizza de status, barras por equipe, barras por categoria, pizza de prioridades",
+      "Cards de estatística clicáveis — navegam direto para a tela correspondente",
+      "Contagem regressiva ao vivo com segundos — atualiza a cada minuto",
+      "Filtros por fase — Geral, Pré-Encontro e Durante o Encontro",
+      "Lista de tarefas urgentes com acesso rápido aos detalhes",
+      "Gráficos responsivos que se adaptam a mobile"
+    ]
+  },
+  {
     "version": "1.18.0",
     "date": "2026-07-30",
     "title": "Dialog de Confirmação Aprimorado",
