@@ -264,8 +264,8 @@ function generateFullReport() {
       zebraRow(doc, y, 24);
       doc.fillColor(COLORS.primary).fontSize(10).font('Helvetica-Bold').text(s.time || '-', 55, y + 4, { width: 55 });
       doc.fillColor(COLORS.dark).font('Helvetica').fontSize(9).text(s.activity || '', 115, y + 4, { width: 270 });
-      doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica').text(s.location || '', 400, y + 4, { width: 80 });
-      doc.fillColor(COLORS.secondary).fontSize(8).font('Helvetica-Bold').text(s.responsible_team || '', 400, y + 15, { width: 80 });
+      doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica').text(s.location || '', 400, y + 4, { width: 70 });
+      doc.fillColor(COLORS.secondary).fontSize(8).font('Helvetica-Bold').text(s.responsible_team || '', 400, y + 15, { width: 70 });
       statusBadge(doc, s.status, 480, y + 3);
       y += 24;
     }
@@ -372,7 +372,6 @@ function generateFullReport() {
           doc.fontSize(9).font('Helvetica').fillColor(COLORS.gray).text(t.description, 68, y, { width: 390 });
           y += Math.ceil(doc.widthOfString(t.description, { width: 390 }) / 390) * 12 + 4;
         }
-        doc.fillColor(COLORS.secondary).fontSize(8).font('Helvetica-Bold').text(t.responsible_team || '-', 470, y - 14, { width: 90 });
         statusBadge(doc, t.status, 470, y - 14);
         y += 18;
       }
@@ -688,8 +687,8 @@ function generateScheduleReport() {
       zebraRow(doc, y, 26);
       doc.fillColor(COLORS.primary).fontSize(10).font('Helvetica-Bold').text(s.time || '-', 55, y + 4, { width: 55 });
       doc.fillColor(COLORS.dark).font('Helvetica').fontSize(9).text(s.activity || '', 115, y + 4, { width: 270 });
-      doc.fillColor(COLORS.gray).fontSize(8).text(s.location || '', 400, y + 4, { width: 100 });
-      doc.fillColor(COLORS.secondary).fontSize(8).font('Helvetica-Bold').text(s.responsible_team || '', 400, y + 15, { width: 100 });
+      doc.fillColor(COLORS.gray).fontSize(8).text(s.location || '', 400, y + 4, { width: 70 });
+      doc.fillColor(COLORS.secondary).fontSize(8).font('Helvetica-Bold').text(s.responsible_team || '', 400, y + 15, { width: 70 });
       statusBadge(doc, s.status, 480, y + 3);
       y += 26;
     }
@@ -1078,14 +1077,14 @@ function generateFornecedoresReport() {
       zebraRow(doc, y, 54);
       doc.fillColor(COLORS.dark).fontSize(11).font('Helvetica-Bold').text(f.name || 'Sem nome', 55, y + 2);
       y += 14;
-      doc.fillColor(COLORS.gray).fontSize(9).font('Helvetica').text(`Servico: ${f.service || '-'}`, 65, y, { width: 440 });
+      doc.fillColor(COLORS.gray).fontSize(9).font('Helvetica').text(`Servico: ${f.service || '-'}`, 65, y, { width: 400 });
       y += 12;
       const contacts = [];
       if (f.contact_person) contacts.push(`Contato: ${f.contact_person}`);
       if (f.phone) contacts.push(`Tel: ${f.phone}`);
       if (f.whatsapp) contacts.push(`WhatsApp: ${f.whatsapp}`);
       if (f.email) contacts.push(`Email: ${f.email}`);
-      if (contacts.length) { doc.text(`  ${contacts.join(' | ')}`, 65, y, { width: 440 }); y += 12; }
+      if (contacts.length) { doc.text(`  ${contacts.join(' | ')}`, 65, y, { width: 400 }); y += 12; }
       if (f.estimated_cost || f.actual_cost) {
         doc.fillColor(COLORS.secondary).font('Helvetica-Bold').text(`Estimado: ${fmtMoney(f.estimated_cost)} | Real: ${fmtMoney(f.actual_cost)}`, 65, y, { width: 300 });
         y += 12;
@@ -1094,7 +1093,7 @@ function generateFornecedoresReport() {
       const stLabels = { contratado: 'Contratado', pendente: 'Pendente', contatado: 'Contatado', cancelado: 'Cancelado' };
       doc.fillColor(stColors[f.status] || COLORS.gray).roundedRect(470, y - 12, 82, 15, 4).fill();
       doc.fillColor('#fff').fontSize(7).font('Helvetica-Bold').text(stLabels[f.status] || f.status, 470, y - 10, { width: 82, align: 'center' });
-      if (f.notes) { doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica-Oblique').text(`Obs: ${f.notes}`, 65, y, { width: 440 }); y += 12; }
+      if (f.notes) { doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica-Oblique').text(`Obs: ${f.notes}`, 65, y, { width: 400 }); y += 12; }
       y += 10;
     }
     y += 10;
@@ -1117,12 +1116,12 @@ function generateFornecedoresReport() {
       if (f.phone) details.push(`Tel: ${f.phone}`);
       if (f.whatsapp) details.push(`WhatsApp: ${f.whatsapp}`);
       if (f.email) details.push(`Email: ${f.email}`);
-      if (details.length) { doc.fillColor(COLORS.gray).fontSize(9).font('Helvetica').text(details.join(' | '), 65, y, { width: 440 }); y += 12; }
+      if (details.length) { doc.fillColor(COLORS.gray).fontSize(9).font('Helvetica').text(details.join(' | '), 65, y, { width: 400 }); y += 12; }
       const stColors = { contratado: COLORS.green, pendente: COLORS.orange, contatado: COLORS.secondary, cancelado: COLORS.red };
       const stLabels = { contratado: 'Confirmado', pendente: 'Pendente', contatado: 'Contatado', cancelado: 'Cancelado' };
       doc.fillColor(stColors[f.status] || COLORS.gray).roundedRect(470, y - 12, 82, 15, 4).fill();
       doc.fillColor('#fff').fontSize(7).font('Helvetica-Bold').text(stLabels[f.status] || f.status, 470, y - 10, { width: 82, align: 'center' });
-      if (f.notes) { doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica-Oblique').text(`Obs: ${f.notes}`, 65, y, { width: 440 }); y += 12; }
+      if (f.notes) { doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica-Oblique').text(`Obs: ${f.notes}`, 65, y, { width: 400 }); y += 12; }
       y += 10;
     }
   }
@@ -1158,12 +1157,14 @@ function generateAvisosReport() {
     for (const a of items) {
       if (y > PAGE_BOTTOM - 60) { doc.addPage(); y = 50; }
       const pColors = { alta: COLORS.red, media: COLORS.orange, baixa: COLORS.secondary };
-      zebraRow(doc, y, 76);
-      doc.fillColor(pColors[a.priority] || COLORS.gray).rect(50, y, 4, 66).fill();
+      const contentLines = Math.ceil(doc.widthOfString(a.content || '', { width: 480 }) / 480);
+      const rowH = 18 + contentLines * 13 + 10 + 20 + 14;
+      zebraRow(doc, y, rowH);
+      doc.fillColor(pColors[a.priority] || COLORS.gray).rect(50, y, 4, rowH - 10).fill();
       doc.fillColor(COLORS.dark).fontSize(13).font('Helvetica-Bold').text(`${a.pinned ? '- ' : ''}${a.title}`, 60, y + 2);
       y += 18;
       doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica').text(a.content || '', 60, y, { width: 480 });
-      y += Math.ceil(doc.widthOfString(a.content || '', { width: 480 }) / 480) * 13 + 10;
+      y += contentLines * 13 + 10;
       doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica').text(`Autor: ${a.author || '-'}  |  Publico: ${targetLabels[a.target] || a.target}  |  Prioridade: ${priorityLabels[a.priority] || a.priority}  |  ${a.created_at ? new Date(a.created_at).toLocaleDateString('pt-BR') : ''}`, 60, y, { width: 480 });
       y += 20;
       y = infoDivider(doc, y);
@@ -1351,8 +1352,8 @@ function generateCoordinatorGuideReport() {
       zebraRow(doc, y, 26);
       doc.fillColor(COLORS.primary).fontSize(10).font('Helvetica-Bold').text(s.time || '-', 55, y + 4, { width: 55 });
       doc.fillColor(COLORS.dark).font('Helvetica').fontSize(9).text(s.activity || '', 115, y + 4, { width: 270 });
-      doc.fillColor(COLORS.gray).fontSize(8).text(s.location || '', 400, y + 4, { width: 100 });
-      doc.fillColor(COLORS.secondary).fontSize(8).font('Helvetica-Bold').text(s.responsible_team || '', 400, y + 15, { width: 100 });
+      doc.fillColor(COLORS.gray).fontSize(8).text(s.location || '', 400, y + 4, { width: 70 });
+      doc.fillColor(COLORS.secondary).fontSize(8).font('Helvetica-Bold').text(s.responsible_team || '', 400, y + 15, { width: 70 });
       statusBadge(doc, s.status, 480, y + 3);
       y += 26;
     }
@@ -1557,12 +1558,14 @@ function generateCoordinatorGuideReport() {
     for (const a of avisos) {
       if (y > PAGE_BOTTOM - 60) { doc.addPage(); y = 50; }
       const pColors = { alta: COLORS.red, media: COLORS.orange, baixa: COLORS.secondary };
-      zebraRow(doc, y, 66);
-      doc.fillColor(pColors[a.priority] || COLORS.gray).rect(50, y, 4, 56).fill();
+      const contentLines = Math.ceil(doc.widthOfString(a.content || '', { width: 480 }) / 480);
+      const rowH = 18 + contentLines * 13 + 8 + 18 + 12;
+      zebraRow(doc, y, rowH);
+      doc.fillColor(pColors[a.priority] || COLORS.gray).rect(50, y, 4, rowH - 10).fill();
       doc.fillColor(COLORS.dark).fontSize(13).font('Helvetica-Bold').text(`${a.pinned ? '- ' : ''}${a.title}`, 60, y + 2);
       y += 18;
       doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica').text(a.content || '', 60, y, { width: 480 });
-      y += Math.ceil(doc.widthOfString(a.content || '', { width: 480 }) / 480) * 13 + 8;
+      y += contentLines * 13 + 8;
       doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica').text(`Publico: ${targetLabels[a.target] || a.target}  |  Prioridade: ${priorityLabels[a.priority] || a.priority}  |  ${a.created_at ? new Date(a.created_at).toLocaleDateString('pt-BR') : ''}`, 60, y, { width: 480 });
       y += 18;
       y = infoDivider(doc, y);
@@ -2014,21 +2017,21 @@ function generatePreparationReport() {
 
   const allForn = db.getAll('fornecedores').sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   y = tableHeader(doc, [
-    { label: 'Nome', x: 54, w: 150 },
-    { label: 'Categoria', x: 210, w: 100 },
-    { label: 'Contato', x: 320, w: 100 },
-    { label: 'Telefone', x: 430, w: 80 },
-    { label: 'Status', x: 520, w: 40 },
+    { label: 'Nome', x: 54, w: 140 },
+    { label: 'Categoria', x: 198, w: 90 },
+    { label: 'Contato', x: 292, w: 95 },
+    { label: 'Telefone', x: 392, w: 65 },
+    { label: 'Status', x: 462, w: 98 },
   ], y);
   for (const f of allForn) {
     if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
     zebraRow(doc, y, 16);
-    doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(f.name || '-', 56, y + 3, { width: 150 });
-    doc.fillColor(COLORS.gray).text(f.category || '-', 210, y + 3, { width: 100 });
-    doc.text(f.contact_person || '-', 320, y + 3, { width: 100 });
-    doc.text(f.phone || f.whatsapp || '-', 430, y + 3, { width: 80 });
+    doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(f.name || '-', 56, y + 3, { width: 140 });
+    doc.fillColor(COLORS.gray).text(f.category || '-', 198, y + 3, { width: 90 });
+    doc.text(f.contact_person || '-', 292, y + 3, { width: 95 });
+    doc.text(f.phone || f.whatsapp || '-', 392, y + 3, { width: 65 });
     const stColor = f.status === 'confirmado' ? COLORS.green : f.status === 'em_negociacao' ? COLORS.orange : COLORS.gray;
-    doc.fillColor(stColor).font('Helvetica-Bold').text(f.status || '-', 520, y + 3, { width: 40 });
+    doc.fillColor(stColor).font('Helvetica-Bold').fontSize(8).text(f.status || '-', 462, y + 3, { width: 98 });
     y += 16;
   }
 
@@ -2055,24 +2058,24 @@ function generatePreparationReport() {
     doc.fillColor(COLORS.gray).fontSize(11).font('Helvetica-Oblique').text('Nenhuma escolinha cadastrada.', 55, y);
   } else {
     y = tableHeader(doc, [
-      { label: 'Data', x: 54, w: 70 },
-      { label: 'Hora', x: 130, w: 45 },
-      { label: 'Nome', x: 180, w: 170 },
-      { label: 'Local', x: 355, w: 85 },
-      { label: 'Publico', x: 445, w: 80 },
-      { label: 'Status', x: 530, w: 30, align: 'right' },
+      { label: 'Data', x: 54, w: 65 },
+      { label: 'Hora', x: 123, w: 40 },
+      { label: 'Nome', x: 168, w: 155 },
+      { label: 'Local', x: 328, w: 75 },
+      { label: 'Publico', x: 408, w: 70 },
+      { label: 'Status', x: 483, w: 77, align: 'right' },
     ], y);
     for (const e of allEsc) {
       if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
       zebraRow(doc, y, 22);
       const dt = e.date ? new Date(e.date + 'T00:00:00').toLocaleDateString('pt-BR') : 'A definir';
-      doc.fillColor(COLORS.primary).fontSize(9).font('Helvetica-Bold').text(dt, 56, y + 4, { width: 70 });
-      doc.fillColor(COLORS.dark).font('Helvetica').text(e.time || '-', 130, y + 4, { width: 45 });
-      doc.font('Helvetica-Bold').text(e.name || '-', 180, y + 4, { width: 170 });
-      doc.font('Helvetica').fillColor(COLORS.gray).text(e.location || '-', 355, y + 4, { width: 85 });
-      doc.fillColor(COLORS.secondary).fontSize(8).font('Helvetica-Oblique').text(e.target_audience || '-', 445, y + 4, { width: 80 });
+      doc.fillColor(COLORS.primary).fontSize(9).font('Helvetica-Bold').text(dt, 56, y + 4, { width: 65 });
+      doc.fillColor(COLORS.dark).font('Helvetica').text(e.time || '-', 123, y + 4, { width: 40 });
+      doc.font('Helvetica-Bold').text(e.name || '-', 168, y + 4, { width: 155 });
+      doc.font('Helvetica').fillColor(COLORS.gray).text(e.location || '-', 328, y + 4, { width: 75 });
+      doc.fillColor(COLORS.secondary).fontSize(8).font('Helvetica-Oblique').text(e.target_audience || '-', 408, y + 4, { width: 70 });
       const stColor = e.status === 'concluida' || e.status === 'concluido' ? COLORS.green : e.status === 'em_andamento' ? COLORS.orange : COLORS.gray;
-      doc.fillColor(stColor).font('Helvetica-Bold').fontSize(8).text(e.status || '-', 530, y + 4, { width: 30, align: 'right' });
+      doc.fillColor(stColor).font('Helvetica-Bold').fontSize(7).text(e.status || '-', 483, y + 4, { width: 77, align: 'right' });
       y += 22;
       if (e.description) {
         doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica-Oblique').text(e.description, 180, y, { width: 380 });
@@ -2373,23 +2376,23 @@ function generateLembretesReport() {
       y += 16;
 
       y = tableHeader(doc, [
-        { label: 'Titulo', x: 54, w: 180 },
-        { label: 'Descricao', x: 240, w: 160 },
-        { label: 'Prazo', x: 405, w: 65 },
-        { label: 'Prioridade', x: 475, w: 60 },
-        { label: 'Status', x: 540, w: 50, align: 'right' },
+        { label: 'Titulo', x: 54, w: 170 },
+        { label: 'Descricao', x: 228, w: 150 },
+        { label: 'Prazo', x: 383, w: 65 },
+        { label: 'Prioridade', x: 453, w: 55 },
+        { label: 'Status', x: 513, w: 47, align: 'right' },
       ], y);
 
       for (const l of catItems) {
         if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
         zebraRow(doc, y, 20);
-        doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica-Bold').text(l.title || '-', 56, y + 4, { width: 180 });
-        doc.fillColor(COLORS.gray).font('Helvetica').text(l.description || '-', 240, y + 4, { width: 160 });
-        doc.fillColor(COLORS.dark).font('Helvetica').text(l.due_date ? fmtDate(l.due_date) : '-', 405, y + 4, { width: 65 });
+        doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica-Bold').text(l.title || '-', 56, y + 4, { width: 170 });
+        doc.fillColor(COLORS.gray).font('Helvetica').text(l.description || '-', 228, y + 4, { width: 150 });
+        doc.fillColor(COLORS.dark).font('Helvetica').text(l.due_date ? fmtDate(l.due_date) : '-', 383, y + 4, { width: 65 });
         const pColor = l.priority === 'alta' ? COLORS.red : l.priority === 'media' ? COLORS.orange : COLORS.gray;
-        doc.fillColor(pColor).font('Helvetica-Bold').text(priorityLabel(l.priority), 475, y + 4, { width: 60 });
+        doc.fillColor(pColor).font('Helvetica-Bold').text(priorityLabel(l.priority), 453, y + 4, { width: 55 });
         const sColor = l.status === 'concluido' ? COLORS.green : l.status === 'em_andamento' ? COLORS.orange : COLORS.gray;
-        doc.fillColor(sColor).font('Helvetica-Bold').text(l.status === 'concluido' ? 'OK' : l.status === 'em_andamento' ? 'Em curso' : 'Pendente', 540, y + 4, { width: 50, align: 'right' });
+        doc.fillColor(sColor).font('Helvetica-Bold').text(l.status === 'concluido' ? 'OK' : l.status === 'em_andamento' ? 'Em curso' : 'Pendente', 513, y + 4, { width: 47, align: 'right' });
         y += 20;
       }
       y += 12;
@@ -2452,25 +2455,25 @@ function generateEscolinhasReport() {
     y += 18;
 
     y = tableHeader(doc, [
-      { label: 'Data', x: 54, w: 75 },
-      { label: 'Hora', x: 135, w: 45 },
-      { label: 'Nome', x: 185, w: 170 },
-      { label: 'Local', x: 360, w: 85 },
-      { label: 'Publico', x: 450, w: 80 },
-      { label: 'Status', x: 535, w: 25, align: 'right' },
+      { label: 'Data', x: 54, w: 70 },
+      { label: 'Hora', x: 128, w: 40 },
+      { label: 'Nome', x: 173, w: 155 },
+      { label: 'Local', x: 333, w: 75 },
+      { label: 'Publico', x: 413, w: 70 },
+      { label: 'Status', x: 488, w: 72, align: 'right' },
     ], y);
 
     for (const e of typeItems) {
       if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
       zebraRow(doc, y, 26);
       const dt = e.date ? new Date(e.date + 'T00:00:00').toLocaleDateString('pt-BR') : 'A definir';
-      doc.fillColor(COLORS.primary).fontSize(9).font('Helvetica-Bold').text(dt, 56, y + 4, { width: 75 });
-      doc.fillColor(COLORS.dark).font('Helvetica').text(e.time || '-', 135, y + 4, { width: 45 });
-      doc.font('Helvetica-Bold').text(e.name || '-', 185, y + 4, { width: 170 });
-      doc.font('Helvetica').fillColor(COLORS.gray).text(e.location || '-', 360, y + 4, { width: 85 });
-      doc.fillColor(COLORS.secondary).fontSize(7).font('Helvetica-Oblique').text(e.target_audience || '-', 450, y + 4, { width: 80 });
+      doc.fillColor(COLORS.primary).fontSize(9).font('Helvetica-Bold').text(dt, 56, y + 4, { width: 70 });
+      doc.fillColor(COLORS.dark).font('Helvetica').text(e.time || '-', 128, y + 4, { width: 40 });
+      doc.font('Helvetica-Bold').text(e.name || '-', 173, y + 4, { width: 155 });
+      doc.font('Helvetica').fillColor(COLORS.gray).text(e.location || '-', 333, y + 4, { width: 75 });
+      doc.fillColor(COLORS.secondary).fontSize(7).font('Helvetica-Oblique').text(e.target_audience || '-', 413, y + 4, { width: 70 });
       const stColor = e.status === 'concluida' || e.status === 'concluido' ? COLORS.green : e.status === 'em_andamento' ? COLORS.orange : COLORS.gray;
-      doc.fillColor(stColor).font('Helvetica-Bold').fontSize(7).text(e.status || '-', 535, y + 4, { width: 25, align: 'right' });
+      doc.fillColor(stColor).font('Helvetica-Bold').fontSize(7).text(e.status || '-', 488, y + 4, { width: 72, align: 'right' });
       y += 26;
       if (e.description) {
         doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica-Oblique').text(e.description, 185, y, { width: 375 });
