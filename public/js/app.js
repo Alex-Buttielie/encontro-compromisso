@@ -149,14 +149,14 @@ async function renderDashboard() {
       const days = Math.floor(diff / 86400000);
       const hours = Math.floor((diff % 86400000) / 3600000);
       const mins = Math.floor((diff % 3600000) / 60000);
-      countdownHTML = `<div class="card" style="text-align:center">
-        <div class="card-title">Contagem Regressiva para o Encontro</div>
+      countdownHTML = `<div class="card countdown-card" style="text-align:center;background:linear-gradient(135deg,rgba(192,57,43,0.05),rgba(212,160,23,0.05));border:1px solid rgba(192,57,43,0.15)">
+        <div class="card-title" style="border:none;text-align:center">⏰ Contagem Regressiva</div>
         <div class="countdown">
           <div class="countdown-unit"><div class="countdown-number">${days}</div><div class="countdown-label">Dias</div></div>
           <div class="countdown-unit"><div class="countdown-number">${hours}</div><div class="countdown-label">Horas</div></div>
           <div class="countdown-unit"><div class="countdown-number">${mins}</div><div class="countdown-label">Min</div></div>
         </div>
-        <p style="color:var(--text-light);font-size:13px">${enc.name || 'Encontro Compromisso Trin'} — ${new Date(enc.start_date).toLocaleDateString('pt-BR')}</p>
+        <p style="color:var(--text-light);font-size:13px;margin-top:8px">${enc.name || 'Encontro Compromisso Trin'} — ${new Date(enc.start_date).toLocaleDateString('pt-BR')}</p>
       </div>`;
     }
   }
@@ -187,27 +187,28 @@ async function renderDashboard() {
       <div class="card-title">Progresso por Fase</div>
       <div class="progress-container">
         <div class="progress-label"><span>📋 Pré-Encontro (Preparação)</span><span>${stats.preDone}/${stats.preTotal} (${prePct}%)</span></div>
-        <div class="progress-bar"><div class="progress-fill" style="width:${prePct}%"></div></div>
+        <div class="progress-bar"><div class="progress-fill ${prePct >= 75 ? '' : prePct >= 40 ? 'warn' : 'danger'}" style="width:${prePct}%"></div></div>
       </div>
       <div class="progress-container">
         <div class="progress-label"><span>🏗️ Durante o Encontro (Execução)</span><span>${stats.duringDone}/${stats.duringTotal} (${duringPct}%)</span></div>
-        <div class="progress-bar"><div class="progress-fill" style="width:${duringPct}%"></div></div>
+        <div class="progress-bar"><div class="progress-fill ${duringPct >= 75 ? '' : duringPct >= 40 ? 'warn' : 'danger'}" style="width:${duringPct}%"></div></div>
       </div>
     </div>
     <div class="card">
       <div class="card-title">Progresso Geral</div>
       <div class="progress-container">
         <div class="progress-label"><span>${stats.done} de ${stats.total} tarefas</span><span>${pct}%</span></div>
-        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <div class="progress-bar"><div class="progress-fill ${pct >= 75 ? '' : pct >= 40 ? 'warn' : 'danger'}" style="width:${pct}%"></div></div>
       </div>
     </div>
     <div class="card">
       <div class="card-title">Progresso por Categoria</div>
       ${stats.byCategory.map(c => {
         const cp = c.total > 0 ? Math.round((c.done / c.total) * 100) : 0;
+        const cls = cp >= 75 ? '' : cp >= 40 ? 'warn' : 'danger';
         return `<div class="progress-container">
           <div class="progress-label"><span>${c.category}</span><span>${c.done}/${c.total} (${cp}%)</span></div>
-          <div class="progress-bar"><div class="progress-fill" style="width:${cp}%"></div></div>
+          <div class="progress-bar"><div class="progress-fill ${cls}" style="width:${cp}%"></div></div>
         </div>`;
       }).join('')}
     </div>
@@ -215,9 +216,10 @@ async function renderDashboard() {
       <div class="card-title">Progresso por Equipe</div>
       ${stats.byTeam.map(t => {
         const tp = t.total > 0 ? Math.round((t.done / t.total) * 100) : 0;
+        const cls = tp >= 75 ? '' : tp >= 40 ? 'warn' : 'danger';
         return `<div class="progress-container">
           <div class="progress-label"><span>${t.team || 'N/A'}</span><span>${t.done}/${t.total} (${tp}%)</span></div>
-          <div class="progress-bar"><div class="progress-fill" style="width:${tp}%"></div></div>
+          <div class="progress-bar"><div class="progress-fill ${cls}" style="width:${tp}%"></div></div>
         </div>`;
       }).join('')}
     </div>
@@ -618,8 +620,9 @@ async function renderCronograma() {
       ${days.map(day => {
         const items = schedule.filter(s => s.day === day);
         if (items.length === 0) return '';
+        const doneCount = items.filter(s => s.status === 'concluido').length;
         return `<div class="schedule-day">
-          <div class="schedule-day-header">📅 ${day} (${items.length} atividades)</div>
+          <div class="schedule-day-header">📅 ${day}<span class="schedule-day-count">${doneCount}/${items.length} concluídas</span></div>
           ${items.map(s => `<div class="schedule-item">
             <div class="schedule-time">${s.time}</div>
             <div class="schedule-activity">${s.activity}</div>
@@ -640,8 +643,9 @@ async function filterSchedule() {
   card.innerHTML = days.map(day => {
     const items = schedule.filter(s => s.day === day);
     if (items.length === 0) return '';
+    const doneCount = items.filter(s => s.status === 'concluido').length;
     return `<div class="schedule-day">
-      <div class="schedule-day-header">📅 ${day} (${items.length} atividades)</div>
+      <div class="schedule-day-header">📅 ${day}<span class="schedule-day-count">${doneCount}/${items.length} concluídas</span></div>
       ${items.map(s => `<div class="schedule-item">
         <div class="schedule-time">${s.time}</div>
         <div class="schedule-activity">${s.activity}</div>
@@ -686,7 +690,7 @@ async function renderEquipes() {
         const tasksDone = teamTasks.filter(task => task.status === 'concluido').length;
         const tasksPct = teamTasks.length > 0 ? Math.round((tasksDone / teamTasks.length) * 100) : 0;
         const schedDone = teamSchedule.filter(s => s.status === 'concluido').length;
-        return `<div class="team-card" style="border-left:4px solid var(--jumire-green)">
+        return `<div class="team-card">
           <div class="team-card-header">
             <h3>${t.name}</h3>
             <span class="team-count">${t.members?.length || 0} membros</span>
@@ -711,25 +715,25 @@ async function renderEquipes() {
           ` : ''}
 
           ${teamSchedule.length > 0 ? `
-            <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px">
-              <div style="font-size:11px;font-weight:600;color:var(--primary);margin-bottom:6px">📅 No Encontro (${schedDone}/${teamSchedule.length} concluídas)</div>
-              <div style="max-height:180px;overflow-y:auto">
-                ${teamSchedule.map(s => `<div style="display:flex;gap:6px;align-items:center;padding:3px 0;font-size:11px">
-                  <span style="color:var(--primary);font-weight:700;min-width:42px">${s.time}</span>
-                  <span style="color:var(--text);flex:1">${s.activity}</span>
-                  <span style="color:var(--text-light);font-size:10px">${s.day.replace('-feira','')}</span>
-                  <span style="width:10px;height:10px;border-radius:50%;background:${s.status==='concluido'?'var(--success)':'var(--border)'};flex-shrink:0"></span>
+            <div class="team-section">
+              <div class="team-section-title">📅 No Encontro (${schedDone}/${teamSchedule.length} concluídas)</div>
+              <div class="team-section-content">
+                ${teamSchedule.map(s => `<div class="team-sched-row">
+                  <span class="team-sched-time">${s.time}</span>
+                  <span class="team-sched-activity">${s.activity}</span>
+                  <span class="team-sched-day">${s.day.replace('-feira','')}</span>
+                  <span class="team-sched-dot" style="background:${s.status==='concluido'?'var(--success)':'var(--border)'}"></span>
                 </div>`).join('')}
               </div>
             </div>
           ` : ''}
 
           ${teamTasks.length > 0 ? `
-            <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px">
-              <div style="font-size:11px;font-weight:600;color:var(--primary);margin-bottom:6px">📋 Tarefas de Preparação</div>
-              <div style="max-height:200px;overflow-y:auto">
-                ${teamTasks.map(task => `<div style="display:flex;gap:6px;align-items:flex-start;padding:3px 0;font-size:11px">
-                  <span style="width:14px;height:14px;border-radius:50%;border:1.5px solid ${task.status==='concluido'?'var(--success)':task.status==='em_andamento'?'var(--warning)':'var(--border)'};background:${task.status==='concluido'?'var(--success)':task.status==='em_andamento'?'rgba(243,156,18,0.2)':'transparent'};flex-shrink:0;margin-top:1px;${task.status==='concluido'?'border-color:var(--success)':''}"></span>
+            <div class="team-section">
+              <div class="team-section-title">📋 Tarefas de Preparação</div>
+              <div class="team-section-content">
+                ${teamTasks.map(task => `<div class="team-task-row">
+                  <span class="team-task-dot ${task.status==='concluido'?'done':task.status==='em_andamento'?'in-progress':''}"></span>
                   <span style="color:var(--text-light);font-weight:600;min-width:28px">[${task.item_number}]</span>
                   <span style="color:var(--text);flex:1">${task.title}</span>
                   <span style="color:var(--text-light);font-size:10px;white-space:nowrap">${task.deadline || ''}</span>
@@ -739,22 +743,22 @@ async function renderEquipes() {
           ` : ''}
 
           ${teamLembrancinhas.length > 0 ? `
-            <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px">
-              <div style="font-size:11px;font-weight:600;color:var(--primary);margin-bottom:6px">🎁 Lembrancinhas</div>
-              ${teamLembrancinhas.map(l => `<div style="display:flex;gap:6px;align-items:center;padding:3px 0;font-size:11px">
+            <div class="team-section">
+              <div class="team-section-title">🎁 Lembrancinhas</div>
+              ${teamLembrancinhas.map(l => `<div class="team-mini-row">
                 <span style="color:var(--text);flex:1">${l.item_name || '—'}</span>
                 <span style="color:var(--text-light);font-size:10px">${l.quantity_done || 0}/${l.quantity_needed || 0}</span>
-                <span style="font-size:9px;padding:1px 6px;border-radius:8px;background:${l.status==='pronto'?'var(--success)':l.status==='em_andamento'?'var(--warning)':'var(--border)'};color:#fff;font-weight:600">${(l.status||'—').replace(/_/g,' ')}</span>
+                <span class="team-mini-badge" style="background:${l.status==='pronto'?'var(--success)':l.status==='em_andamento'?'var(--warning)':'var(--border)'}">${(l.status||'—').replace(/_/g,' ')}</span>
               </div>`).join('')}
             </div>
           ` : ''}
 
           ${teamAlicerces.length > 0 ? `
-            <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px">
-              <div style="font-size:11px;font-weight:600;color:var(--primary);margin-bottom:6px">🏛️ Alicerces/Alvenarias</div>
-              ${teamAlicerces.map(a => `<div style="display:flex;gap:6px;align-items:center;padding:3px 0;font-size:11px">
+            <div class="team-section">
+              <div class="team-section-title">🏛️ Alicerces/Alvenarias</div>
+              ${teamAlicerces.map(a => `<div class="team-mini-row">
                 <span style="color:var(--text);flex:1">${a.title}</span>
-                <span style="font-size:9px;padding:1px 6px;border-radius:8px;background:${a.status==='concluido'?'var(--success)':a.status==='atribuido'?'var(--warning)':'var(--border)'};color:#fff;font-weight:600">${(a.status||'—').replace(/_/g,' ')}</span>
+                <span class="team-mini-badge" style="background:${a.status==='concluido'?'var(--success)':a.status==='atribuido'?'var(--warning)':'var(--border)'}">${(a.status||'—').replace(/_/g,' ')}</span>
               </div>`).join('')}
             </div>
           ` : ''}
@@ -818,15 +822,15 @@ async function renderEncontro() {
     <p class="page-subtitle">Informações gerais do Encontro Compromisso Trin</p>
     <div class="card">
       <div class="encounter-info">
-        <div class="info-item"><label>Nome</label><div class="info-value">${enc.name || '—'}</div></div>
-        <div class="info-item"><label>Data de Início</label><div class="info-value">${enc.start_date || '—'}</div></div>
-        <div class="info-item"><label>Data de Fim</label><div class="info-value">${enc.end_date || '—'}</div></div>
-        <div class="info-item"><label>Local</label><div class="info-value">${enc.location || '—'}</div></div>
-        <div class="info-item"><label>Tema</label><div class="info-value">${enc.theme || '—'}</div></div>
-        <div class="info-item"><label>Música Tema</label><div class="info-value">${enc.theme_song || '—'}</div></div>
-        <div class="info-item"><label>Status</label><div class="info-value">${statusLabel(enc.status || 'em_preparacao')}</div></div>
+        <div class="info-item"><label>📛 Nome</label><div class="info-value">${enc.name || '—'}</div></div>
+        <div class="info-item"><label>📅 Data de Início</label><div class="info-value">${enc.start_date || '—'}</div></div>
+        <div class="info-item"><label>🏁 Data de Fim</label><div class="info-value">${enc.end_date || '—'}</div></div>
+        <div class="info-item"><label>📍 Local</label><div class="info-value">${enc.location || '—'}</div></div>
+        <div class="info-item"><label>🎨 Tema</label><div class="info-value">${enc.theme || '—'}</div></div>
+        <div class="info-item"><label>🎵 Música Tema</label><div class="info-value">${enc.theme_song || '—'}</div></div>
+        <div class="info-item"><label>📊 Status</label><div class="info-value">${statusLabel(enc.status || 'em_preparacao')}</div></div>
       </div>
-      <button class="btn btn-primary" onclick="editEncontro(${enc.id || 0})">Editar Dados</button>
+      <button class="btn btn-primary" onclick="editEncontro(${enc.id || 0})">✏️ Editar Dados</button>
     </div>
   `;
 }
@@ -1064,20 +1068,21 @@ function renderParticipantCards(list) {
   container.innerHTML = list.map(p => {
     const displayName = prettifyPersonName(p.name);
     const displayPadrinho = prettifyPersonName(p.padrinho, { couple: true });
+    const initials = (displayName || '?').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
     return `<div class="participant-card ${p.paid ? 'paid' : 'pending-payment'}">
-    <div class="participant-name">${displayName || 'Sem nome'} ${p.paid ? '<span class="badge-sm badge-success">Pago</span>' : '<span class="badge-sm badge-warning">Pendente</span>'} ${p.presente ? '<span class="badge-sm badge-info">Presente</span>' : ''}</div>
+    <div class="participant-name"><div class="participant-avatar">${initials}</div>${displayName || 'Sem nome'} ${p.paid ? '<span class="badge-sm badge-success">Pago</span>' : '<span class="badge-sm badge-warning">Pendente</span>'} ${p.presente ? '<span class="badge-sm badge-info">Presente</span>' : ''}</div>
     <div class="participant-info">
-      ${p.cracha_name ? `Crachá: ${p.cracha_name}<br>` : ''}
-      ${p.age ? `Idade: ${p.age} anos<br>` : ''}
-      ${p.gender ? `Sexo: ${p.gender === 'MASC' ? 'Masculino' : 'Feminino'}<br>` : ''}
-      ${p.phone ? `Tel: ${p.phone}<br>` : ''}
-      ${p.food_restriction ? `⚠️ Restrição alimentar: ${p.food_restriction}<br>` : ''}
-      ${p.medication ? `💊 Medicação: ${p.medication}<br>` : ''}
-      ${p.special_needs ? `♿ Necessidades especiais: ${p.special_needs}<br>` : ''}
-      ${p.shirt_size ? `Camiseta: ${p.shirt_size}<br>` : ''}
-      ${p.group ? `Grupo: ${p.group}<br>` : ''}
-      ${p.room ? `Quarto: ${p.room}<br>` : ''}
-      ${displayPadrinho ? `Padrinho/Madrinha: ${displayPadrinho}<br>` : ''}
+      ${p.cracha_name ? `<div class="participant-info-row">🏷️ Crachá: ${p.cracha_name}</div>` : ''}
+      ${p.age ? `<div class="participant-info-row">🎂 Idade: ${p.age} anos</div>` : ''}
+      ${p.gender ? `<div class="participant-info-row">👤 Sexo: ${p.gender === 'MASC' ? 'Masculino' : 'Feminino'}</div>` : ''}
+      ${p.phone ? `<div class="participant-info-row">📞 Tel: ${p.phone}</div>` : ''}
+      ${p.food_restriction ? `<div class="participant-info-row">⚠️ Restrição: ${p.food_restriction}</div>` : ''}
+      ${p.medication ? `<div class="participant-info-row">💊 Medicação: ${p.medication}</div>` : ''}
+      ${p.special_needs ? `<div class="participant-info-row">♿ Necessidades especiais: ${p.special_needs}</div>` : ''}
+      ${p.shirt_size ? `<div class="participant-info-row">👕 Camiseta: ${p.shirt_size}</div>` : ''}
+      ${p.group ? `<div class="participant-info-row">👥 Grupo: ${p.group}</div>` : ''}
+      ${p.room ? `<div class="participant-info-row">🚪 Quarto: ${p.room}</div>` : ''}
+      ${displayPadrinho ? `<div class="participant-info-row">❤️ Padrinho/Madrinha: ${displayPadrinho}</div>` : ''}
     </div>
     <div class="participant-tags">
       <button class="btn-icon" onclick="togglePaid(${p.id})" title="${p.paid ? 'Marcar como não pago' : 'Marcar como pago'}">
@@ -1751,15 +1756,18 @@ async function renderLembrancinhas() {
   const done = lembrancinhasCache.filter(l => l.status === 'pronto').length;
   const inProgress = lembrancinhasCache.filter(l => l.status === 'em_andamento').length;
   const notStarted = lembrancinhasCache.filter(l => l.status === 'nao_iniciado').length;
+  const stats = { total: lembrancinhasCache.length, pronto: done, em_andamento: inProgress, nao_iniciado: notStarted };
+  const pct = stats.total > 0 ? Math.round((stats.pronto / stats.total) * 100) : 0;
   main.innerHTML = `
     <h1 class="page-title">Lembrancinhas</h1>
-    <p class="page-subtitle">Controle de confecção por equipe — cada equipe confecciona suas lembrancinhas</p>
+    <p class="page-subtitle">Controle de produção e entrega das lembrancinhas por equipe</p>
     <div class="stats-grid">
-      <div class="stat-card"><div class="stat-icon total">🎁</div><div class="stat-info"><h3>${lembrancinhasCache.length}</h3><p>Total Itens</p></div></div>
-      <div class="stat-card"><div class="stat-icon done">✅</div><div class="stat-info"><h3>${done}</h3><p>Prontos</p></div></div>
-      <div class="stat-card"><div class="stat-icon progress">⏳</div><div class="stat-info"><h3>${inProgress}</h3><p>Em Andamento</p></div></div>
-      <div class="stat-card"><div class="stat-icon pending">⭕</div><div class="stat-info"><h3>${notStarted}</h3><p>Não Iniciados</p></div></div>
+      <div class="stat-card"><div class="stat-icon total">🎁</div><div class="stat-info"><h3>${stats.total}</h3><p>Total de Lembrancinhas</p></div></div>
+      <div class="stat-card"><div class="stat-icon done">✅</div><div class="stat-info"><h3>${stats.pronto}</h3><p>Prontas (${pct}%)</p></div></div>
+      <div class="stat-card"><div class="stat-icon progress">🔧</div><div class="stat-info"><h3>${stats.em_andamento}</h3><p>Em Produção</p></div></div>
+      <div class="stat-card"><div class="stat-icon pending">⭕</div><div class="stat-info"><h3>${stats.nao_iniciado}</h3><p>Não Iniciadas</p></div></div>
     </div>
+    ${stats.total > 0 ? `<div class="card"><div class="progress-container"><div class="progress-label"><span>Progresso Geral</span><span>${stats.pronto}/${stats.total} (${pct}%)</span></div><div class="progress-bar"><div class="progress-fill ${pct >= 75 ? '' : pct >= 40 ? 'warn' : 'danger'}" style="width:${pct}%"></div></div></div></div>` : ''}
     <div class="filters">
       <button class="btn btn-primary btn-sm" onclick="openLembrancinhaModal()">+ Nova Lembrancinha</button>
     </div>
