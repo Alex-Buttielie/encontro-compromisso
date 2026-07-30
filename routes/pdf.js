@@ -164,6 +164,16 @@ function infoDivider(doc, y) {
   return y + 8;
 }
 
+function calcTextHeight(doc, text, width, fontSize) {
+  if (!text) return 0;
+  const fs = doc._fontSize || 10;
+  doc.fontSize(fontSize);
+  const w = doc.widthOfString(text, { width });
+  doc.fontSize(fs);
+  const lines = Math.max(1, Math.ceil(w / width));
+  return lines * (fontSize + 3);
+}
+
 function priorityLabel(p) {
   return { alta: 'Alta', media: 'Media', baixa: 'Baixa' }[p] || p;
 }
@@ -236,14 +246,17 @@ function generateFullReport() {
 
     for (const t of items) {
       if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
-      zebraRow(doc, y, 32);
+      const titleH = calcTextHeight(doc, `[${t.item_number}] ${t.title}`, 370, 10);
+      const metaH = calcTextHeight(doc, `Equipe: ${t.responsible_team || 'N/A'}  |  Prazo: ${t.deadline || 'N/A'}  |  Prioridade: ${priorityLabel(t.priority)}`, 370, 8);
+      const rowH = Math.max(32, titleH + metaH + 8);
+      zebraRow(doc, y, rowH);
       const statusColor = t.status === 'concluido' ? COLORS.green : t.status === 'em_andamento' ? COLORS.orange : COLORS.gray;
       doc.fillColor(statusColor).circle(55, y + 6, 4).fill();
       doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica-Bold').text(`[${t.item_number}]`, 68, y + 1, { continued: true });
       doc.font('Helvetica').text(` ${t.title}`, { width: 370 });
-      doc.fontSize(8).font('Helvetica').fillColor(COLORS.gray).text(`Equipe: ${t.responsible_team || 'N/A'}  |  Prazo: ${t.deadline || 'N/A'}  |  Prioridade: ${priorityLabel(t.priority)}`, 68, y + 14, { width: 370 });
+      doc.fontSize(8).font('Helvetica').fillColor(COLORS.gray).text(`Equipe: ${t.responsible_team || 'N/A'}  |  Prazo: ${t.deadline || 'N/A'}  |  Prioridade: ${priorityLabel(t.priority)}`, 68, y + titleH + 4, { width: 370 });
       statusBadge(doc, t.status, 470, y + 4);
-      y += 32;
+      y += rowH;
     }
     y += 10;
   }
@@ -261,13 +274,15 @@ function generateFullReport() {
     const items = db.getAll('schedule').filter(s => s.day === day).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
     for (const s of items) {
       if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
-      zebraRow(doc, y, 24);
+      const actH = calcTextHeight(doc, s.activity || '', 270, 9);
+      const rowH = Math.max(26, actH + 12);
+      zebraRow(doc, y, rowH);
       doc.fillColor(COLORS.primary).fontSize(10).font('Helvetica-Bold').text(s.time || '-', 55, y + 4, { width: 55 });
       doc.fillColor(COLORS.dark).font('Helvetica').fontSize(9).text(s.activity || '', 115, y + 4, { width: 270 });
       doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica').text(s.location || '', 400, y + 4, { width: 70 });
       doc.fillColor(COLORS.secondary).fontSize(8).font('Helvetica-Bold').text(s.responsible_team || '', 400, y + 15, { width: 70 });
       statusBadge(doc, s.status, 480, y + 3);
-      y += 24;
+      y += rowH;
     }
     y += 12;
   }
@@ -331,7 +346,10 @@ function generateFullReport() {
     y = sectionTitle(doc, `${typeLabels[type] || type} (${typeItems.length})`, y, COLORS.primary);
     for (const e of typeItems) {
       if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
-      zebraRow(doc, y, 28);
+      const nameH = calcTextHeight(doc, e.name || '-', 280, 9);
+      const descH = e.description ? calcTextHeight(doc, e.description, 420, 8) : 0;
+      const rowH = Math.max(28, nameH + descH + 8);
+      zebraRow(doc, y, rowH);
       const dt = e.date ? new Date(e.date + 'T00:00:00').toLocaleDateString('pt-BR') : 'A definir';
       doc.fillColor(COLORS.primary).fontSize(10).font('Helvetica-Bold').text(dt, 55, y + 2, { width: 75 });
       doc.fillColor(COLORS.dark).font('Helvetica').fontSize(9).text(e.name || '-', 135, y + 2, { width: 280 });
@@ -339,10 +357,9 @@ function generateFullReport() {
       const stColor = e.status === 'concluida' || e.status === 'concluido' ? COLORS.green : e.status === 'em_andamento' ? COLORS.orange : COLORS.gray;
       doc.fillColor(stColor).font('Helvetica-Bold').fontSize(8).text(e.status || 'agendada', 500, y + 2, { width: 60 });
       if (e.description) {
-        doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica-Oblique').text(e.description, 135, y + 14, { width: 420 });
-        y += 14;
+        doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica-Oblique').text(e.description, 135, y + nameH + 4, { width: 420 });
       }
-      y += 28;
+      y += rowH;
     }
     y += 8;
   }
@@ -363,17 +380,20 @@ function generateFullReport() {
       y += 4;
       for (const t of items) {
         if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
-        zebraRow(doc, y, 32);
+        const titleH = calcTextHeight(doc, `[${t.item_number}] ${t.title}`, 390, 10);
+        const descH = t.description ? calcTextHeight(doc, t.description, 390, 9) : 0;
+        const rowH = Math.max(32, titleH + descH + 8);
+        zebraRow(doc, y, rowH);
         const statusColor = t.status === 'concluido' ? COLORS.green : t.status === 'em_andamento' ? COLORS.orange : COLORS.gray;
         doc.fillColor(statusColor).circle(55, y + 6, 4).fill();
         doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica-Bold').text(`[${t.item_number}] ${t.title}`, 68, y + 1, { width: 390 });
-        y += 14;
+        let cy = y + titleH + 2;
         if (t.description) {
-          doc.fontSize(9).font('Helvetica').fillColor(COLORS.gray).text(t.description, 68, y, { width: 390 });
-          y += Math.ceil(doc.widthOfString(t.description, { width: 390 }) / 390) * 12 + 4;
+          doc.fontSize(9).font('Helvetica').fillColor(COLORS.gray).text(t.description, 68, cy, { width: 390 });
+          cy += descH;
         }
-        statusBadge(doc, t.status, 470, y - 14);
-        y += 18;
+        statusBadge(doc, t.status, 470, y + 4);
+        y += rowH;
       }
       y += 10;
     }
@@ -415,23 +435,28 @@ function generateCategoryReport(category) {
 
   for (const t of items) {
     if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
-    zebraRow(doc, y, 34);
+    const titleH = calcTextHeight(doc, `[${t.item_number}] ${t.title}`, 390, 10);
+    const descH = t.description ? calcTextHeight(doc, t.description, 390, 9) : 0;
+    const metaText = `Equipe: ${t.responsible_team || 'N/A'}  |  Prazo: ${t.deadline || 'N/A'}  |  Prioridade: ${priorityLabel(t.priority)}`;
+    const metaH = calcTextHeight(doc, metaText, 390, 8);
+    const notesH = t.notes ? calcTextHeight(doc, `Obs: ${t.notes}`, 420, 8) : 0;
+    const rowH = Math.max(34, titleH + descH + metaH + notesH + 12);
+    zebraRow(doc, y, rowH);
     const statusColor = t.status === 'concluido' ? COLORS.green : t.status === 'em_andamento' ? COLORS.orange : COLORS.gray;
     doc.fillColor(statusColor).circle(55, y + 6, 4).fill();
     doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica-Bold').text(`[${t.item_number}] ${t.title}`, 68, y + 1, { width: 390 });
-    y += 16;
+    let cy = y + titleH + 2;
     if (t.description) {
-      doc.fontSize(9).font('Helvetica').fillColor(COLORS.gray).text(t.description, 68, y, { width: 390 });
-      y += Math.ceil(doc.widthOfString(t.description, { width: 390 }) / 390) * 12 + 4;
+      doc.fontSize(9).font('Helvetica').fillColor(COLORS.gray).text(t.description, 68, cy, { width: 390 });
+      cy += descH;
     }
-    doc.fontSize(8).font('Helvetica').fillColor(COLORS.gray).text(`Equipe: ${t.responsible_team || 'N/A'}  |  Prazo: ${t.deadline || 'N/A'}  |  Prioridade: ${priorityLabel(t.priority)}`, 68, y, { width: 390 });
-    statusBadge(doc, t.status, 470, y - 2);
-    y += 24;
+    doc.fontSize(8).font('Helvetica').fillColor(COLORS.gray).text(metaText, 68, cy, { width: 390 });
+    statusBadge(doc, t.status, 470, cy - 2);
+    cy += metaH;
     if (t.notes) {
-      doc.fontSize(8).font('Helvetica-Oblique').fillColor(COLORS.gray).text(`Obs: ${t.notes}`, 68, y, { width: 420 });
-      y += 12;
+      doc.fontSize(8).font('Helvetica-Oblique').fillColor(COLORS.gray).text(`Obs: ${t.notes}`, 68, cy, { width: 420 });
     }
-    y += 8;
+    y += rowH;
   }
 
   // === DURANTE O ENCONTRO ===
@@ -445,23 +470,28 @@ function generateCategoryReport(category) {
     y += 4;
     for (const t of duringItems) {
       if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
-      zebraRow(doc, y, 34);
+      const titleH = calcTextHeight(doc, `[${t.item_number}] ${t.title}`, 390, 10);
+      const descH = t.description ? calcTextHeight(doc, t.description, 390, 9) : 0;
+      const metaText = `Equipe: ${t.responsible_team || 'N/A'}  |  Prioridade: ${priorityLabel(t.priority)}`;
+      const metaH = calcTextHeight(doc, metaText, 390, 8);
+      const notesH = t.notes ? calcTextHeight(doc, `Obs: ${t.notes}`, 420, 8) : 0;
+      const rowH = Math.max(34, titleH + descH + metaH + notesH + 12);
+      zebraRow(doc, y, rowH);
       const statusColor = t.status === 'concluido' ? COLORS.green : t.status === 'em_andamento' ? COLORS.orange : COLORS.gray;
       doc.fillColor(statusColor).circle(55, y + 6, 4).fill();
       doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica-Bold').text(`[${t.item_number}] ${t.title}`, 68, y + 1, { width: 390 });
-      y += 16;
+      let cy = y + titleH + 2;
       if (t.description) {
-        doc.fontSize(9).font('Helvetica').fillColor(COLORS.gray).text(t.description, 68, y, { width: 390 });
-        y += Math.ceil(doc.widthOfString(t.description, { width: 390 }) / 390) * 12 + 4;
+        doc.fontSize(9).font('Helvetica').fillColor(COLORS.gray).text(t.description, 68, cy, { width: 390 });
+        cy += descH;
       }
-      doc.fontSize(8).font('Helvetica').fillColor(COLORS.gray).text(`Equipe: ${t.responsible_team || 'N/A'}  |  Prioridade: ${priorityLabel(t.priority)}`, 68, y, { width: 390 });
-      statusBadge(doc, t.status, 470, y - 2);
-      y += 24;
+      doc.fontSize(8).font('Helvetica').fillColor(COLORS.gray).text(metaText, 68, cy, { width: 390 });
+      statusBadge(doc, t.status, 470, cy - 2);
+      cy += metaH;
       if (t.notes) {
-        doc.fontSize(8).font('Helvetica-Oblique').fillColor(COLORS.gray).text(`Obs: ${t.notes}`, 68, y, { width: 420 });
-        y += 12;
+        doc.fontSize(8).font('Helvetica-Oblique').fillColor(COLORS.gray).text(`Obs: ${t.notes}`, 68, cy, { width: 420 });
       }
-      y += 8;
+      y += rowH;
     }
   }
 
@@ -597,15 +627,17 @@ function generateTeamScheduleReport() {
           doc.fillColor(COLORS.green).fontSize(10).font('Helvetica-Bold').text(`  ${currentDay}`, 50, y);
           y += 14;
         }
-        zebraRow(doc, y, 24);
+        const actH = calcTextHeight(doc, `  ${s.activity}`, 400, 10);
+        const rowH = Math.max(24, actH + 10);
+        zebraRow(doc, y, rowH);
         doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica-Bold').text(`    ${s.time || '-'}`, 50, y + 4, { width: 60, continued: true });
         doc.font('Helvetica').fillColor(COLORS.dark).text(`  ${s.activity}`, { width: 400 });
-        doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica').text(`    Local: ${s.location || '-'}`, 50, y + 15, { width: 400 });
+        doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica').text(`    Local: ${s.location || '-'}`, 50, y + actH + 2, { width: 400 });
         const sColors = { concluido: COLORS.green, em_andamento: COLORS.orange, pendente: COLORS.gray };
         const sLabels = { concluido: 'Concluido', em_andamento: 'Em Andamento', pendente: 'Pendente' };
         doc.fillColor(sColors[s.status] || COLORS.gray).roundedRect(470, y + 3, 82, 15, 4).fill();
         doc.fillColor('#fff').fontSize(7).font('Helvetica-Bold').text(sLabels[s.status] || s.status, 470, y + 5, { width: 82, align: 'center' });
-        y += 24;
+        y += rowH;
       }
     } else {
       y += 4;
@@ -624,12 +656,14 @@ function generateTeamScheduleReport() {
       y += 14;
       for (const t of teamPreTasks) {
         if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
-        zebraRow(doc, y, 18);
+        const titleH = calcTextHeight(doc, `[${t.item_number}] ${t.title}`, 400, 9);
+        const rowH = Math.max(18, titleH + 6);
+        zebraRow(doc, y, rowH);
         const stColor = t.status === 'concluido' ? COLORS.green : t.status === 'em_andamento' ? COLORS.orange : COLORS.gray;
         doc.fillColor(stColor).circle(55, y + 5, 3).fill();
         doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(`[${t.item_number}] ${t.title}`, 65, y + 3, { width: 400 });
         doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica').text(t.deadline || '', 470, y + 3, { width: 80 });
-        y += 18;
+        y += rowH;
       }
     }
 
@@ -644,12 +678,14 @@ function generateTeamScheduleReport() {
       y += 14;
       for (const t of teamDuringTasks) {
         if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
-        zebraRow(doc, y, 18);
+        const titleH = calcTextHeight(doc, `[${t.item_number}] ${t.title}`, 400, 9);
+        const rowH = Math.max(18, titleH + 6);
+        zebraRow(doc, y, rowH);
         const stColor = t.status === 'concluido' ? COLORS.green : t.status === 'em_andamento' ? COLORS.orange : COLORS.gray;
         doc.fillColor(stColor).circle(55, y + 5, 3).fill();
         doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(`[${t.item_number}] ${t.title}`, 65, y + 3, { width: 400 });
         doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica').text(t.deadline || '', 470, y + 3, { width: 80 });
-        y += 18;
+        y += rowH;
       }
     }
 
@@ -684,13 +720,15 @@ function generateScheduleReport() {
     }
     for (const s of items) {
       if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
-      zebraRow(doc, y, 26);
+      const actH = calcTextHeight(doc, s.activity || '', 270, 9);
+      const rowH = Math.max(26, actH + 12);
+      zebraRow(doc, y, rowH);
       doc.fillColor(COLORS.primary).fontSize(10).font('Helvetica-Bold').text(s.time || '-', 55, y + 4, { width: 55 });
       doc.fillColor(COLORS.dark).font('Helvetica').fontSize(9).text(s.activity || '', 115, y + 4, { width: 270 });
       doc.fillColor(COLORS.gray).fontSize(8).text(s.location || '', 400, y + 4, { width: 70 });
       doc.fillColor(COLORS.secondary).fontSize(8).font('Helvetica-Bold').text(s.responsible_team || '', 400, y + 15, { width: 70 });
       statusBadge(doc, s.status, 480, y + 3);
-      y += 26;
+      y += rowH;
     }
     y += 14;
   }
@@ -866,12 +904,17 @@ function generateFinanceReport() {
   y = sectionTitle(doc, 'Lancamentos Detalhados', y, COLORS.primary);
   for (const i of items) {
     if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
-    zebraRow(doc, y, 30);
+    const descText = ` ${fmtMoney(i.amount)} - ${i.description || ''}`;
+    const descH = calcTextHeight(doc, descText, 350, 10);
+    const metaText = `${i.category || ''}  |  ${i.date ? fmtDate(i.date) : ''}  |  ${i.paid ? 'Pago' : 'Pendente'}  |  Resp: ${i.responsible || '-'}`;
+    const metaH = calcTextHeight(doc, metaText, 440, 8);
+    const rowH = Math.max(30, descH + metaH + 6);
+    zebraRow(doc, y, rowH);
     doc.fillColor(i.type === 'receita' ? COLORS.green : COLORS.red).circle(55, y + 6, 3).fill();
     doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica-Bold').text(i.type === 'receita' ? '+' : '-', 66, y + 1, { continued: true });
-    doc.font('Helvetica').text(` ${fmtMoney(i.amount)} - ${i.description || ''}`, { width: 350 });
-    doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica').text(`${i.category || ''}  |  ${i.date ? fmtDate(i.date) : ''}  |  ${i.paid ? 'Pago' : 'Pendente'}  |  Resp: ${i.responsible || '-'}`, 66, y + 14, { width: 440 });
-    y += 30;
+    doc.font('Helvetica').text(descText, { width: 350 });
+    doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica').text(metaText, 66, y + descH + 2, { width: 440 });
+    y += rowH;
   }
 
   // === EVENTOS FINANCEIROS ===
@@ -958,17 +1001,19 @@ function generateAlicercesReport() {
 
   for (const a of alicerceItems) {
     if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
-    zebraRow(doc, y, 44);
+    const contentH = a.content ? calcTextHeight(doc, a.content, 480, 10) : 0;
+    const rowH = Math.max(44, 16 + contentH + 14 + 22);
+    zebraRow(doc, y, rowH);
     doc.fillColor(COLORS.primary).fontSize(12).font('Helvetica-Bold').text(a.title, 55, y + 2);
-    y += 16;
-    if (a.content) { doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica').text(a.content, 55, y, { width: 480 }); y += Math.ceil(doc.widthOfString(a.content, { width: 480 }) / 480) * 13 + 4; }
-    doc.fillColor(COLORS.gray).fontSize(9).font('Helvetica').text(`Construtor: ${a.builder || 'Nao atribuido'}  |  Dia: ${a.day || '-'}  |  Horario: ${a.time || '-'}`, 55, y, { width: 400 });
-    y += 14;
+    let cy = y + 16;
+    if (a.content) { doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica').text(a.content, 55, cy, { width: 480 }); cy += contentH; }
+    doc.fillColor(COLORS.gray).fontSize(9).font('Helvetica').text(`Construtor: ${a.builder || 'Nao atribuido'}  |  Dia: ${a.day || '-'}  |  Horario: ${a.time || '-'}`, 55, cy, { width: 400 });
+    cy += 14;
     const stColors = { concluido: COLORS.green, atribuido: COLORS.orange, pendente: COLORS.gray };
     const stLabels = { concluido: 'Concluido', atribuido: 'Atribuido', pendente: 'Pendente' };
-    doc.fillColor(stColors[a.status] || COLORS.gray).roundedRect(55, y, 82, 15, 4).fill();
-    doc.fillColor('#fff').fontSize(7).font('Helvetica-Bold').text(stLabels[a.status] || a.status || 'pendente', 55, y + 3, { width: 82, align: 'center' });
-    y += 22;
+    doc.fillColor(stColors[a.status] || COLORS.gray).roundedRect(55, cy, 82, 15, 4).fill();
+    doc.fillColor('#fff').fontSize(7).font('Helvetica-Bold').text(stLabels[a.status] || a.status || 'pendente', 55, cy + 3, { width: 82, align: 'center' });
+    y += rowH;
   }
 
   y += 10;
@@ -977,17 +1022,19 @@ function generateAlicercesReport() {
 
   for (const a of alvenariaItems) {
     if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
-    zebraRow(doc, y, 44);
+    const contentH = a.content ? calcTextHeight(doc, a.content, 480, 10) : 0;
+    const rowH = Math.max(44, 16 + contentH + 14 + 22);
+    zebraRow(doc, y, rowH);
     doc.fillColor(COLORS.secondary).fontSize(12).font('Helvetica-Bold').text(a.title, 55, y + 2);
-    y += 16;
-    if (a.content) { doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica').text(a.content, 55, y, { width: 480 }); y += Math.ceil(doc.widthOfString(a.content, { width: 480 }) / 480) * 13 + 4; }
-    doc.fillColor(COLORS.gray).fontSize(9).font('Helvetica').text(`Construtor: ${a.builder || 'Nao atribuido'}  |  Dia: ${a.day || '-'}  |  Horario: ${a.time || '-'}`, 55, y, { width: 400 });
-    y += 14;
+    let cy = y + 16;
+    if (a.content) { doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica').text(a.content, 55, cy, { width: 480 }); cy += contentH; }
+    doc.fillColor(COLORS.gray).fontSize(9).font('Helvetica').text(`Construtor: ${a.builder || 'Nao atribuido'}  |  Dia: ${a.day || '-'}  |  Horario: ${a.time || '-'}`, 55, cy, { width: 400 });
+    cy += 14;
     const stColors = { concluido: COLORS.green, atribuido: COLORS.orange, pendente: COLORS.gray };
     const stLabels = { concluido: 'Concluido', atribuido: 'Atribuido', pendente: 'Pendente' };
-    doc.fillColor(stColors[a.status] || COLORS.gray).roundedRect(55, y, 82, 15, 4).fill();
-    doc.fillColor('#fff').fontSize(7).font('Helvetica-Bold').text(stLabels[a.status] || a.status || 'pendente', 55, y + 3, { width: 82, align: 'center' });
-    y += 22;
+    doc.fillColor(stColors[a.status] || COLORS.gray).roundedRect(55, cy, 82, 15, 4).fill();
+    doc.fillColor('#fff').fontSize(7).font('Helvetica-Bold').text(stLabels[a.status] || a.status || 'pendente', 55, cy + 3, { width: 82, align: 'center' });
+    y += rowH;
   }
 
   doc.end();
@@ -1074,27 +1121,32 @@ function generateFornecedoresReport() {
     const catItems = fornecedores.filter(f => f.category === cat);
     for (const f of catItems) {
       if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
-      zebraRow(doc, y, 54);
-      doc.fillColor(COLORS.dark).fontSize(11).font('Helvetica-Bold').text(f.name || 'Sem nome', 55, y + 2);
-      y += 14;
-      doc.fillColor(COLORS.gray).fontSize(9).font('Helvetica').text(`Servico: ${f.service || '-'}`, 65, y, { width: 400 });
-      y += 12;
       const contacts = [];
       if (f.contact_person) contacts.push(`Contato: ${f.contact_person}`);
       if (f.phone) contacts.push(`Tel: ${f.phone}`);
       if (f.whatsapp) contacts.push(`WhatsApp: ${f.whatsapp}`);
       if (f.email) contacts.push(`Email: ${f.email}`);
-      if (contacts.length) { doc.text(`  ${contacts.join(' | ')}`, 65, y, { width: 400 }); y += 12; }
+      const contactsStr = contacts.length ? `  ${contacts.join(' | ')}` : '';
+      const servH = calcTextHeight(doc, `Servico: ${f.service || '-'}`, 400, 9);
+      const contactsH = contacts.length ? calcTextHeight(doc, contactsStr, 400, 9) : 0;
+      const costH = (f.estimated_cost || f.actual_cost) ? calcTextHeight(doc, `Estimado: ${fmtMoney(f.estimated_cost)} | Real: ${fmtMoney(f.actual_cost)}`, 300, 9) : 0;
+      const notesH = f.notes ? calcTextHeight(doc, `Obs: ${f.notes}`, 400, 8) : 0;
+      const rowH = Math.max(54, 14 + servH + contactsH + costH + notesH + 16);
+      zebraRow(doc, y, rowH);
+      doc.fillColor(COLORS.dark).fontSize(11).font('Helvetica-Bold').text(f.name || 'Sem nome', 55, y + 2);
+      let cy = y + 14;
+      doc.fillColor(COLORS.gray).fontSize(9).font('Helvetica').text(`Servico: ${f.service || '-'}`, 65, cy, { width: 400 });
+      cy += servH;
+      if (contacts.length) { doc.text(contactsStr, 65, cy, { width: 400 }); cy += contactsH; }
       if (f.estimated_cost || f.actual_cost) {
-        doc.fillColor(COLORS.secondary).font('Helvetica-Bold').text(`Estimado: ${fmtMoney(f.estimated_cost)} | Real: ${fmtMoney(f.actual_cost)}`, 65, y, { width: 300 });
-        y += 12;
+        doc.fillColor(COLORS.secondary).font('Helvetica-Bold').text(`Estimado: ${fmtMoney(f.estimated_cost)} | Real: ${fmtMoney(f.actual_cost)}`, 65, cy, { width: 300 }); cy += costH;
       }
       const stColors = { contratado: COLORS.green, pendente: COLORS.orange, contatado: COLORS.secondary, cancelado: COLORS.red };
       const stLabels = { contratado: 'Contratado', pendente: 'Pendente', contatado: 'Contatado', cancelado: 'Cancelado' };
-      doc.fillColor(stColors[f.status] || COLORS.gray).roundedRect(470, y - 12, 82, 15, 4).fill();
-      doc.fillColor('#fff').fontSize(7).font('Helvetica-Bold').text(stLabels[f.status] || f.status, 470, y - 10, { width: 82, align: 'center' });
-      if (f.notes) { doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica-Oblique').text(`Obs: ${f.notes}`, 65, y, { width: 400 }); y += 12; }
-      y += 10;
+      doc.fillColor(stColors[f.status] || COLORS.gray).roundedRect(470, cy - 12, 82, 15, 4).fill();
+      doc.fillColor('#fff').fontSize(7).font('Helvetica-Bold').text(stLabels[f.status] || f.status, 470, cy - 10, { width: 82, align: 'center' });
+      if (f.notes) { doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica-Oblique').text(`Obs: ${f.notes}`, 65, cy, { width: 400 }); cy += notesH; }
+      y += rowH;
     }
     y += 10;
   }
@@ -1107,22 +1159,26 @@ function generateFornecedoresReport() {
 
     for (const f of paisMP) {
       if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
-      zebraRow(doc, y, 44);
-      doc.fillColor(COLORS.dark).fontSize(11).font('Helvetica-Bold').text(f.name || 'Sem nome', 55, y + 2);
-      y += 14;
       const details = [];
       if (f.mp_name) details.push(`Filho(a): ${f.mp_name}`);
       if (f.relationship) details.push(`Parentesco: ${f.relationship}`);
       if (f.phone) details.push(`Tel: ${f.phone}`);
       if (f.whatsapp) details.push(`WhatsApp: ${f.whatsapp}`);
       if (f.email) details.push(`Email: ${f.email}`);
-      if (details.length) { doc.fillColor(COLORS.gray).fontSize(9).font('Helvetica').text(details.join(' | '), 65, y, { width: 400 }); y += 12; }
+      const detailsStr = details.join(' | ');
+      const detailsH = details.length ? calcTextHeight(doc, detailsStr, 400, 9) : 0;
+      const notesH = f.notes ? calcTextHeight(doc, `Obs: ${f.notes}`, 400, 8) : 0;
+      const rowH = Math.max(44, 14 + detailsH + notesH + 16);
+      zebraRow(doc, y, rowH);
+      doc.fillColor(COLORS.dark).fontSize(11).font('Helvetica-Bold').text(f.name || 'Sem nome', 55, y + 2);
+      let cy = y + 14;
+      if (details.length) { doc.fillColor(COLORS.gray).fontSize(9).font('Helvetica').text(detailsStr, 65, cy, { width: 400 }); cy += detailsH; }
       const stColors = { contratado: COLORS.green, pendente: COLORS.orange, contatado: COLORS.secondary, cancelado: COLORS.red };
       const stLabels = { contratado: 'Confirmado', pendente: 'Pendente', contatado: 'Contatado', cancelado: 'Cancelado' };
-      doc.fillColor(stColors[f.status] || COLORS.gray).roundedRect(470, y - 12, 82, 15, 4).fill();
-      doc.fillColor('#fff').fontSize(7).font('Helvetica-Bold').text(stLabels[f.status] || f.status, 470, y - 10, { width: 82, align: 'center' });
-      if (f.notes) { doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica-Oblique').text(`Obs: ${f.notes}`, 65, y, { width: 400 }); y += 12; }
-      y += 10;
+      doc.fillColor(stColors[f.status] || COLORS.gray).roundedRect(470, cy - 12, 82, 15, 4).fill();
+      doc.fillColor('#fff').fontSize(7).font('Helvetica-Bold').text(stLabels[f.status] || f.status, 470, cy - 10, { width: 82, align: 'center' });
+      if (f.notes) { doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica-Oblique').text(`Obs: ${f.notes}`, 65, cy, { width: 400 }); cy += notesH; }
+      y += rowH;
     }
   }
 
@@ -1349,13 +1405,15 @@ function generateCoordinatorGuideReport() {
     const items = schedule.filter(s => s.day === day).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
     for (const s of items) {
       if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
-      zebraRow(doc, y, 26);
+      const actH = calcTextHeight(doc, s.activity || '', 270, 9);
+      const rowH = Math.max(26, actH + 12);
+      zebraRow(doc, y, rowH);
       doc.fillColor(COLORS.primary).fontSize(10).font('Helvetica-Bold').text(s.time || '-', 55, y + 4, { width: 55 });
       doc.fillColor(COLORS.dark).font('Helvetica').fontSize(9).text(s.activity || '', 115, y + 4, { width: 270 });
       doc.fillColor(COLORS.gray).fontSize(8).text(s.location || '', 400, y + 4, { width: 70 });
       doc.fillColor(COLORS.secondary).fontSize(8).font('Helvetica-Bold').text(s.responsible_team || '', 400, y + 15, { width: 70 });
       statusBadge(doc, s.status, 480, y + 3);
-      y += 26;
+      y += rowH;
     }
     y += 14;
   }
@@ -1383,14 +1441,16 @@ function generateCoordinatorGuideReport() {
     ], y);
     for (const e of calEsc) {
       if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
-      zebraRow(doc, y, 22);
+      const nameH = calcTextHeight(doc, e.name || '-', 200, 9);
+      const rowH = Math.max(22, nameH + 8);
+      zebraRow(doc, y, rowH);
       const dt = e.date ? new Date(e.date + 'T00:00:00').toLocaleDateString('pt-BR') : 'A definir';
       doc.fillColor(COLORS.primary).fontSize(9).font('Helvetica-Bold').text(dt, 56, y + 4, { width: 75 });
       doc.fillColor(COLORS.dark).font('Helvetica').text(e.time || '-', 135, y + 4, { width: 45 });
       doc.font('Helvetica-Bold').text(e.name || '-', 190, y + 4, { width: 200 });
       doc.font('Helvetica').fillColor(COLORS.gray).text(e.location || '-', 400, y + 4, { width: 90 });
       doc.fillColor(COLORS.secondary).fontSize(8).font('Helvetica-Oblique').text(e.target_audience || '-', 500, y + 4, { width: 60 });
-      y += 22;
+      y += rowH;
     }
   }
 
@@ -1407,18 +1467,18 @@ function generateCoordinatorGuideReport() {
 
   for (const a of alicerceItems) {
     if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
-    zebraRow(doc, y, 44);
+    const contentH = a.content ? calcTextHeight(doc, a.content, 480, 9) : 0;
+    const rowH = Math.max(44, 16 + 14 + contentH + 8);
+    zebraRow(doc, y, rowH);
     doc.fillColor(COLORS.primary).fontSize(11).font('Helvetica-Bold').text(a.title, 55, y + 2);
-    y += 16;
-    doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(`Construtor: ${a.builder || 'NAO ATRIBUIDO'}  |  Dia: ${a.day || '-'}  |  Horario: ${a.time || '-'}`, 55, y, { width: CONTENT_WIDTH });
-    y += 14;
+    let cy = y + 16;
+    doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(`Construtor: ${a.builder || 'NAO ATRIBUIDO'}  |  Dia: ${a.day || '-'}  |  Horario: ${a.time || '-'}`, 55, cy, { width: CONTENT_WIDTH });
+    cy += 14;
     if (a.content) {
-      const lines = Math.ceil(doc.widthOfString(a.content, { width: 480 }) / 480) * 11;
-      if (y + lines > PAGE_BOTTOM) { doc.addPage(); y = 50; }
-      doc.fillColor(COLORS.gray).fontSize(9).font('Helvetica').text(a.content, 65, y, { width: 480 });
-      y += lines + 8;
+      if (cy + contentH > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+      doc.fillColor(COLORS.gray).fontSize(9).font('Helvetica').text(a.content, 65, cy, { width: 480 });
     }
-    y += 8;
+    y += rowH;
   }
 
   y += 10;
@@ -1427,18 +1487,18 @@ function generateCoordinatorGuideReport() {
 
   for (const a of alvenariaItems) {
     if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
-    zebraRow(doc, y, 44);
+    const contentH = a.content ? calcTextHeight(doc, a.content, 480, 9) : 0;
+    const rowH = Math.max(44, 16 + 14 + contentH + 8);
+    zebraRow(doc, y, rowH);
     doc.fillColor(COLORS.secondary).fontSize(11).font('Helvetica-Bold').text(a.title, 55, y + 2);
-    y += 16;
-    doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(`Construtor: ${a.builder || 'NAO ATRIBUIDO'}  |  Dia: ${a.day || '-'}  |  Horario: ${a.time || '-'}`, 55, y, { width: CONTENT_WIDTH });
-    y += 14;
+    let cy = y + 16;
+    doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(`Construtor: ${a.builder || 'NAO ATRIBUIDO'}  |  Dia: ${a.day || '-'}  |  Horario: ${a.time || '-'}`, 55, cy, { width: CONTENT_WIDTH });
+    cy += 14;
     if (a.content) {
-      const lines = Math.ceil(doc.widthOfString(a.content, { width: 480 }) / 480) * 11;
-      if (y + lines > PAGE_BOTTOM) { doc.addPage(); y = 50; }
-      doc.fillColor(COLORS.gray).fontSize(9).font('Helvetica').text(a.content, 65, y, { width: 480 });
-      y += lines + 8;
+      if (cy + contentH > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+      doc.fillColor(COLORS.gray).fontSize(9).font('Helvetica').text(a.content, 65, cy, { width: 480 });
     }
-    y += 8;
+    y += rowH;
   }
 
   // ============ MATERIAS-PRIMAS ============
@@ -1495,13 +1555,18 @@ function generateCoordinatorGuideReport() {
   } else {
     for (const p of restricted) {
       if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
-      zebraRow(doc, y, 40);
+      let restrictionH = 0;
+      if (p.food_restriction) restrictionH += calcTextHeight(doc, `  ! Restricao alimentar: ${p.food_restriction}`, 480, 9);
+      if (p.medication) restrictionH += calcTextHeight(doc, `  Medicacao: ${p.medication}`, 480, 9);
+      if (p.special_needs) restrictionH += calcTextHeight(doc, `  Necessidades especiais: ${p.special_needs}`, 480, 9);
+      const rowH = Math.max(40, 14 + restrictionH + 8);
+      zebraRow(doc, y, rowH);
       doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica-Bold').text(p.name, 55, y + 2);
-      y += 14;
-      if (p.food_restriction) { doc.fillColor(COLORS.red).font('Helvetica').fontSize(9).text(`  ! Restricao alimentar: ${p.food_restriction}`, 55, y); y += 12; }
-      if (p.medication) { doc.fillColor(COLORS.orange).fontSize(9).text(`  Medicacao: ${p.medication}`, 55, y); y += 12; }
-      if (p.special_needs) { doc.fillColor(COLORS.secondary).fontSize(9).text(`  Necessidades especiais: ${p.special_needs}`, 55, y); y += 12; }
-      y += 8;
+      let cy = y + 14;
+      if (p.food_restriction) { doc.fillColor(COLORS.red).font('Helvetica').fontSize(9).text(`  ! Restricao alimentar: ${p.food_restriction}`, 55, cy, { width: 480 }); cy += calcTextHeight(doc, `  ! Restricao alimentar: ${p.food_restriction}`, 480, 9); }
+      if (p.medication) { doc.fillColor(COLORS.orange).font('Helvetica').fontSize(9).text(`  Medicacao: ${p.medication}`, 55, cy, { width: 480 }); cy += calcTextHeight(doc, `  Medicacao: ${p.medication}`, 480, 9); }
+      if (p.special_needs) { doc.fillColor(COLORS.secondary).font('Helvetica').fontSize(9).text(`  Necessidades especiais: ${p.special_needs}`, 55, cy, { width: 480 }); }
+      y += rowH;
     }
   }
 
@@ -1593,12 +1658,15 @@ function generateCoordinatorGuideReport() {
     y = sectionTitle(doc, 'Em Andamento', y, COLORS.orange);
     for (const t of inProgress) {
       if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
-      zebraRow(doc, y, 24);
+      const titleH = calcTextHeight(doc, `[${t.item_number}] ${t.title}`, 380, 9);
+      const metaH = calcTextHeight(doc, `Equipe: ${t.responsible_team || '-'}  |  Prazo: ${t.deadline || '-'}`, 380, 8);
+      const rowH = Math.max(24, titleH + metaH + 4);
+      zebraRow(doc, y, rowH);
       doc.fillColor(COLORS.orange).circle(55, y + 5, 3).fill();
       doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica-Bold').text(`[${t.item_number}]`, 65, y + 1, { continued: true, width: 30 });
       doc.font('Helvetica').text(` ${t.title}`, { width: 380 });
-      doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica').text(`Equipe: ${t.responsible_team || '-'}  |  Prazo: ${t.deadline || '-'}`, 65, y + 12, { width: 380 });
-      y += 24;
+      doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica').text(`Equipe: ${t.responsible_team || '-'}  |  Prazo: ${t.deadline || '-'}`, 65, y + titleH + 2, { width: 380 });
+      y += rowH;
     }
     y += 10;
   }
@@ -1608,11 +1676,14 @@ function generateCoordinatorGuideReport() {
     y = sectionTitle(doc, 'Nao Iniciadas', y, COLORS.gray);
     for (const t of notStarted) {
       if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
-      zebraRow(doc, y, 22);
+      const titleH = calcTextHeight(doc, `[${t.item_number}] ${t.title}`, 400, 9);
+      const metaH = calcTextHeight(doc, `Equipe: ${t.responsible_team || '-'}  |  Prazo: ${t.deadline || '-'}`, 400, 8);
+      const rowH = Math.max(22, titleH + metaH + 4);
+      zebraRow(doc, y, rowH);
       doc.strokeColor(COLORS.gray).lineWidth(0.5).circle(55, y + 5, 3).stroke();
       doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(`[${t.item_number}] ${t.title}`, 65, y + 1, { width: 400 });
-      doc.fillColor(COLORS.gray).fontSize(8).text(`Equipe: ${t.responsible_team || '-'}  |  Prazo: ${t.deadline || '-'}`, 65, y + 12, { width: 400 });
-      y += 22;
+      doc.fillColor(COLORS.gray).fontSize(8).text(`Equipe: ${t.responsible_team || '-'}  |  Prazo: ${t.deadline || '-'}`, 65, y + titleH + 2, { width: 400 });
+      y += rowH;
     }
   }
 
@@ -1635,18 +1706,22 @@ function generateCoordinatorGuideReport() {
     const catItems = fornecedores.filter(f => f.category === cat);
     for (const f of catItems) {
       if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
-      zebraRow(doc, y, 40);
-      const stColors = { contratado: COLORS.green, pendente: COLORS.orange, contatado: COLORS.secondary, cancelado: COLORS.red };
-      doc.fillColor(stColors[f.status] || COLORS.gray).circle(55, y + 5, 3).fill();
-      doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica-Bold').text(f.name || '-', 65, y + 1);
-      y += 14;
       const contacts = [];
       if (f.contact_person) contacts.push(f.contact_person);
       if (f.phone) contacts.push(f.phone);
       if (f.whatsapp) contacts.push(`WhatsApp: ${f.whatsapp}`);
-      if (contacts.length) { doc.fillColor(COLORS.gray).fontSize(9).font('Helvetica').text(`  ${contacts.join(' | ')}`, 65, y, { width: 450 }); y += 12; }
-      if (f.service) { doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica').text(`  Servico: ${f.service}`, 65, y, { width: 450 }); y += 10; }
-      y += 8;
+      const contactsStr = contacts.length ? `  ${contacts.join(' | ')}` : '';
+      const contactsH = contacts.length ? calcTextHeight(doc, contactsStr, 450, 9) : 0;
+      const servH = f.service ? calcTextHeight(doc, `  Servico: ${f.service}`, 450, 8) : 0;
+      const rowH = Math.max(40, 14 + contactsH + servH + 8);
+      zebraRow(doc, y, rowH);
+      const stColors = { contratado: COLORS.green, pendente: COLORS.orange, contatado: COLORS.secondary, cancelado: COLORS.red };
+      doc.fillColor(stColors[f.status] || COLORS.gray).circle(55, y + 5, 3).fill();
+      doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica-Bold').text(f.name || '-', 65, y + 1);
+      let cy = y + 14;
+      if (contacts.length) { doc.fillColor(COLORS.gray).fontSize(9).font('Helvetica').text(contactsStr, 65, cy, { width: 450 }); cy += contactsH; }
+      if (f.service) { doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica').text(`  Servico: ${f.service}`, 65, cy, { width: 450 }); }
+      y += rowH;
     }
     y += 6;
   }
@@ -1841,13 +1916,17 @@ function generatePreparationReport() {
       y += 22;
       for (const t of overdueParsed.slice(0, 20)) {
         if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
-        zebraRow(doc, y, 28);
+        const titleH = calcTextHeight(doc, t.title, 340, 10);
+        const catH = calcTextHeight(doc, `${t.category}`, 340, 8);
+        const teamH = calcTextHeight(doc, `Equipe: ${t.responsible_team || 'N/A'}`, 130, 8);
+        const rowH = Math.max(28, titleH + catH + 4);
+        zebraRow(doc, y, rowH);
         doc.fillColor(COLORS.red).circle(55, y + 5, 3).fill();
         doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica-Bold').text(t.title, 65, y + 1, { width: 340 });
-        doc.fillColor(COLORS.gray).font('Helvetica').fontSize(8).text(`${t.category}`, 65, y + 13, { width: 340 });
+        doc.fillColor(COLORS.gray).font('Helvetica').fontSize(8).text(`${t.category}`, 65, y + titleH + 2, { width: 340 });
         doc.fillColor(COLORS.red).font('Helvetica-Bold').fontSize(9).text(`${t.diff_days}d atrasado`, 420, y + 1, { width: 130, align: 'right' });
-        doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica').text(`Equipe: ${t.responsible_team || 'N/A'}`, 420, y + 13, { width: 130, align: 'right' });
-        y += 28;
+        doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica').text(`Equipe: ${t.responsible_team || 'N/A'}`, 420, y + titleH + 2, { width: 130, align: 'right' });
+        y += rowH;
       }
       if (overdueParsed.length > 20) {
         doc.fillColor(COLORS.gray).fontSize(9).text(`... e mais ${overdueParsed.length - 20} tarefas atrasadas`, 50, y);
@@ -1876,13 +1955,16 @@ function generatePreparationReport() {
 
     for (const t of catItems) {
       if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
-      zebraRow(doc, y, 24);
+      const titleH = calcTextHeight(doc, `[${t.item_number}] ${t.title}`, 350, 9);
+      const metaH = calcTextHeight(doc, `${t.responsible_team || ''}  |  ${t.deadline || ''}`, 350, 8);
+      const rowH = Math.max(24, titleH + metaH + 4);
+      zebraRow(doc, y, rowH);
       const sColor = t.status === 'concluido' ? COLORS.green : t.status === 'em_andamento' ? COLORS.orange : COLORS.gray;
       doc.fillColor(sColor).circle(55, y + 5, 3).fill();
       doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(`[${t.item_number}] ${t.title}`, 65, y + 1, { width: 350 });
-      doc.fillColor(COLORS.gray).fontSize(8).text(`${t.responsible_team || ''}  |  ${t.deadline || ''}`, 65, y + 12, { width: 350 });
+      doc.fillColor(COLORS.gray).fontSize(8).text(`${t.responsible_team || ''}  |  ${t.deadline || ''}`, 65, y + titleH + 2, { width: 350 });
       statusBadge(doc, t.status, 470, y + 2);
-      y += 24;
+      y += rowH;
     }
     y += 10;
   }
@@ -2067,7 +2149,10 @@ function generatePreparationReport() {
     ], y);
     for (const e of allEsc) {
       if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
-      zebraRow(doc, y, 22);
+      const nameH = calcTextHeight(doc, e.name || '-', 155, 9);
+      const descH = e.description ? calcTextHeight(doc, e.description, 380, 8) : 0;
+      const rowH = Math.max(22, nameH + descH + 8);
+      zebraRow(doc, y, rowH);
       const dt = e.date ? new Date(e.date + 'T00:00:00').toLocaleDateString('pt-BR') : 'A definir';
       doc.fillColor(COLORS.primary).fontSize(9).font('Helvetica-Bold').text(dt, 56, y + 4, { width: 65 });
       doc.fillColor(COLORS.dark).font('Helvetica').text(e.time || '-', 123, y + 4, { width: 40 });
@@ -2076,12 +2161,11 @@ function generatePreparationReport() {
       doc.fillColor(COLORS.secondary).fontSize(8).font('Helvetica-Oblique').text(e.target_audience || '-', 408, y + 4, { width: 70 });
       const stColor = e.status === 'concluida' || e.status === 'concluido' ? COLORS.green : e.status === 'em_andamento' ? COLORS.orange : COLORS.gray;
       doc.fillColor(stColor).font('Helvetica-Bold').fontSize(7).text(e.status || '-', 483, y + 4, { width: 77, align: 'right' });
-      y += 22;
+      let cy = y + nameH + 6;
       if (e.description) {
-        doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica-Oblique').text(e.description, 180, y, { width: 380 });
-        y += 12;
+        doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica-Oblique').text(e.description, 180, cy, { width: 380 });
       }
-      y += 4;
+      y += rowH;
     }
   }
 
@@ -2113,7 +2197,7 @@ function generatePreparationReport() {
       y += 16;
       if (a.content) {
         doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica').text(a.content, 50, y, { width: CONTENT_WIDTH });
-        y += Math.ceil(doc.widthOfString(a.content, { width: CONTENT_WIDTH }) / CONTENT_WIDTH) * 13 + 8;
+        y += calcTextHeight(doc, a.content, CONTENT_WIDTH, 10) + 8;
       }
       doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica').text(`Prioridade: ${a.priority || 'baixa'}  |  Autor: ${a.author || 'N/A'}`, 50, y);
       y += 18;
@@ -2385,7 +2469,10 @@ function generateLembretesReport() {
 
       for (const l of catItems) {
         if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
-        zebraRow(doc, y, 20);
+        const titleH = calcTextHeight(doc, l.title || '-', 170, 9);
+        const descH = calcTextHeight(doc, l.description || '-', 150, 9);
+        const rowH = Math.max(20, Math.max(titleH, descH) + 8);
+        zebraRow(doc, y, rowH);
         doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica-Bold').text(l.title || '-', 56, y + 4, { width: 170 });
         doc.fillColor(COLORS.gray).font('Helvetica').text(l.description || '-', 228, y + 4, { width: 150 });
         doc.fillColor(COLORS.dark).font('Helvetica').text(l.due_date ? fmtDate(l.due_date) : '-', 383, y + 4, { width: 65 });
@@ -2393,7 +2480,7 @@ function generateLembretesReport() {
         doc.fillColor(pColor).font('Helvetica-Bold').text(priorityLabel(l.priority), 453, y + 4, { width: 55 });
         const sColor = l.status === 'concluido' ? COLORS.green : l.status === 'em_andamento' ? COLORS.orange : COLORS.gray;
         doc.fillColor(sColor).font('Helvetica-Bold').text(l.status === 'concluido' ? 'OK' : l.status === 'em_andamento' ? 'Em curso' : 'Pendente', 513, y + 4, { width: 47, align: 'right' });
-        y += 20;
+        y += rowH;
       }
       y += 12;
     }
@@ -2465,7 +2552,10 @@ function generateEscolinhasReport() {
 
     for (const e of typeItems) {
       if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
-      zebraRow(doc, y, 26);
+      const nameH = calcTextHeight(doc, e.name || '-', 155, 9);
+      const descH = e.description ? calcTextHeight(doc, e.description, 375, 8) : 0;
+      const rowH = Math.max(26, nameH + descH + 8);
+      zebraRow(doc, y, rowH);
       const dt = e.date ? new Date(e.date + 'T00:00:00').toLocaleDateString('pt-BR') : 'A definir';
       doc.fillColor(COLORS.primary).fontSize(9).font('Helvetica-Bold').text(dt, 56, y + 4, { width: 70 });
       doc.fillColor(COLORS.dark).font('Helvetica').text(e.time || '-', 128, y + 4, { width: 40 });
@@ -2474,12 +2564,11 @@ function generateEscolinhasReport() {
       doc.fillColor(COLORS.secondary).fontSize(7).font('Helvetica-Oblique').text(e.target_audience || '-', 413, y + 4, { width: 70 });
       const stColor = e.status === 'concluida' || e.status === 'concluido' ? COLORS.green : e.status === 'em_andamento' ? COLORS.orange : COLORS.gray;
       doc.fillColor(stColor).font('Helvetica-Bold').fontSize(7).text(e.status || '-', 488, y + 4, { width: 72, align: 'right' });
-      y += 26;
+      let cy = y + nameH + 6;
       if (e.description) {
-        doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica-Oblique').text(e.description, 185, y, { width: 375 });
-        y += 12;
+        doc.fillColor(COLORS.gray).fontSize(8).font('Helvetica-Oblique').text(e.description, 185, cy, { width: 375 });
       }
-      y += 4;
+      y += rowH;
     }
     y += 12;
   }
