@@ -2411,10 +2411,48 @@ async function openAutoLembreteDetails(taskId) {
 }
 
 async function completeAutoLembrete(taskId) {
-  if (!confirm('Marcar esta tarefa como concluída? O lembrete será removido da lista.')) return;
-  await api(`/tasks/${taskId}/status`, { method: 'PATCH', body: JSON.stringify({ status: 'concluido' }) });
-  toast('Tarefa concluída! Lembrete removido.', 'success');
-  renderLembretes();
+  const l = autoLembretesCache.find(a => a.task_id === taskId);
+  if (!l) return;
+  showConfirmDialog({
+    icon: '✅',
+    title: 'Concluir Tarefa',
+    message: 'Marcar esta tarefa como concluída?',
+    detail: l.title,
+    subdetail: 'O lembrete será removido da lista automaticamente.',
+    confirmText: 'Sim, concluir',
+    cancelText: 'Cancelar',
+    onConfirm: async () => {
+      try {
+        await api(`/tasks/${taskId}/status`, { method: 'PATCH', body: JSON.stringify({ status: 'concluido' }) });
+        toast('Tarefa concluída! Lembrete removido.', 'success');
+        renderLembretes();
+      } catch (e) {
+        toast('Erro ao concluir tarefa.', 'error');
+      }
+    }
+  });
+}
+
+function showConfirmDialog(opts) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay active';
+  overlay.innerHTML = `<div class="modal" style="max-width:420px;text-align:center">
+    <div style="font-size:48px;margin-bottom:12px">${opts.icon || '❓'}</div>
+    <h3 style="margin-bottom:8px">${opts.title || 'Confirmar'}</h3>
+    <p style="color:var(--text);margin-bottom:4px">${opts.message || ''}</p>
+    ${opts.detail ? '<p style="font-weight:600;color:var(--primary);margin:8px 0 4px">' + opts.detail + '</p>' : ''}
+    ${opts.subdetail ? '<p style="font-size:13px;color:var(--text-light);margin-bottom:16px">' + opts.subdetail + '</p>' : '<div style="margin-bottom:16px"></div>'}
+    <div class="modal-actions" style="justify-content:center">
+      <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">${opts.cancelText || 'Cancelar'}</button>
+      <button class="btn btn-primary" id="confirm-dialog-ok">${opts.confirmText || 'Confirmar'}</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  overlay.querySelector('#confirm-dialog-ok').addEventListener('click', () => {
+    overlay.remove();
+    if (opts.onConfirm) opts.onConfirm();
+  });
 }
 
 function renderManualLembretes(list) {
