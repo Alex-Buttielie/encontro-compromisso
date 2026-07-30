@@ -2070,6 +2070,10 @@ let lembreteActiveTab = 'all';
 let lembreteFilterStatus = '';
 let lembreteFilterPriority = '';
 let lembreteSearchText = '';
+let autoFilterUrgency = '';
+let autoFilterCategory = '';
+let autoFilterTeam = '';
+let autoSearchText = '';
 
 const LEMBRETE_CATEGORIES = [
   'Geral MOs', 'Espaço Físico', 'Mestres de Obras', 'Traslado', 'Materiais Gráficos',
@@ -2137,6 +2141,22 @@ async function renderLembretes() {
 
     <div class="card">
       <div class="card-title">Lembretes Automáticos (baseados nos prazos do manual)</div>
+      <div class="lem-filters" id="auto-filters">
+        <input type="text" class="lem-search" placeholder="🔍 Buscar lembrete automático..." oninput="autoSearch(this.value)" id="auto-search-input">
+        <select onchange="autoFilterByUrgency(this.value)" id="auto-filter-urgency">
+          <option value="">Todas Urgências</option>
+          <option value="overdue">🚨 Atrasados</option>
+          <option value="urgent">⚠️ Urgentes</option>
+          <option value="warning">📅 Atenção</option>
+          <option value="info">ℹ️ Em Dia</option>
+        </select>
+        <select onchange="autoFilterByCategory(this.value)" id="auto-filter-category">
+          <option value="">Todas Categorias</option>
+        </select>
+        <select onchange="autoFilterByTeam(this.value)" id="auto-filter-team">
+          <option value="">Todas Equipes</option>
+        </select>
+      </div>
       <div id="auto-lembretes"></div>
     </div>
 
@@ -2186,7 +2206,51 @@ async function renderLembretes() {
   `;
 
   renderAutoLembretes(autoLembretesCache);
+  populateAutoFilters();
+  applyAutoFilters();
   applyLemFilters();
+}
+
+function populateAutoFilters() {
+  const cats = [...new Set(autoLembretesCache.map(l => l.category || 'N/A'))].sort();
+  const teams = [...new Set(autoLembretesCache.map(l => l.responsible_team || 'N/A').filter(Boolean))].sort();
+  const catSelect = document.getElementById('auto-filter-category');
+  const teamSelect = document.getElementById('auto-filter-team');
+  if (catSelect) { catSelect.innerHTML = '<option value="">Todas Categorias</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join(''); }
+  if (teamSelect) { teamSelect.innerHTML = '<option value="">Todas Equipes</option>' + teams.map(t => `<option value="${t}">${t}</option>`).join(''); }
+}
+
+function autoSearch(text) {
+  autoSearchText = text.toLowerCase();
+  applyAutoFilters();
+}
+
+function autoFilterByUrgency(val) {
+  autoFilterUrgency = val;
+  applyAutoFilters();
+}
+
+function autoFilterByCategory(val) {
+  autoFilterCategory = val;
+  applyAutoFilters();
+}
+
+function autoFilterByTeam(val) {
+  autoFilterTeam = val;
+  applyAutoFilters();
+}
+
+function applyAutoFilters() {
+  let list = [...autoLembretesCache];
+  if (autoFilterUrgency) list = list.filter(l => l.urgency === autoFilterUrgency);
+  if (autoFilterCategory) list = list.filter(l => (l.category || 'N/A') === autoFilterCategory);
+  if (autoFilterTeam) list = list.filter(l => (l.responsible_team || 'N/A') === autoFilterTeam);
+  if (autoSearchText) list = list.filter(l =>
+    (l.title || '').toLowerCase().includes(autoSearchText) ||
+    (l.category || '').toLowerCase().includes(autoSearchText) ||
+    (l.responsible_team || '').toLowerCase().includes(autoSearchText)
+  );
+  renderAutoLembretes(list);
 }
 
 function switchLemTab(cat) {
@@ -2244,10 +2308,16 @@ function applyLemFilters() {
 
 function renderAutoLembretes(list) {
   const container = document.getElementById('auto-lembretes');
-  if (list.length === 0) { container.innerHTML = '<p style="color:var(--text-light);padding:12px">Nenhum lembrete automático. Defina a data do Encontro.</p>'; return; }
+  if (list.length === 0) {
+    const hasData = autoLembretesCache.length > 0;
+    container.innerHTML = `<p style="color:var(--text-light);padding:12px">${hasData ? 'Nenhum lembrete automático encontrado com os filtros atuais.' : 'Nenhum lembrete automático. Defina a data do Encontro.'}</p>`;
+    return;
+  }
   const icons = { overdue: '🚨', urgent: '⚠️', warning: '📅', info: 'ℹ️' };
   const labels = { overdue: 'Atrasado', urgent: 'Urgente', warning: 'Atenção', info: 'Em dia' };
-  container.innerHTML = list.slice(0, 30).map(l => `<div class="lembrete-card ${l.urgency}">
+  const showingAll = list.length === autoLembretesCache.length;
+  container.innerHTML = `${!showingAll ? `<div style="font-size:11px;color:var(--text-light);padding:4px 12px">Mostrando ${list.length} de ${autoLembretesCache.length} lembretes</div>` : ''}
+  ${list.map(l => `<div class="lembrete-card ${l.urgency}">
     <div class="lembrete-icon">${icons[l.urgency]}</div>
     <div class="lembrete-info">
       <div class="lembrete-title">${l.title}</div>
