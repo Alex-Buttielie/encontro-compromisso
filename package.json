@@ -12,13 +12,19 @@
   },
   "dependencies": {
     "express": "^4.21.0",
+    "pdf-parse": "^1.1.1",
     "pdfkit": "^0.15.0"
   },
   "repository": {
     "type": "git",
     "url": ""
   },
-  "keywords": ["encontro", "compromisso-trin", "jumire", "coordenador"],
+  "keywords": [
+    "encontro",
+    "compromisso-trin",
+    "jumire",
+    "coordenador"
+  ],
   "author": "",
   "license": "ISC"
 }
