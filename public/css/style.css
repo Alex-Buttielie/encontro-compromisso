@@ -1463,3 +1463,72 @@ select:focus, input:focus, textarea:focus { border-color: var(--primary); }
 }
 .kit-toggle:hover { border-color: var(--primary); }
 .kit-toggle.checked { background: var(--success); border-color: var(--success); color: #fff; }
+
+/* FINANCE CHARTS & ANALYTICS */
+.fin-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.fin-charts-grid .card { padding: 16px; }
+.fin-charts-grid .card-title { margin-bottom: 12px; }
+
+.fin-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.fin-top-list { display: flex; flex-direction: column; gap: 6px; }
+.fin-top-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+}
+.fin-top-desc { flex: 1; font-size: 13px; font-weight: 600; }
+.fin-top-cat { font-size: 11px; color: var(--text-light); white-space: nowrap; }
+.fin-top-val { font-size: 14px; font-weight: 700; white-space: nowrap; }
+
+/* FINANCE EVENTS */
+.fin-events-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
+}
+.fin-event-card { padding: 16px; }
+.fin-event-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+.fin-event-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 8px;
+  margin: 10px 0;
+}
+.fin-event-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+.fin-event-stat .label { font-size: 10px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.3px; }
+.fin-event-stat .value { font-size: 14px; font-weight: 700; }
+.fin-event-actions { display: flex; gap: 6px; justify-content: flex-end; }
+
+/* FINANCE TABS - responsive */
+@media (max-width: 768px) {
+  .fin-charts-grid { grid-template-columns: 1fr; }
+  .fin-overview-grid { grid-template-columns: 1fr; }
+  .fin-events-grid { grid-template-columns: 1fr; }
+  .fin-event-stats { grid-template-columns: repeat(2, 1fr); }
+}

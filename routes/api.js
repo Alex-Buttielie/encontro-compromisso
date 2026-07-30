@@ -267,6 +267,177 @@ router.get('/finance/summary', (req, res) => {
   res.json({ income, expenses, balance: income - expenses, pendingIncome, pendingExpenses, byCategory });
 });
 
+// ============ FINANCE CATEGORIES ============
+
+router.get('/finance/categories', (req, res) => {
+  const list = db.getAll('finance_categories');
+  list.sort((a, b) => (a.type || '').localeCompare(a.type || '') || (a.name || '').localeCompare(b.name || ''));
+  res.json(list);
+});
+
+router.post('/finance/categories', (req, res) => {
+  const { name, type, color, budget_limit, description } = req.body;
+  const id = db.insert('finance_categories', {
+    name, type: type || 'despesa', color: color || '#c0392b',
+    budget_limit: parseFloat(budget_limit) || 0, description: description || ''
+  });
+  res.json({ id });
+});
+
+router.put('/finance/categories/:id', (req, res) => {
+  db.update('finance_categories', req.params.id, { ...req.body, updated_at: new Date().toISOString() });
+  res.json({ success: true });
+});
+
+router.delete('/finance/categories/:id', (req, res) => {
+  db.remove('finance_categories', req.params.id);
+  res.json({ success: true });
+});
+
+// ============ FINANCE EVENTS ============
+
+router.get('/finance/events', (req, res) => {
+  let list = db.getAll('finance_events');
+  const { status } = req.query;
+  if (status) list = list.filter(e => e.status === status);
+  list.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+  res.json(list);
+});
+
+router.post('/finance/events', (req, res) => {
+  const { name, type, date, description, expected_revenue, actual_revenue, expected_expense, actual_expense, status, location } = req.body;
+  const id = db.insert('finance_events', {
+    name, type: type || 'evento', date: date || new Date().toISOString().slice(0, 10),
+    description: description || '',
+    expected_revenue: parseFloat(expected_revenue) || 0, actual_revenue: parseFloat(actual_revenue) || 0,
+    expected_expense: parseFloat(expected_expense) || 0, actual_expense: parseFloat(actual_expense) || 0,
+    status: status || 'planejado', location: location || ''
+  });
+  res.json({ id });
+});
+
+router.put('/finance/events/:id', (req, res) => {
+  db.update('finance_events', req.params.id, { ...req.body, updated_at: new Date().toISOString() });
+  res.json({ success: true });
+});
+
+router.delete('/finance/events/:id', (req, res) => {
+  db.remove('finance_events', req.params.id);
+  res.json({ success: true });
+});
+
+// ============ FINANCE BUDGET ============
+
+router.get('/finance/budget', (req, res) => {
+  const list = db.getAll('finance_budget');
+  list.sort((a, b) => (a.category || '').localeCompare(b.category || ''));
+  res.json(list);
+});
+
+router.post('/finance/budget', (req, res) => {
+  const { category, type, planned_amount, notes } = req.body;
+  const id = db.insert('finance_budget', {
+    category, type: type || 'despesa',
+    planned_amount: parseFloat(planned_amount) || 0, notes: notes || ''
+  });
+  res.json({ id });
+});
+
+router.put('/finance/budget/:id', (req, res) => {
+  db.update('finance_budget', req.params.id, { ...req.body, updated_at: new Date().toISOString() });
+  res.json({ success: true });
+});
+
+router.delete('/finance/budget/:id', (req, res) => {
+  db.remove('finance_budget', req.params.id);
+  res.json({ success: true });
+});
+
+// ============ FINANCE ANALYTICS ============
+
+router.get('/finance/analytics', (req, res) => {
+  const items = db.getAll('finance');
+  const events = db.getAll('finance_events');
+  const budget = db.getAll('finance_budget');
+
+  // Monthly breakdown
+  const monthly = {};
+  for (const f of items) {
+    if (!f.date) continue;
+    const m = f.date.substring(0, 7);
+    if (!monthly[m]) monthly[m] = { receita: 0, despesa: 0, receita_pendente: 0, despesa_pendente: 0 };
+    if (f.type === 'receita') {
+      if (f.paid) monthly[m].receita += f.amount || 0;
+      else monthly[m].receita_pendente += f.amount || 0;
+    } else {
+      if (f.paid) monthly[m].despesa += f.amount || 0;
+      else monthly[m].despesa_pendente += f.amount || 0;
+    }
+  }
+
+  // Category breakdown with counts
+  const byCategory = {};
+  for (const f of items) {
+    const cat = f.category || 'Outros';
+    if (!byCategory[cat]) byCategory[cat] = { receita: 0, despesa: 0, count: 0, paid: 0, pending: 0 };
+    byCategory[cat].count++;
+    if (f.type === 'receita' && f.paid) byCategory[cat].receita += f.amount || 0;
+    if (f.type === 'despesa' && f.paid) byCategory[cat].despesa += f.amount || 0;
+    if (f.paid) byCategory[cat].paid++; else byCategory[cat].pending++;
+  }
+
+  // Payment status
+  const paidCount = items.filter(f => f.paid).length;
+  const pendingCount = items.filter(f => !f.paid).length;
+
+  // Top expenses
+  const topExpenses = items
+    .filter(f => f.type === 'despesa')
+    .sort((a, b) => (b.amount || 0) - (a.amount || 0))
+    .slice(0, 10)
+    .map(f => ({ description: f.description, amount: f.amount, category: f.category, date: f.date }));
+
+  // Top revenues
+  const topRevenues = items
+    .filter(f => f.type === 'receita')
+    .sort((a, b) => (b.amount || 0) - (a.amount || 0))
+    .slice(0, 10)
+    .map(f => ({ description: f.description, amount: f.amount, category: f.category, date: f.date }));
+
+  // Budget vs actual
+  const budgetVsActual = budget.map(b => {
+    const actual = items
+      .filter(f => f.category === b.category && f.type === b.type && f.paid)
+      .reduce((s, f) => s + (f.amount || 0), 0);
+    return {
+      category: b.category, type: b.type,
+      planned: b.planned_amount || 0, actual,
+      difference: (b.planned_amount || 0) - actual
+    };
+  });
+
+  // Events summary
+  const eventsSummary = events.map(e => ({
+    name: e.name, date: e.date, status: e.status,
+    revenue: e.actual_revenue || 0, expense: e.actual_expense || 0,
+    profit: (e.actual_revenue || 0) - (e.actual_expense || 0)
+  }));
+
+  res.json({
+    monthly,
+    byCategory,
+    paymentStatus: { paid: paidCount, pending: pendingCount, total: items.length },
+    topExpenses,
+    topRevenues,
+    budgetVsActual,
+    eventsSummary,
+    totalIncome: items.filter(f => f.type === 'receita' && f.paid).reduce((s, f) => s + (f.amount || 0), 0),
+    totalExpenses: items.filter(f => f.type === 'despesa' && f.paid).reduce((s, f) => s + (f.amount || 0), 0),
+    totalPendingIncome: items.filter(f => f.type === 'receita' && !f.paid).reduce((s, f) => s + (f.amount || 0), 0),
+    totalPendingExpenses: items.filter(f => f.type === 'despesa' && !f.paid).reduce((s, f) => s + (f.amount || 0), 0),
+  });
+});
+
 // ============ LEMBRANCINHAS ============
 
 router.get('/lembrancinhas', (req, res) => {

@@ -1076,20 +1076,149 @@ function val(id) { const el = document.getElementById(id); return el ? el.value 
 
 // ============ FINANCEIRO ============
 let financeCache = [];
+let financeCategoriesCache = [];
+let financeEventsCache = [];
+let financeBudgetCache = [];
+let financeAnalyticsCache = null;
+let financeCharts = {};
+let financeTab = 'overview';
+
+const FINANCE_CATEGORIES = {
+  receita: ['Inscrições', 'Doações', 'Bazar', 'Camisetas', 'Apadrinhamento', 'Contribuições de Equipes', 'Betoneiras', 'Outros'],
+  despesa: ['Espaço Físico', 'Traslado', 'Alimentação', 'Materiais Gráficos', 'Camisetas', 'Bíblias', 'Capela', 'Som e Técnica', 'Lembrancinhas', 'Decoração', 'Rosas', 'Bazar', 'Higienização', 'Equipamentos', 'Primeiros Socorros', 'Hospedagem', 'Honorários', 'Diversos', 'Outros'],
+};
+
+const FINANCE_EVENT_TYPES = ['Evento', 'Bazar', 'Rifa', 'Campanha', 'Jantar', 'Show', 'Sorteio', 'Outro'];
+const FINANCE_EVENT_STATUS = ['planejado', 'em_andamento', 'concluido', 'cancelado'];
 
 async function renderFinanceiro() {
   financeCache = await api('/finance');
-  const summary = await api('/finance/summary');
   const main = document.getElementById('main-content');
   main.innerHTML = `
     <h1 class="page-title">Controle Financeiro</h1>
-    <p class="page-subtitle">Receitas e despesas do Encontro Compromisso Trin</p>
+    <p class="page-subtitle">Gestão completa: lançamentos, análises, categorias, eventos e orçamento</p>
+    <div class="tab-bar" id="fin-tabs">
+      <button class="tab-btn active" onclick="switchFinanceTab('overview')">📊 Visão Geral</button>
+      <button class="tab-btn" onclick="switchFinanceTab('lancamentos')">💰 Lançamentos</button>
+      <button class="tab-btn" onclick="switchFinanceTab('categorias')">📁 Categorias</button>
+      <button class="tab-btn" onclick="switchFinanceTab('eventos')">📅 Eventos</button>
+      <button class="tab-btn" onclick="switchFinanceTab('orcamento')">🎯 Orçamento</button>
+    </div>
+    <div id="fin-tab-content"></div>
+  `;
+  await switchFinanceTab(financeTab);
+}
+
+async function switchFinanceTab(tab) {
+  financeTab = tab;
+  document.querySelectorAll('#fin-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+  const btns = document.querySelectorAll('#fin-tabs .tab-btn');
+  const tabMap = { overview: 0, lancamentos: 1, categorias: 2, eventos: 3, orcamento: 4 };
+  if (btns[tabMap[tab]]) btns[tabMap[tab]].classList.add('active');
+  Object.values(financeCharts).forEach(c => { try { c.destroy(); } catch(e){} });
+  financeCharts = {};
+  const content = document.getElementById('fin-tab-content');
+  if (!content) return;
+  if (tab === 'overview') await renderFinOverview(content);
+  else if (tab === 'lancamentos') await renderFinLancamentos(content);
+  else if (tab === 'categorias') await renderFinCategorias(content);
+  else if (tab === 'eventos') await renderFinEventos(content);
+  else if (tab === 'orcamento') await renderFinOrcamento(content);
+}
+
+// ===== VISÃO GERAL (charts) =====
+async function renderFinOverview(container) {
+  financeAnalyticsCache = await api('/finance/analytics');
+  const a = financeAnalyticsCache;
+  const balance = a.totalIncome - a.totalExpenses;
+  const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+  container.innerHTML = `
+    <div class="finance-summary">
+      <div class="finance-card income"><div class="label">Receitas</div><div class="amount">R$ ${a.totalIncome.toFixed(2)}</div></div>
+      <div class="finance-card expense"><div class="label">Despesas</div><div class="amount">R$ ${a.totalExpenses.toFixed(2)}</div></div>
+      <div class="finance-card balance"><div class="label">Saldo</div><div class="amount">R$ ${balance.toFixed(2)}</div></div>
+      <div class="finance-card pending"><div class="label">A Receber</div><div class="amount">R$ ${a.totalPendingIncome.toFixed(2)}</div></div>
+      <div class="finance-card pending"><div class="label">A Pagar</div><div class="amount">R$ ${a.totalPendingExpenses.toFixed(2)}</div></div>
+    </div>
+    <div class="fin-charts-grid">
+      <div class="card"><div class="card-title">Receitas vs Despesas por Mês</div><canvas id="chart-monthly" height="200"></canvas></div>
+      <div class="card"><div class="card-title">Despesas por Categoria</div><canvas id="chart-exp-cat" height="200"></canvas></div>
+      <div class="card"><div class="card-title">Receitas por Categoria</div><canvas id="chart-inc-cat" height="200"></canvas></div>
+      <div class="card"><div class="card-title">Status de Pagamentos</div><canvas id="chart-payment" height="200"></canvas></div>
+    </div>
+    <div class="fin-overview-grid">
+      <div class="card">
+        <div class="card-title">Top 10 Despesas</div>
+        <div class="fin-top-list">
+          ${a.topExpenses.length === 0 ? '<p class="empty-state">Nenhuma despesa.</p>' :
+            a.topExpenses.map(e => `<div class="fin-top-item"><span class="fin-top-desc">${e.description || '—'}</span><span class="fin-top-cat">${e.category || '—'}</span><span class="fin-top-val" style="color:var(--danger)">R$ ${(e.amount||0).toFixed(2)}</span></div>`).join('')}
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Top 10 Receitas</div>
+        <div class="fin-top-list">
+          ${a.topRevenues.length === 0 ? '<p class="empty-state">Nenhuma receita.</p>' :
+            a.topRevenues.map(e => `<div class="fin-top-item"><span class="fin-top-desc">${e.description || '—'}</span><span class="fin-top-cat">${e.category || '—'}</span><span class="fin-top-val" style="color:var(--success)">R$ ${(e.amount||0).toFixed(2)}</span></div>`).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Monthly chart
+  const months = Object.keys(a.monthly).sort();
+  if (months.length > 0) {
+    const ctx = document.getElementById('chart-monthly');
+    if (ctx) financeCharts.monthly = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: months.map(m => { const [y, mo] = m.split('-'); return `${monthNames[parseInt(mo)-1]}/${y}`; }),
+        datasets: [
+          { label: 'Receitas', data: months.map(m => a.monthly[m].receita), backgroundColor: '#27ae60' },
+          { label: 'Despesas', data: months.map(m => a.monthly[m].despesa), backgroundColor: '#c0392b' },
+        ]
+      },
+      options: { responsive: true, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true } } }
+    });
+  }
+
+  // Expense category doughnut
+  const expCats = Object.entries(a.byCategory).filter(([_, v]) => v.despesa > 0).sort((a, b) => b[1].despesa - a[1].despesa);
+  const ctxExp = document.getElementById('chart-exp-cat');
+  if (ctxExp && expCats.length > 0) financeCharts.expCat = new Chart(ctxExp, {
+    type: 'doughnut',
+    data: { labels: expCats.map(([k]) => k), datasets: [{ data: expCats.map(([_, v]) => v.despesa), backgroundColor: ['#c0392b','#e74c3c','#f39c12','#d4a017','#1a3a5c','#234c72','#2d8659','#8e44ad','#7f8c8d','#e67e22','#3498db','#95a5a6'] }] },
+    options: { responsive: true, plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } } } }
+  });
+
+  // Income category doughnut
+  const incCats = Object.entries(a.byCategory).filter(([_, v]) => v.receita > 0).sort((a, b) => b[1].receita - a[1].receita);
+  const ctxInc = document.getElementById('chart-inc-cat');
+  if (ctxInc && incCats.length > 0) financeCharts.incCat = new Chart(ctxInc, {
+    type: 'doughnut',
+    data: { labels: incCats.map(([k]) => k), datasets: [{ data: incCats.map(([_, v]) => v.receita), backgroundColor: ['#27ae60','#2d8659','#16a085','#1abc9c','#2ecc71','#f1c40f','#e67e22','#d4a017','#1a3a5c','#3498db'] }] },
+    options: { responsive: true, plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } } } }
+  });
+
+  // Payment status pie
+  const ctxPay = document.getElementById('chart-payment');
+  if (ctxPay) financeCharts.payment = new Chart(ctxPay, {
+    type: 'pie',
+    data: { labels: ['Pagos', 'Pendentes'], datasets: [{ data: [a.paymentStatus.paid, a.paymentStatus.pending], backgroundColor: ['#27ae60', '#f39c12'] }] },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+  });
+}
+
+// ===== LANÇAMENTOS =====
+async function renderFinLancamentos(container) {
+  const summary = await api('/finance/summary');
+  container.innerHTML = `
     <div class="finance-summary">
       <div class="finance-card income"><div class="label">Receitas</div><div class="amount">R$ ${summary.income.toFixed(2)}</div></div>
       <div class="finance-card expense"><div class="label">Despesas</div><div class="amount">R$ ${summary.expenses.toFixed(2)}</div></div>
       <div class="finance-card balance"><div class="label">Saldo</div><div class="amount">R$ ${summary.balance.toFixed(2)}</div></div>
-      <div class="finance-card pending"><div class="label">Pendente a Receber</div><div class="amount">R$ ${summary.pendingIncome.toFixed(2)}</div></div>
-      <div class="finance-card pending"><div class="label">Pendente a Pagar</div><div class="amount">R$ ${summary.pendingExpenses.toFixed(2)}</div></div>
+      <div class="finance-card pending"><div class="label">A Receber</div><div class="amount">R$ ${summary.pendingIncome.toFixed(2)}</div></div>
+      <div class="finance-card pending"><div class="label">A Pagar</div><div class="amount">R$ ${summary.pendingExpenses.toFixed(2)}</div></div>
     </div>
     <div class="filters">
       <div class="filter-group">
@@ -1129,11 +1258,6 @@ function filterFinance() {
   renderFinanceTable(filtered);
 }
 
-const FINANCE_CATEGORIES = {
-  receita: ['Inscrições', 'Doações', 'Bazar', 'Camisetas', 'Apadrinhamento', 'Contribuições de Equipes', 'Betoneiras', 'Outros'],
-  despesa: ['Espaço Físico', 'Traslado', 'Alimentação', 'Materiais Gráficos', 'Camisetas', 'Bíblias', 'Capela', 'Som e Técnica', 'Lembrancinhas', 'Decoração', 'Rosas', 'Bazar', 'Higienização', 'Equipamentos', 'Primeiros Socorros', 'Hospedagem', 'Honorários', 'Diversos', 'Outros'],
-};
-
 function populateFinanceCategoryDropdown(selectedType, selectedCategory) {
   const sel = document.getElementById('fin-category');
   if (!sel) return;
@@ -1145,6 +1269,7 @@ function populateFinanceCategoryDropdown(selectedType, selectedCategory) {
 function renderFinanceTable(list) {
   const tbody = document.querySelector('#finance-table tbody');
   const cardsContainer = document.getElementById('finance-cards');
+  if (!tbody) return;
   if (list.length === 0) {
     tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-light);padding:20px">Nenhum lançamento.</td></tr>';
     cardsContainer.innerHTML = '<div class="empty-state"><p>Nenhum lançamento.</p></div>';
@@ -1238,6 +1363,267 @@ async function deleteFinance(id) {
   await api(`/finance/${id}`, { method: 'DELETE' });
   toast('Lançamento excluído', 'error');
   renderFinanceiro();
+}
+
+// ===== CATEGORIAS =====
+async function renderFinCategorias(container) {
+  financeCategoriesCache = await api('/finance/categories');
+  container.innerHTML = `
+    <div class="filters">
+      <h3 class="card-title" style="margin:0">Categorias de Lançamentos</h3>
+      <button class="btn btn-primary btn-sm" onclick="openFinCategoryModal()">+ Categoria</button>
+    </div>
+    <div class="card">
+      ${financeCategoriesCache.length === 0 ? '<div class="empty-state"><p>Nenhuma categoria cadastrada. Crie uma nova!</p></div>' : `
+      <table class="data-table" id="fin-cat-table">
+        <thead><tr><th>Nome</th><th>Tipo</th><th>Cor</th><th>Orçamento (R$)</th><th>Descrição</th><th></th></tr></thead>
+        <tbody>
+          ${financeCategoriesCache.map(c => `<tr>
+            <td style="font-weight:600">${c.name}</td>
+            <td><span class="badge-sm ${c.type==='receita'?'badge-success':'badge-danger'}">${c.type==='receita'?'Receita':'Despesa'}</span></td>
+            <td><span style="display:inline-block;width:20px;height:20px;border-radius:4px;background:${c.color||'#ccc'};vertical-align:middle"></span></td>
+            <td>R$ ${(c.budget_limit||0).toFixed(2)}</td>
+            <td>${c.description || '—'}</td>
+            <td>
+              <button class="btn-icon" onclick="openFinCategoryModal(${c.id})">✏️</button>
+              <button class="btn-icon" onclick="deleteFinCategory(${c.id})">🗑️</button>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`}
+    </div>
+  `;
+}
+
+function openFinCategoryModal(id) {
+  const c = id ? financeCategoriesCache.find(c => c.id === id) : null;
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay active';
+  overlay.innerHTML = `<div class="modal">
+    <h3>${c ? 'Editar Categoria' : 'Nova Categoria'}</h3>
+    <div class="form-row">
+      <div class="form-group"><label>Nome</label><input id="fc-name" value="${c?.name || ''}"></div>
+      <div class="form-group"><label>Tipo</label><select id="fc-type"><option value="receita" ${c?.type==='receita'?'selected':''}>Receita</option><option value="despesa" ${c?.type==='despesa'?'selected':''}>Despesa</option></select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Cor</label><input id="fc-color" type="color" value="${c?.color || '#c0392b'}" style="height:40px;padding:4px"></div>
+      <div class="form-group"><label>Orçamento (R$)</label><input id="fc-budget" type="number" step="0.01" value="${c?.budget_limit || 0}"></div>
+    </div>
+    <div class="form-group"><label>Descrição</label><input id="fc-desc" value="${c?.description || ''}"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveFinCategory(${id || 'null'}, this)">${c ? 'Salvar' : 'Criar'}</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+}
+
+async function saveFinCategory(id, btn) {
+  const data = {
+    name: val('fc-name'), type: val('fc-type'), color: val('fc-color'),
+    budget_limit: parseFloat(val('fc-budget')) || 0, description: val('fc-desc')
+  };
+  if (id) await api(`/finance/categories/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+  else await api('/finance/categories', { method: 'POST', body: JSON.stringify(data) });
+  btn.closest('.modal-overlay').remove();
+  toast('Categoria salva!', 'success');
+  renderFinCategorias(document.getElementById('fin-tab-content'));
+}
+
+async function deleteFinCategory(id) {
+  if (!confirm('Excluir esta categoria?')) return;
+  await api(`/finance/categories/${id}`, { method: 'DELETE' });
+  toast('Categoria excluída', 'error');
+  renderFinCategorias(document.getElementById('fin-tab-content'));
+}
+
+// ===== EVENTOS =====
+async function renderFinEventos(container) {
+  financeEventsCache = await api('/finance/events');
+  container.innerHTML = `
+    <div class="filters">
+      <h3 class="card-title" style="margin:0">Eventos Financeiros</h3>
+      <button class="btn btn-primary btn-sm" onclick="openFinEventModal()">+ Evento</button>
+    </div>
+    <div class="fin-events-grid">
+      ${financeEventsCache.length === 0 ? '<div class="card empty-state"><p>Nenhum evento cadastrado. Crie um novo evento financeiro!</p></div>' :
+        financeEventsCache.map(e => {
+          const profit = (e.actual_revenue||0) - (e.actual_expense||0);
+          const statusLabels = { planejado: 'Planejado', em_andamento: 'Em Andamento', concluido: 'Concluído', cancelado: 'Cancelado' };
+          const statusBadge = { planejado: 'badge-warning', em_andamento: 'badge-info', concluido: 'badge-success', cancelado: 'badge-danger' };
+          return `<div class="card fin-event-card">
+            <div class="fin-event-header">
+              <div>
+                <h3 style="margin:0;font-size:16px">${e.name}</h3>
+                <span style="font-size:12px;color:var(--text-light)">${e.type || 'Evento'} · ${e.date ? new Date(e.date).toLocaleDateString('pt-BR') : '—'} · ${e.location || '—'}</span>
+              </div>
+              <span class="badge-sm ${statusBadge[e.status]||'badge-gray'}">${statusLabels[e.status]||e.status}</span>
+            </div>
+            ${e.description ? `<p style="font-size:13px;color:var(--text-light);margin:8px 0">${e.description}</p>` : ''}
+            <div class="fin-event-stats">
+              <div class="fin-event-stat"><span class="label">Receita Prevista</span><span class="value">R$ ${(e.expected_revenue||0).toFixed(2)}</span></div>
+              <div class="fin-event-stat"><span class="label">Receita Real</span><span class="value" style="color:var(--success)">R$ ${(e.actual_revenue||0).toFixed(2)}</span></div>
+              <div class="fin-event-stat"><span class="label">Despesa Prevista</span><span class="value">R$ ${(e.expected_expense||0).toFixed(2)}</span></div>
+              <div class="fin-event-stat"><span class="label">Despesa Real</span><span class="value" style="color:var(--danger)">R$ ${(e.actual_expense||0).toFixed(2)}</span></div>
+              <div class="fin-event-stat"><span class="label">Lucro/Prejuízo</span><span class="value" style="color:${profit>=0?'var(--success)':'var(--danger)'};font-weight:700">R$ ${profit.toFixed(2)}</span></div>
+            </div>
+            <div class="fin-event-actions">
+              <button class="btn-icon" onclick="openFinEventModal(${e.id})">✏️</button>
+              <button class="btn-icon" onclick="deleteFinEvent(${e.id})">🗑️</button>
+            </div>
+          </div>`;
+        }).join('')}
+    </div>
+  `;
+}
+
+function openFinEventModal(id) {
+  const e = id ? financeEventsCache.find(e => e.id === id) : null;
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay active';
+  overlay.innerHTML = `<div class="modal">
+    <h3>${e ? 'Editar Evento' : 'Novo Evento'}</h3>
+    <div class="form-row">
+      <div class="form-group"><label>Nome</label><input id="fe-name" value="${e?.name || ''}"></div>
+      <div class="form-group"><label>Tipo</label><select id="fe-type">${FINANCE_EVENT_TYPES.map(t => `<option value="${t}" ${e?.type===t?'selected':''}>${t}</option>`).join('')}</select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Data</label><input id="fe-date" type="date" value="${e?.date || ''}"></div>
+      <div class="form-group"><label>Local</label><input id="fe-location" value="${e?.location || ''}"></div>
+      <div class="form-group"><label>Status</label><select id="fe-status">${FINANCE_EVENT_STATUS.map(s => `<option value="${s}" ${e?.status===s?'selected':''}>${s.replace('_',' ').replace(/\b\w/g,c=>c.toUpperCase())}</option>`).join('')}</select></div>
+    </div>
+    <div class="form-group"><label>Descrição</label><textarea id="fe-desc" rows="2">${e?.description || ''}</textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label>Receita Prevista (R$)</label><input id="fe-exp-rev" type="number" step="0.01" value="${e?.expected_revenue || 0}"></div>
+      <div class="form-group"><label>Receita Real (R$)</label><input id="fe-act-rev" type="number" step="0.01" value="${e?.actual_revenue || 0}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Despesa Prevista (R$)</label><input id="fe-exp-exp" type="number" step="0.01" value="${e?.expected_expense || 0}"></div>
+      <div class="form-group"><label>Despesa Real (R$)</label><input id="fe-act-exp" type="number" step="0.01" value="${e?.actual_expense || 0}"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveFinEvent(${id || 'null'}, this)">${e ? 'Salvar' : 'Criar'}</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', ev => { if (ev.target === overlay) overlay.remove(); });
+}
+
+async function saveFinEvent(id, btn) {
+  const data = {
+    name: val('fe-name'), type: val('fe-type'), date: val('fe-date'),
+    location: val('fe-location'), status: val('fe-status'), description: val('fe-desc'),
+    expected_revenue: parseFloat(val('fe-exp-rev')) || 0, actual_revenue: parseFloat(val('fe-act-rev')) || 0,
+    expected_expense: parseFloat(val('fe-exp-exp')) || 0, actual_expense: parseFloat(val('fe-act-exp')) || 0,
+  };
+  if (id) await api(`/finance/events/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+  else await api('/finance/events', { method: 'POST', body: JSON.stringify(data) });
+  btn.closest('.modal-overlay').remove();
+  toast('Evento salvo!', 'success');
+  renderFinEventos(document.getElementById('fin-tab-content'));
+}
+
+async function deleteFinEvent(id) {
+  if (!confirm('Excluir este evento?')) return;
+  await api(`/finance/events/${id}`, { method: 'DELETE' });
+  toast('Evento excluído', 'error');
+  renderFinEventos(document.getElementById('fin-tab-content'));
+}
+
+// ===== ORÇAMENTO =====
+async function renderFinOrcamento(container) {
+  financeBudgetCache = await api('/finance/budget');
+  const analytics = financeAnalyticsCache || await api('/finance/analytics');
+  const bva = analytics.budgetVsActual || [];
+  container.innerHTML = `
+    <div class="filters">
+      <h3 class="card-title" style="margin:0">Planejamento Orçamentário</h3>
+      <button class="btn btn-primary btn-sm" onclick="openFinBudgetModal()">+ Item de Orçamento</button>
+    </div>
+    ${bva.length > 0 ? `
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">Orçamento vs Realizado</div>
+      <table class="data-table" id="fin-bva-table">
+        <thead><tr><th>Categoria</th><th>Tipo</th><th>Planejado</th><th>Realizado</th><th>Diferença</th><th>% Uso</th></tr></thead>
+        <tbody>
+          ${bva.map(b => {
+            const pct = b.planned > 0 ? Math.round((b.actual / b.planned) * 100) : 0;
+            const diffColor = b.difference >= 0 ? 'var(--success)' : 'var(--danger)';
+            return `<tr>
+              <td style="font-weight:600">${b.category}</td>
+              <td><span class="badge-sm ${b.type==='receita'?'badge-success':'badge-danger'}">${b.type==='receita'?'Receita':'Despesa'}</span></td>
+              <td>R$ ${b.planned.toFixed(2)}</td>
+              <td>R$ ${b.actual.toFixed(2)}</td>
+              <td style="color:${diffColor};font-weight:600">R$ ${b.difference.toFixed(2)}</td>
+              <td>${pct}%</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>` : ''}
+    <div class="card">
+      <div class="card-title">Itens de Orçamento</div>
+      ${financeBudgetCache.length === 0 ? '<div class="empty-state"><p>Nenhum item de orçamento. Crie um novo!</p></div>' : `
+      <table class="data-table" id="fin-budget-table">
+        <thead><tr><th>Categoria</th><th>Tipo</th><th>Valor Planejado</th><th>Notas</th><th></th></tr></thead>
+        <tbody>
+          ${financeBudgetCache.map(b => `<tr>
+            <td style="font-weight:600">${b.category}</td>
+            <td><span class="badge-sm ${b.type==='receita'?'badge-success':'badge-danger'}">${b.type==='receita'?'Receita':'Despesa'}</span></td>
+            <td>R$ ${(b.planned_amount||0).toFixed(2)}</td>
+            <td>${b.notes || '—'}</td>
+            <td>
+              <button class="btn-icon" onclick="openFinBudgetModal(${b.id})">✏️</button>
+              <button class="btn-icon" onclick="deleteFinBudget(${b.id})">🗑️</button>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`}
+    </div>
+  `;
+}
+
+function openFinBudgetModal(id) {
+  const b = id ? financeBudgetCache.find(b => b.id === id) : null;
+  const allCats = [...new Set([...FINANCE_CATEGORIES.receita, ...FINANCE_CATEGORIES.despesa])];
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay active';
+  overlay.innerHTML = `<div class="modal">
+    <h3>${b ? 'Editar Orçamento' : 'Novo Item de Orçamento'}</h3>
+    <div class="form-row">
+      <div class="form-group"><label>Categoria</label><select id="fb-category">${allCats.map(c => `<option value="${c}" ${b?.category===c?'selected':''}>${c}</option>`).join('')}</select></div>
+      <div class="form-group"><label>Tipo</label><select id="fb-type"><option value="receita" ${b?.type==='receita'?'selected':''}>Receita</option><option value="despesa" ${b?.type==='despesa'?'selected':''}>Despesa</option></select></div>
+    </div>
+    <div class="form-group"><label>Valor Planejado (R$)</label><input id="fb-amount" type="number" step="0.01" value="${b?.planned_amount || 0}"></div>
+    <div class="form-group"><label>Notas</label><textarea id="fb-notes" rows="2">${b?.notes || ''}</textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveFinBudget(${id || 'null'}, this)">${b ? 'Salvar' : 'Criar'}</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+}
+
+async function saveFinBudget(id, btn) {
+  const data = {
+    category: val('fb-category'), type: val('fb-type'),
+    planned_amount: parseFloat(val('fb-amount')) || 0, notes: val('fb-notes')
+  };
+  if (id) await api(`/finance/budget/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+  else await api('/finance/budget', { method: 'POST', body: JSON.stringify(data) });
+  btn.closest('.modal-overlay').remove();
+  toast('Orçamento salvo!', 'success');
+  renderFinOrcamento(document.getElementById('fin-tab-content'));
+}
+
+async function deleteFinBudget(id) {
+  if (!confirm('Excluir este item de orçamento?')) return;
+  await api(`/finance/budget/${id}`, { method: 'DELETE' });
+  toast('Item excluído', 'error');
+  renderFinOrcamento(document.getElementById('fin-tab-content'));
 }
 
 // ============ LEMBRANCINHAS ============
