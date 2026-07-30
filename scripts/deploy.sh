@@ -32,9 +32,27 @@ nvm use 20
 # Clone or pull
 if [ -d "$APP_DIR/.git" ]; then
   echo ">>> Pulling latest code..."
+
+  # Backup database before git reset (preserve user data)
+  DB_FILE="$APP_DIR/db/encontro.json"
+  DB_BACKUP=""
+  if [ -f "$DB_FILE" ]; then
+    DB_BACKUP=$(mktemp /tmp/encontro-db-XXXXXX.json)
+    cp "$DB_FILE" "$DB_BACKUP"
+    echo ">>> Database backed up"
+  fi
+
   cd "$APP_DIR"
   git fetch origin
   git reset --hard "origin/$BRANCH"
+
+  # Restore database after git reset
+  if [ -n "$DB_BACKUP" ] && [ -f "$DB_BACKUP" ]; then
+    mkdir -p "$APP_DIR/db"
+    cp "$DB_BACKUP" "$DB_FILE"
+    rm -f "$DB_BACKUP"
+    echo ">>> Database restored"
+  fi
 else
   echo ">>> Cloning repository..."
   mkdir -p "$(dirname "$APP_DIR")"

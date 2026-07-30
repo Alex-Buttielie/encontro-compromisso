@@ -1,8 +1,8 @@
 # Dependencies
 node_modules/
 
-# Database (versionado com dados de produção)
-# db/encontro.json
+# Database (cada ambiente mantem seu proprio DB)
+db/encontro.json
 
 # Environment
 .env
