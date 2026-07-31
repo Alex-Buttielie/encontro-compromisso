@@ -1,5 +1,17 @@
 [
   {
+    "version": "1.47.0",
+    "date": "2026-07-31",
+    "title": "Correção de Membros Órfãos em Produção (VPS)",
+    "changes": [
+      "Migration V12: remapeia team_members órfãos usando nome da equipe como referência",
+      "Migration V1 corrigida: agora remapeia team_id após db.insert() atribuir novos IDs",
+      "Causa raiz: db.insert() atribuía novos IDs sequenciais às teams (39-57 na VPS), mas team_members mantinham team_ids originais (1-20)",
+      "Corrigido em PROD, DEV e HOMOLOG na VPS Hostgator",
+      "Scripts temporários de diagnóstico removidos"
+    ]
+  },
+  {
     "version": "1.45.0",
     "date": "2026-07-31",
     "title": "Correção de Membros de Equipes Ausentes em Produção",
