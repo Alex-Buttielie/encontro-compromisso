@@ -314,15 +314,16 @@ function generateFullReport() {
       doc.fontSize(9).fillColor(COLORS.gray).font('Helvetica-Bold').text(`Membros (${members.length}):`, 50, y);
       y += 14;
       const colW = 250;
+      let memberStartY = y;
       members.forEach((m, i) => {
         const col = i % 2;
         const row = Math.floor(i / 2);
         const mx = 55 + col * colW;
-        const my = y + row * 13;
-        if (my > PAGE_BOTTOM) { doc.addPage(); y = 50; }
-        doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(`- ${m.name}${m.role ? ' (' + m.role + ')' : ''}${m.phone ? '  ' + m.phone : ''}`, mx, my, { width: colW - 5 });
+        const my = memberStartY + row * 13;
+        if (my > PAGE_BOTTOM) { doc.addPage(); memberStartY = 50; }
+        doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(`- ${m.name}${m.role ? ' (' + m.role + ')' : ''}${m.phone ? '  ' + m.phone : ''}`, mx, memberStartY + row * 13, { width: colW - 5 });
       });
-      y += Math.ceil(members.length / 2) * 13 + 10;
+      y = memberStartY + Math.ceil(members.length / 2) * 13 + 10;
     }
     y += 10;
   }
@@ -563,15 +564,16 @@ function generateTeamReport() {
       doc.fontSize(9).fillColor(COLORS.gray).font('Helvetica-Bold').text(`Membros (${members.length}):`, 50, y);
       y += 14;
       const colW = 250;
+      let memberStartY = y;
       members.forEach((m, i) => {
         const col = i % 2;
         const row = Math.floor(i / 2);
         const mx = 55 + col * colW;
-        const my = y + row * 13;
-        if (my > PAGE_BOTTOM) { doc.addPage(); y = 50; }
-        doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(`- ${m.name}${m.role ? ' (' + m.role + ')' : ''}${m.phone ? '  ' + m.phone : ''}`, mx, my, { width: colW - 5 });
+        const my = memberStartY + row * 13;
+        if (my > PAGE_BOTTOM) { doc.addPage(); memberStartY = 50; }
+        doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(`- ${m.name}${m.role ? ' (' + m.role + ')' : ''}${m.phone ? '  ' + m.phone : ''}`, mx, memberStartY + row * 13, { width: colW - 5 });
       });
-      y += Math.ceil(members.length / 2) * 13 + 10;
+      y = memberStartY + Math.ceil(members.length / 2) * 13 + 10;
     } else {
       doc.fillColor(COLORS.gray).fontSize(9).font('Helvetica-Oblique').text('Nenhum membro cadastrado', 55, y);
       y += 16;
@@ -1998,15 +2000,16 @@ function generatePreparationReport() {
     const members = db.getAll('team_members').filter(m => Number(m.team_id) === Number(team.id)).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     if (members.length > 0) {
       const colW = 250;
+      let memberStartY = y;
       members.forEach((m, i) => {
         const col = i % 2;
         const row = Math.floor(i / 2);
         const mx = 55 + col * colW;
-        const my = y + row * 13;
-        if (my > PAGE_BOTTOM) { doc.addPage(); y = 50; }
-        doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(`- ${m.name}${m.role ? ' (' + m.role + ')' : ''}${m.phone ? '  ' + m.phone : ''}`, mx, my, { width: colW - 5 });
+        const my = memberStartY + row * 13;
+        if (my > PAGE_BOTTOM) { doc.addPage(); memberStartY = 50; }
+        doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(`- ${m.name}${m.role ? ' (' + m.role + ')' : ''}${m.phone ? '  ' + m.phone : ''}`, mx, memberStartY + row * 13, { width: colW - 5 });
       });
-      y += Math.ceil(members.length / 2) * 13 + 10;
+      y = memberStartY + Math.ceil(members.length / 2) * 13 + 10;
     } else {
       doc.fillColor(COLORS.gray).fontSize(9).font('Helvetica-Oblique').text('Nenhum membro cadastrado', 55, y);
       y += 14;

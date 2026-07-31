@@ -1,5 +1,18 @@
 [
   {
+    "version": "1.37.0",
+    "date": "2026-07-31",
+    "title": "Correcao Definitiva de Membros em Relatorios PDF",
+    "changes": [
+      "Corrigido bug critico: membros das equipes eram renderizados fora da pagina apos quebra de pagina em PDFs",
+      "Causa raiz: variavel y era resetada para 50 apos addPage() mas my continuava calculada com y antigo, posicionando membros em coordenadas invisiveis",
+      "Solucao: introduzida variavel memberStartY que rastreia o inicio do bloco de membros e e resetada corretamente apos page break",
+      "Corrigido em 3 funcoes: generateFullReport, generateTeamReport e generatePreparationReport (secao Equipes e Membros)",
+      "Membros agora aparecem corretamente em todos os relatorios: Geral, por Equipes, Preparacao e Guia do Coordenador",
+      "Servidor reiniciado para carregar codigo atualizado"
+    ]
+  },
+  {
     "version": "1.36.0",
     "date": "2026-07-31",
     "title": "Agrupamento Harmonico de Relatorios PDF",
