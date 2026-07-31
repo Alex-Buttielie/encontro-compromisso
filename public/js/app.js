@@ -1016,6 +1016,9 @@ async function toggleSchedule(id, el) {
 let equipesSearchText = '';
 let equipesExpanded = new Set();
 let equipesCache = { tasks: [], schedule: [], lembrancinhas: [], alicerces: [] };
+let equipesSortBy = 'name';
+let equipesViewMode = 'grid';
+let equipesFilterProgress = '';
 
 async function renderEquipes() {
   teamsCache = await api('/teams');
@@ -1026,152 +1029,257 @@ async function renderEquipes() {
   renderEquipesGrid();
 }
 
-function renderEquipesGrid() {
-  const { tasks: allTasks, schedule: allSchedule, lembrancinhas: allLembrancinhas, alicerces: allAlicerces } = equipesCache;
-  const main = document.getElementById('main-content');
+function getTeamStats(t) {
+  const { tasks, schedule, lembrancinhas, alicerces } = equipesCache;
+  const teamTasks = tasks.filter(task => task.responsible_team === t.name);
+  const teamSchedule = schedule.filter(s => (s.responsible_team || '').includes(t.name));
+  const teamLembrancinhas = lembrancinhas.filter(l => l.team === t.name);
+  const teamAlicerces = alicerces.filter(a => a.constructor_name && a.constructor_name.includes(t.name));
+  const tasksDone = teamTasks.filter(task => task.status === 'concluido').length;
+  const tasksPct = teamTasks.length > 0 ? Math.round((tasksDone / teamTasks.length) * 100) : 0;
+  return { teamTasks, teamSchedule, teamLembrancinhas, teamAlicerces, tasksDone, tasksPct };
+}
 
-  let filteredTeams = teamsCache;
+function sortTeams(list) {
+  const sorted = [...list];
+  if (equipesSortBy === 'members') sorted.sort((a, b) => (b.members?.length || 0) - (a.members?.length || 0));
+  else if (equipesSortBy === 'tasks') sorted.sort((a, b) => getTeamStats(b).teamTasks.length - getTeamStats(a).teamTasks.length);
+  else if (equipesSortBy === 'progress') sorted.sort((a, b) => getTeamStats(b).tasksPct - getTeamStats(a).tasksPct);
+  else sorted.sort((a, b) => a.name.localeCompare(b.name));
+  return sorted;
+}
+
+function filterTeamsList() {
+  let list = [...teamsCache];
   if (equipesSearchText) {
     const q = equipesSearchText.toLowerCase();
-    filteredTeams = teamsCache.filter(t =>
+    list = list.filter(t =>
       t.name.toLowerCase().includes(q) ||
       (t.description || '').toLowerCase().includes(q) ||
-      (t.members || []).some(m => (m.name || '').toLowerCase().includes(q))
+      (t.responsible || '').toLowerCase().includes(q) ||
+      (t.members || []).some(m => (m.name || '').toLowerCase().includes(q) || (m.role || '').toLowerCase().includes(q))
     );
   }
+  if (equipesFilterProgress) {
+    list = list.filter(t => {
+      const { tasksPct, teamTasks } = getTeamStats(t);
+      if (equipesFilterProgress === 'done') return tasksPct === 100 && teamTasks.length > 0;
+      if (equipesFilterProgress === 'inprogress') return tasksPct > 0 && tasksPct < 100;
+      if (equipesFilterProgress === 'notstarted') return teamTasks.length === 0 || tasksPct === 0;
+      if (equipesFilterProgress === 'hasmembers') return (t.members?.length || 0) > 0;
+      if (equipesFilterProgress === 'nomembers') return (t.members?.length || 0) === 0;
+      return true;
+    });
+  }
+  return sortTeams(list);
+}
+
+function renderEquipesGrid() {
+  const { tasks: allTasks } = equipesCache;
+  const main = document.getElementById('main-content');
+  const filteredTeams = filterTeamsList();
+  const totalMembers = teamsCache.reduce((s, t) => s + (t.members?.length || 0), 0);
 
   main.innerHTML = `
     <h1 class="page-title">Equipes de Trabalho</h1>
     <p class="page-subtitle">Responsabilidades, membros, tarefas e cronograma de cada equipe</p>
 
-    <div class="equipes-toolbar">
-      <input type="text" class="equipes-search" placeholder="Buscar equipe ou membro..." value="${equipesSearchText}" oninput="filterEquipes(this.value)">
-      <button class="btn btn-primary" onclick="openTeamModal()">+ Nova Equipe</button>
-    </div>
-
     <div class="stats-grid" style="margin-bottom:16px">
       <div class="stat-card"><div class="stat-icon total">👥</div><div class="stat-info"><h3>${teamsCache.length}</h3><p>Equipes</p></div></div>
-      <div class="stat-card"><div class="stat-icon done">🧑</div><div class="stat-info"><h3>${teamsCache.reduce((s,t)=>s+(t.members?.length||0),0)}</h3><p>Total Membros</p></div></div>
+      <div class="stat-card"><div class="stat-icon done">🧑</div><div class="stat-info"><h3>${totalMembers}</h3><p>Total Membros</p></div></div>
       <div class="stat-card"><div class="stat-icon progress">📋</div><div class="stat-info"><h3>${allTasks.filter(t=>t.responsible_team).length}</h3><p>Tarefas Atribuídas</p></div></div>
       <div class="stat-card"><div class="stat-icon pending">✅</div><div class="stat-info"><h3>${allTasks.filter(t=>t.responsible_team && t.status==='concluido').length}</h3><p>Tarefas Concluídas</p></div></div>
     </div>
 
-    ${filteredTeams.length === 0 ? '<div class="card" style="text-align:center;padding:40px;color:var(--text-light)">Nenhuma equipe encontrada.</div>' : `
-    <div class="team-grid">
-      ${filteredTeams.map(t => {
-        const teamTasks = allTasks.filter(task => task.responsible_team === t.name);
-        const teamSchedule = allSchedule.filter(s => (s.responsible_team || '').includes(t.name));
-        const teamLembrancinhas = allLembrancinhas.filter(l => l.team === t.name);
-        const teamAlicerces = allAlicerces.filter(a => a.constructor_name && a.constructor_name.includes(t.name));
-        const tasksDone = teamTasks.filter(task => task.status === 'concluido').length;
-        const tasksPct = teamTasks.length > 0 ? Math.round((tasksDone / teamTasks.length) * 100) : 0;
-        const schedDone = teamSchedule.filter(s => s.status === 'concluido').length;
-        const expanded = equipesExpanded.has(t.id);
-        return `<div class="team-card ${expanded ? 'expanded' : ''}">
-          <div class="team-card-header">
-            <h3>${t.name}</h3>
-            <div style="display:flex;gap:4px;align-items:center">
-              <span class="team-count">${t.members?.length || 0} membros</span>
-              <button class="btn-icon" onclick="toggleEquipeExpand(${t.id})" title="${expanded ? 'Recolher' : 'Expandir'}">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform:${expanded?'rotate(180deg)':'none'};transition:transform 0.2s"><polyline points="6 9 12 15 18 9"/></svg>
-              </button>
-            </div>
-          </div>
-          <p>${t.description || 'Sem descrição'}</p>
-          ${t.responsible ? `<p style="font-size:11px;color:var(--primary);font-weight:600;margin-top:-6px;margin-bottom:8px">👤 Responsável: ${t.responsible}</p>` : ''}
+    <div class="eq-toolbar">
+      <div class="eq-toolbar-left">
+        <input type="text" class="eq-search" placeholder="🔍 Buscar equipe, membro, função..." value="${equipesSearchText}" oninput="filterEquipes(this.value)">
+      </div>
+      <div class="eq-toolbar-right">
+        <select class="eq-select" onchange="equipesSortChange(this.value)" id="eq-sort">
+          <option value="name" ${equipesSortBy==='name'?'selected':''}>Ordenar: Nome</option>
+          <option value="members" ${equipesSortBy==='members'?'selected':''}>Ordenar: Membros</option>
+          <option value="tasks" ${equipesSortBy==='tasks'?'selected':''}>Ordenar: Tarefas</option>
+          <option value="progress" ${equipesSortBy==='progress'?'selected':''}>Ordenar: Progresso</option>
+        </select>
+        <select class="eq-select" onchange="equipesFilterChange(this.value)" id="eq-filter">
+          <option value="">Todos</option>
+          <option value="hasmembers" ${equipesFilterProgress==='hasmembers'?'selected':''}>Com Membros</option>
+          <option value="nomembers" ${equipesFilterProgress==='nomembers'?'selected':''}>Sem Membros</option>
+          <option value="done" ${equipesFilterProgress==='done'?'selected':''}>100% Concluídas</option>
+          <option value="inprogress" ${equipesFilterProgress==='inprogress'?'selected':''}>Em Progresso</option>
+          <option value="notstarted" ${equipesFilterProgress==='notstarted'?'selected':''}>Não Iniciadas</option>
+        </select>
+        <div class="eq-view-toggle">
+          <button class="eq-view-btn ${equipesViewMode==='grid'?'active':''}" onclick="equipesSetView('grid')" title="Grade">▦</button>
+          <button class="eq-view-btn ${equipesViewMode==='list'?'active':''}" onclick="equipesSetView('list')" title="Lista">☰</button>
+        </div>
+        <button class="btn btn-primary" onclick="openTeamModal()">+ Nova Equipe</button>
+      </div>
+    </div>
 
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-            <span class="tag tag-team" style="font-size:11px">📋 ${teamTasks.length} tarefas</span>
-            <span class="tag tag-deadline" style="font-size:11px">🗓️ ${teamSchedule.length} no cronograma</span>
-            ${teamLembrancinhas.length > 0 ? `<span class="tag tag-priority-media" style="font-size:11px">🎁 ${teamLembrancinhas.length} lembrancinhas</span>` : ''}
-            ${teamAlicerces.length > 0 ? `<span class="tag tag-priority-alta" style="font-size:11px">🏛️ ${teamAlicerces.length} pistas</span>` : ''}
-          </div>
+    <div class="eq-results-bar">
+      <span>${filteredTeams.length} de ${teamsCache.length} equipes</span>
+      ${(equipesSearchText || equipesFilterProgress) ? '<button class="eq-clear-btn" onclick="equipesClearFilters()">✕ Limpar filtros</button>' : ''}
+    </div>
 
-          ${teamTasks.length > 0 ? `
-            <div class="team-progress">
-              <div class="progress-label">
-                <span>Tarefas: ${tasksDone}/${teamTasks.length}</span>
-                <span>${tasksPct}%</span>
-              </div>
-              <div class="team-progress-bar"><div class="team-progress-fill" style="width:${tasksPct}%"></div></div>
-            </div>
-          ` : ''}
-
-          <div class="team-card-actions">
-            <button class="btn btn-primary btn-sm" onclick="viewTeamDetails(${t.id})">👁️ Detalhes</button>
-            <button class="btn btn-secondary btn-sm" onclick="openTeamModal(${t.id})">✏️ Editar</button>
-            <button class="btn btn-secondary btn-sm" onclick="deleteTeam(${t.id}, '${t.name.replace(/'/g,"\\'")}')">🗑️ Excluir</button>
-          </div>
-
-          ${expanded ? `
-            ${teamSchedule.length > 0 ? `
-              <div class="team-section">
-                <div class="team-section-title">📅 No Encontro (${schedDone}/${teamSchedule.length} concluídas)</div>
-                <div class="team-section-content">
-                  ${teamSchedule.map(s => `<div class="team-sched-row">
-                    <span class="team-sched-time">${s.time}</span>
-                    <span class="team-sched-activity">${s.activity}</span>
-                    <span class="team-sched-day">${s.day.replace('-feira','')}</span>
-                    <span class="team-sched-dot" style="background:${s.status==='concluido'?'var(--success)':'var(--border)'}"></span>
-                  </div>`).join('')}
-                </div>
-              </div>
-            ` : ''}
-
-            ${teamTasks.length > 0 ? `
-              <div class="team-section">
-                <div class="team-section-title">📋 Tarefas de Preparação</div>
-                <div class="team-section-content">
-                  ${teamTasks.map(task => `<div class="team-task-row" style="cursor:pointer" onclick="navigateTo('checklist')">
-                    <span class="team-task-dot ${task.status==='concluido'?'done':task.status==='em_andamento'?'in-progress':''}"></span>
-                    <span style="color:var(--text-light);font-weight:600;min-width:28px">[${task.item_number}]</span>
-                    <span style="color:var(--text);flex:1">${task.title}</span>
-                    <span style="color:var(--text-light);font-size:10px;white-space:nowrap">${task.deadline || ''}</span>
-                  </div>`).join('')}
-                </div>
-              </div>
-            ` : ''}
-
-            ${teamLembrancinhas.length > 0 ? `
-              <div class="team-section">
-                <div class="team-section-title">🎁 Lembrancinhas</div>
-                ${teamLembrancinhas.map(l => `<div class="team-mini-row">
-                  <span style="color:var(--text);flex:1">${l.item_name || '—'}</span>
-                  <span style="color:var(--text-light);font-size:10px">${l.quantity_done || 0}/${l.quantity_needed || 0}</span>
-                  <span class="team-mini-badge" style="background:${l.status==='pronto'?'var(--success)':l.status==='em_andamento'?'var(--warning)':'var(--border)'}">${(l.status||'—').replace(/_/g,' ')}</span>
-                </div>`).join('')}
-              </div>
-            ` : ''}
-
-            ${teamAlicerces.length > 0 ? `
-              <div class="team-section">
-                <div class="team-section-title">🏛️ Alicerces/Alvenarias</div>
-                ${teamAlicerces.map(a => `<div class="team-mini-row">
-                  <span style="color:var(--text);flex:1">${a.title}</span>
-                  <span class="team-mini-badge" style="background:${a.status==='concluido'?'var(--success)':a.status==='atribuido'?'var(--warning)':'var(--border)'}">${(a.status||'—').replace(/_/g,' ')}</span>
-                </div>`).join('')}
-              </div>
-            ` : ''}
-          ` : ''}
-
-          ${t.members?.length ? `<ul class="team-members-list">${t.members.map(m => `<li>
-            <span style="cursor:pointer" onclick="openMemberModal(${t.id},${m.id})"><span class="team-member-name">${m.name}</span> ${m.role ? `<span class="team-member-role">(${m.role})</span>` : ''}${m.phone ? ` <span style="font-size:10px;color:var(--text-light)">📞 ${m.phone}</span>` : ''}</span>
-            <div style="display:flex;gap:2px">
-              <button class="btn-icon" onclick="openMemberModal(${t.id},${m.id})" title="Editar membro"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-              <button class="btn-icon" onclick="removeMember(${t.id},${m.id})" title="Remover membro"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-            </div>
-          </li>`).join('')}</ul>` : '<p style="font-size:12px;color:var(--text-light);padding-top:8px;border-top:1px solid var(--border)">Nenhum membro cadastrado</p>'}
-          <button class="btn btn-secondary btn-sm" style="margin-top:12px;width:100%" onclick="openMemberModal(${t.id})">+ Adicionar Membro</button>
-        </div>`;
-      }).join('')}
+    ${filteredTeams.length === 0 ? `
+      <div class="eq-empty-state">
+        <div class="eq-empty-icon">🔍</div>
+        <h3>Nenhuma equipe encontrada</h3>
+        <p>${(equipesSearchText || equipesFilterProgress) ? 'Tente ajustar os filtros ou limpar a busca.' : 'Comece criando sua primeira equipe.'}</p>
+        ${(equipesSearchText || equipesFilterProgress) ? '<button class="btn btn-secondary" onclick="equipesClearFilters()">Limpar Filtros</button>' : '<button class="btn btn-primary" onclick="openTeamModal()">+ Nova Equipe</button>'}
+      </div>
+    ` : `
+    <div class="team-grid ${equipesViewMode==='list'?'team-grid-list':''}">
+      ${filteredTeams.map(t => renderTeamCard(t)).join('')}
     </div>`}
   `;
+}
+
+function renderTeamCard(t) {
+  const { teamTasks, teamSchedule, teamLembrancinhas, teamAlicerces, tasksDone, tasksPct } = getTeamStats(t);
+  const schedDone = teamSchedule.filter(s => s.status === 'concluido').length;
+  const expanded = equipesExpanded.has(t.id);
+  const members = t.members || [];
+  const safeName = t.name.replace(/'/g, "\\'");
+  return `<div class="team-card ${expanded ? 'expanded' : ''}">
+    <div class="team-card-header">
+      <h3>${t.name}</h3>
+      <div style="display:flex;gap:4px;align-items:center">
+        <span class="team-count">${members.length} ${members.length === 1 ? 'membro' : 'membros'}</span>
+        <button class="btn-icon" onclick="toggleEquipeExpand(${t.id})" title="${expanded ? 'Recolher' : 'Expandir'}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform:${expanded?'rotate(180deg)':'none'};transition:transform 0.2s"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+      </div>
+    </div>
+    <p>${t.description || 'Sem descrição'}</p>
+    ${t.responsible ? `<p style="font-size:11px;color:var(--primary);font-weight:600;margin-top:-6px;margin-bottom:8px">👤 Responsável: ${t.responsible}</p>` : ''}
+
+    <div class="eq-tags">
+      <span class="eq-tag ${teamTasks.length > 0 ? 'active' : ''}">📋 ${teamTasks.length} ${teamTasks.length === 1 ? 'tarefa' : 'tarefas'}</span>
+      <span class="eq-tag ${teamSchedule.length > 0 ? 'active' : ''}">🗓️ ${teamSchedule.length} no cronograma</span>
+      ${teamLembrancinhas.length > 0 ? `<span class="eq-tag active">🎁 ${teamLembrancinhas.length} lembrancinhas</span>` : ''}
+      ${teamAlicerces.length > 0 ? `<span class="eq-tag active">🏛️ ${teamAlicerces.length} alicerces</span>` : ''}
+    </div>
+
+    ${teamTasks.length > 0 ? `
+      <div class="team-progress">
+        <div class="progress-label">
+          <span>Tarefas: ${tasksDone}/${teamTasks.length}</span>
+          <span class="eq-pct-badge ${tasksPct === 100 ? 'pct-done' : tasksPct >= 50 ? 'pct-half' : ''}">${tasksPct}%</span>
+        </div>
+        <div class="team-progress-bar"><div class="team-progress-fill" style="width:${tasksPct}%"></div></div>
+      </div>
+    ` : ''}
+
+    <div class="team-card-actions">
+      <button class="btn btn-primary btn-sm" onclick="viewTeamDetails(${t.id})">👁️ Detalhes</button>
+      <button class="btn btn-secondary btn-sm" onclick="openTeamModal(${t.id})">✏️ Editar</button>
+      <button class="btn btn-secondary btn-sm" onclick="deleteTeam(${t.id}, '${safeName}')">🗑️ Excluir</button>
+    </div>
+
+    <div class="team-members-section">
+      <div class="team-members-header">
+        <span class="team-members-title">👥 Membros</span>
+        <button class="btn btn-secondary btn-sm" onclick="openMemberModal(${t.id})">+ Adicionar</button>
+      </div>
+      ${members.length > 0 ? `
+        <div class="team-members-grid">
+          ${members.map(m => `<div class="team-member-chip">
+            <span class="team-member-avatar">${(m.name || '?').charAt(0).toUpperCase()}</span>
+            <div class="team-member-content">
+              <span class="team-member-name" onclick="openMemberModal(${t.id},${m.id})" title="Editar">${m.name}</span>
+              ${m.role ? `<span class="team-member-role">${m.role}</span>` : ''}
+              ${m.phone ? `<span class="team-member-phone">📞 ${m.phone}</span>` : ''}
+            </div>
+            <div class="team-member-actions">
+              <button class="btn-icon" onclick="openMemberModal(${t.id},${m.id})" title="Editar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="btn-icon" onclick="removeMember(${t.id},${m.id})" title="Remover"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+            </div>
+          </div>`).join('')}
+        </div>
+      ` : `<p class="team-members-empty">Nenhum membro cadastrado</p>`}
+    </div>
+
+    ${expanded ? `
+      ${teamSchedule.length > 0 ? `
+        <div class="team-section">
+          <div class="team-section-title">📅 No Encontro (${schedDone}/${teamSchedule.length} concluídas)</div>
+          <div class="team-section-content">
+            ${teamSchedule.map(s => `<div class="team-sched-row">
+              <span class="team-sched-time">${s.time}</span>
+              <span class="team-sched-activity">${s.activity}</span>
+              <span class="team-sched-day">${s.day.replace('-feira','')}</span>
+              <span class="team-sched-dot" style="background:${s.status==='concluido'?'var(--success)':'var(--border)'}"></span>
+            </div>`).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      ${teamTasks.length > 0 ? `
+        <div class="team-section">
+          <div class="team-section-title">📋 Tarefas de Preparação</div>
+          <div class="team-section-content">
+            ${teamTasks.map(task => `<div class="team-task-row" style="cursor:pointer" onclick="navigateTo('checklist')">
+              <span class="team-task-dot ${task.status==='concluido'?'done':task.status==='em_andamento'?'in-progress':''}"></span>
+              <span style="color:var(--text-light);font-weight:600;min-width:28px">[${task.item_number}]</span>
+              <span style="color:var(--text);flex:1">${task.title}</span>
+              <span style="color:var(--text-light);font-size:10px;white-space:nowrap">${task.deadline || ''}</span>
+            </div>`).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      ${teamLembrancinhas.length > 0 ? `
+        <div class="team-section">
+          <div class="team-section-title">🎁 Lembrancinhas</div>
+          ${teamLembrancinhas.map(l => `<div class="team-mini-row">
+            <span style="color:var(--text);flex:1">${l.item_name || '—'}</span>
+            <span style="color:var(--text-light);font-size:10px">${l.quantity_done || 0}/${l.quantity_needed || 0}</span>
+            <span class="team-mini-badge" style="background:${l.status==='pronto'?'var(--success)':l.status==='em_andamento'?'var(--warning)':'var(--border)'}">${(l.status||'—').replace(/_/g,' ')}</span>
+          </div>`).join('')}
+        </div>
+      ` : ''}
+
+      ${teamAlicerces.length > 0 ? `
+        <div class="team-section">
+          <div class="team-section-title">🏛️ Alicerces/Alvenarias</div>
+          ${teamAlicerces.map(a => `<div class="team-mini-row">
+            <span style="color:var(--text);flex:1">${a.title}</span>
+            <span class="team-mini-badge" style="background:${a.status==='concluido'?'var(--success)':a.status==='atribuido'?'var(--warning)':'var(--border)'}">${(a.status||'—').replace(/_/g,' ')}</span>
+          </div>`).join('')}
+        </div>
+      ` : ''}
+    ` : ''}
+  </div>`;
 }
 
 const filterEquipes = debounce(function(val) {
   equipesSearchText = val;
   renderEquipesGrid();
 }, 250);
+
+function equipesSortChange(val) {
+  equipesSortBy = val;
+  renderEquipesGrid();
+}
+
+function equipesFilterChange(val) {
+  equipesFilterProgress = val;
+  renderEquipesGrid();
+}
+
+function equipesSetView(mode) {
+  equipesViewMode = mode;
+  renderEquipesGrid();
+}
+
+function equipesClearFilters() {
+  equipesSearchText = '';
+  equipesFilterProgress = '';
+  renderEquipesGrid();
+}
 
 function toggleEquipeExpand(id) {
   if (equipesExpanded.has(id)) equipesExpanded.delete(id);
@@ -1183,20 +1291,9 @@ async function viewTeamDetails(teamId) {
   const team = teamsCache.find(t => t.id === teamId);
   if (!team) return;
 
-  const allTasks = await api('/tasks');
-  const allSchedule = await api('/schedule');
-  const allLembrancinhas = await api('/lembrancinhas');
-  const allAlicerces = await api('/alicerces');
-
-  const teamTasks = allTasks.filter(task => task.responsible_team === team.name);
-  const teamSchedule = allSchedule.filter(s => (s.responsible_team || '').includes(team.name));
-  const teamLembrancinhas = allLembrancinhas.filter(l => l.team === team.name);
-  const teamAlicerces = allAlicerces.filter(a => a.constructor_name && a.constructor_name.includes(team.name));
-
-  const tasksDone = teamTasks.filter(t => t.status === 'concluido').length;
+  const { teamTasks, teamSchedule, teamLembrancinhas, teamAlicerces, tasksDone, tasksPct } = getTeamStats(team);
   const tasksInProgress = teamTasks.filter(t => t.status === 'em_andamento').length;
   const tasksPending = teamTasks.filter(t => t.status === 'pendente').length;
-  const tasksPct = teamTasks.length > 0 ? Math.round((tasksDone / teamTasks.length) * 100) : 0;
   const schedDone = teamSchedule.filter(s => s.status === 'concluido').length;
   const schedPct = teamSchedule.length > 0 ? Math.round((schedDone / teamSchedule.length) * 100) : 0;
 
@@ -1407,9 +1504,23 @@ async function saveMemberEdit(teamId, memberId, btn) {
 }
 
 async function removeMember(teamId, memberId) {
-  await api(`/teams/${teamId}/members/${memberId}`, { method: 'DELETE' });
-  toast('Membro removido', 'error');
-  renderEquipes();
+  const team = teamsCache.find(t => t.id === teamId);
+  const member = team?.members?.find(m => m.id === memberId);
+  if (!member) return;
+  showConfirmDialog({
+    icon: '👤',
+    title: 'Remover Membro',
+    message: 'Tem certeza que deseja remover?',
+    detail: member.name,
+    subdetail: member.role ? `Função: ${member.role}` : '',
+    confirmText: 'Sim, remover',
+    cancelText: 'Cancelar',
+    onConfirm: async () => {
+      await api(`/teams/${teamId}/members/${memberId}`, { method: 'DELETE' });
+      toast('Membro removido', 'error');
+      renderEquipes();
+    }
+  });
 }
 
 // ============ ENCONTRO ============
