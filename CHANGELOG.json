@@ -1,5 +1,111 @@
 [
   {
+    "version": "1.45.0",
+    "date": "2026-07-31",
+    "title": "Correção de Membros de Equipes Ausentes em Produção",
+    "changes": [
+      "Migration V11: detecta e adiciona team_members ausentes em todos os ambientes",
+      "Migration V7 corrigida: não pula mais o seed inteiro quando alguns membros já existem — agora verifica membro a membro",
+      "Export de SEED_MEMBERS do V7 para reutilização no V11",
+      "Correção do members_count das equipes após adicionar membros ausentes",
+      "Variáveis CSS ausentes adicionadas: --dark, --light-card, --light-alt"
+    ]
+  },
+  {
+    "version": "1.44.2",
+    "date": "2026-07-31",
+    "title": "Correção de Variáveis CSS Ausentes",
+    "changes": [
+      "Adicionadas variáveis CSS faltantes: --dark, --light-card, --light-alt",
+      "Correção de chips de membros de equipes invisíveis por falta de background e cor"
+    ]
+  },
+  {
+    "version": "1.44.1",
+    "date": "2026-07-31",
+    "title": "Correção do Filtro de Status do Checklist",
+    "changes": [
+      "Bug corrigido: filtro de status do checklist limpando sozinho após re-render",
+      "Adicionadas variáveis de estado: currentFilterStatus, currentFilterPriority, currentFilterTeam, currentFilterSearch",
+      "renderChecklist() agora restaura valores dos filtros após reconstruir o DOM",
+      "filterTasks() agora persiste valores dos filtros nas variáveis de estado"
+    ]
+  },
+  {
+    "version": "1.44.0",
+    "date": "2026-07-31",
+    "title": "Remoção da Abordagem Netlify",
+    "changes": [
+      "Removido netlify.toml e netlify/functions/server.js",
+      "Removida dependência serverless-http do package.json",
+      "server.js revertido para modo standalone sem module.exports",
+      "Removida entrada .netlify do .gitignore"
+    ]
+  },
+  {
+    "version": "1.43.0",
+    "date": "2026-07-31",
+    "title": "Refatoração do Módulo de Lembretes",
+    "changes": [
+      "Nova dropdown de ordenação: Vencimento, Título, Prioridade, Status, Categoria",
+      "Seção automática colapsável com header clicável e ícone de chevron animado",
+      "Destaque visual de vencimento: atrasado (vermelho), vence hoje (amarelo), próximo (azul)",
+      "Contador de resultados e botão Limpar filtros em ambas as seções",
+      "Cards melhores com hover, concluídos com borda verde e título riscado",
+      "Confirmação ao excluir via showConfirmDialog em vez de confirm() nativo",
+      "Stat card de atrasados com animação de pulse vermelho",
+      "Busca ampliada incluindo categoria além de título e descrição"
+    ]
+  },
+  {
+    "version": "1.42.0",
+    "date": "2026-07-31",
+    "title": "Refatoração do Módulo de Equipes",
+    "changes": [
+      "Filtros interativos: busca por nome/descrição/membro, filtro de progresso, ordenação",
+      "Modos de visualização: grid e lista",
+      "Membros com avatares circulares (inicial do nome), role e telefone",
+      "Confirmação de remoção via showConfirmDialog",
+      "Cards expansíveis com detalhes sob demanda"
+    ]
+  },
+  {
+    "version": "1.41.1",
+    "date": "2026-07-31",
+    "title": "Correção de Membros de Equipes Não Exibidos",
+    "changes": [
+      "Cache-control na API e fetch para evitar dados stale",
+      "Correção de membros de equipes não aparecendo na tela"
+    ]
+  },
+  {
+    "version": "1.41.0",
+    "date": "2026-07-31",
+    "title": "Relatório de Tarefas Atribuídas por MO's e Equipes",
+    "changes": [
+      "Novo relatório PDF de tarefas atribuídas por MO's e equipes",
+      "Endpoint /reports/assigned-tasks para geração do PDF"
+    ]
+  },
+  {
+    "version": "1.40.0",
+    "date": "2026-07-31",
+    "title": "Loading Spinner ao Trocar de Tela",
+    "changes": [
+      "Spinner de loading exibido ao trocar de tela até a renderização completar",
+      "Melhor feedback visual durante carregamento assíncrono"
+    ]
+  },
+  {
+    "version": "1.39.0",
+    "date": "2026-07-31",
+    "title": "Refatoração do Módulo Kit MPs",
+    "changes": [
+      "Módulo Kit das Matérias-Primas mais interativo e menos poluído",
+      "Melhoria na apresentação e usabilidade dos dados"
+    ]
+  },
+  {
     "version": "1.38.0",
     "date": "2026-07-31",
     "title": "Agrupamento Harmonico Aplicado a Todos os Relatorios PDF",

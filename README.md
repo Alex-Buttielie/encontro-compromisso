@@ -7,7 +7,7 @@ Sistema web para organização, preparação e execução do Encontro Compromiss
 - **Dashboard**: Visão geral com estatísticas, contagem regressiva para o Encontro, resumo financeiro e progresso de lembrancinhas
 - **Checklist de Preparação**: 64 tarefas extraídas do manual, organizadas por categoria (Espaço Físico, Traslado, Impressos, Cozinha, Capela, etc.)
 - **Cronograma**: Programação completa de Sexta a Domingo com 71 atividades (horários, locais e equipes responsáveis) com status de 3 estados (pendente → em andamento → concluído)
-- **Equipes**: 19 equipes de trabalho com descrições, membros e progresso de tarefas
+- **Equipes**: 20 equipes de trabalho com descrições, membros (103 cadastrados), filtros, ordenação, modos de visualização (grid/lista) e progresso de tarefas
 - **Matérias-primas**: Cadastro de inscritos (Ficha de Inscrição Final do manual) com controle de pagamentos, grupos, quartos, restrições alimentares, medicações, necessidades especiais, padrinhos e controle de presença no Encontro
 - **Financeiro**: Controle de receitas e despesas com resumo (saldo, pendentes a receber/pagar), filtro por tipo e categoria, e 55 lançamentos pré-cadastrados em 19 categorias diversas (Receitas: Inscrições, Doações, Bazar, Camisetas, Apadrinhamento, Contribuições de Equipes, Betoneiras; Despesas: Espaço Físico, Traslado, Alimentação, Materiais Gráficos, Camisetas, Bíblias, Capela, Som e Técnica, Lembrancinhas, Decoração, Rosas, Bazar, Higienização, Equipamentos, Primeiros Socorros, Hospedagem, Honorários, Diversos). Dropdown de categorias dinâmico no modal de lançamento
 - **Lembrancinhas**: Controle de confecção por equipe com status (não iniciado → em andamento → pronto), quantidades e data de entrega. 10 itens pré-cadastrados baseados nas responsabilidades de cada equipe
@@ -19,6 +19,9 @@ Sistema web para organização, preparação e execução do Encontro Compromiss
 - **Kit das Matérias-primas**: Controle interativo de conferência e entrega dos kits do RH (10 itens por matéria-prima) com tracking de kit conferido, squeeze personalizada e kit entregue
 - **Avisos & Comunicados**: Mural de comunicações do coordenador para equipes e participantes, com fixação de avisos importantes, público-alvo (todos, equipes, matérias-primas, coordenação) e níveis de prioridade
 - **Dados do Encontro**: Informações gerais (nome, datas, local, tema, música tema) — a data define a contagem regressiva no Dashboard e ativa os lembretes automáticos
+- **Orçamento e Doações**: Controle de itens de orçamento por categoria (alimentação, limpeza, decoração, materiais, etc.) com custo estimado vs real, status e fornecedor vinculado. Doações em dinheiro ou materiais com consolidação automática no financeiro
+- **Cardápio do Encontro**: Timeline visual das refeições dos 3 dias (Sexta, Sábado, Domingo) com CRUD completo e lista de compras da cozinha integrada ao orçamento
+- **Tutorial do Sistema**: 7 guias interativos passo a passo para novos usuários (Primeiros Passos, Equipes, Tarefas, Pessoas, Financeiro, Recursos, Relatórios)
 - **Relatórios PDF**: Geração de relatórios em PDF para análise e acompanhamento
   - **Guia do Coordenador** — relatório completo para os dias do Encontro (contatos, cronograma, alicerces/alvenarias, matérias-primas com restrições, padrinhos, avisos, tarefas pendentes, fornecedores e espaço para anotações)
   - Relatório Geral Completo (tarefas + cronograma + equipes)
@@ -33,6 +36,7 @@ Sistema web para organização, preparação e execução do Encontro Compromiss
   - Lista de Fornecedores (contatos, cotações e status por categoria)
   - Mural de Avisos (comunicados para impressão)
   - Relatório de Lembretes (prazos automáticos e lembretes manuais)
+  - Relatório de Tarefas Atribuídas (por MO's e equipes)
   - Relatórios por Categoria (Espaço Físico, Traslado, Cozinha, Capela, etc.)
 
 ## Stack
@@ -169,9 +173,27 @@ encontro-compromisso/
 - Materiais para Capela (10 tarefas)
 - Mestres de Obras (4 tarefas)
 
+## Migrations
+
+O sistema usa migrations automáticas (Flyway-style) que rodam na inicialização do servidor. O banco de dados (`db/encontro.json`) é gerado automaticamente a partir das migrations.
+
+| Versão | Descrição |
+|--------|-----------|
+| V1 | Seed completo (tasks, teams, schedule, team_members, participants, finance, etc.) |
+| V2 | Atualização de participants |
+| V3 | Seed de lembretes automáticos |
+| V4 | Calendário 2026 |
+| V5 | Dados financeiros (categorias, eventos, orçamento) |
+| V6 | Categorias de lembretes |
+| V7 | Seed de team_members (101 membros) |
+| V8 | Correção de tipos de team_id em team_members |
+| V9 | Seed de orçamento e doações |
+| V10 | Seed de cardápio |
+| V11 | Correção de team_members ausentes em produção |
+
 ## Equipes
 
-Mestres de Obras, Supervisores, Auxiliares, Bazar, Cozinha, Dinamização, Espiritualização, Estagiários, Instrutores, Laboral, Logística, Office Boy/Girl, Refeitório, Registro, Secretaria, Serviços Gerais, Sonorização, RH, Colaboradores.
+Mestres de Obras, Supervisores, Auxiliares, Bazar, Cozinha, Dinamização, Espiritualização, Estagiários, Instrutores, Laboral, Logística, Office Boy/Girl, Refeitório, Registro, Secretaria, Serviços Gerais, Sonorização, RH, Colaboradores, Auxiliar de RH.
 
 ## Como Usar
 
@@ -179,5 +201,31 @@ Mestres de Obras, Supervisores, Auxiliares, Bazar, Cozinha, Dinamização, Espir
 2. **Filtrar**: Use a busca e os filtros de status/equipe no Checklist
 3. **Adicionar/editar**: Use o botão "+ Nova Tarefa" ou o ícone de edição em cada tarefa
 4. **Cronograma**: Clique no círculo de cada atividade para alternar entre Pendente → Em Andamento → Concluído
-5. **Equipes**: Adicione membros a cada equipe com nome, função e contato
+5. **Equipes**: Adicione membros a cada equipe com nome, função e contato. Use filtros, busca e ordenação
 6. **Relatórios**: Acesse a aba "Relatórios PDF" e baixe os relatórios para análise
+7. **Orçamento**: Cadastre itens por categoria e acompanhe custo estimado vs real
+8. **Cardápio**: Planeje as refeições dos 3 dias do Encontro
+9. **Tutorial**: Acesse o Tutorial no menu lateral para um tour guiado pelo sistema
+
+## Deploy
+
+O sistema roda em VPS (Hostgator) com 3 ambientes:
+
+- **DEV**: branch `develop` — ambiente de desenvolvimento
+- **HOMOLOG**: branch `develop` — ambiente de homologação
+- **PROD**: branch `main` — ambiente de produção
+
+### Atualizar VPS
+
+```bash
+cd /caminho/do/projeto
+git pull origin main
+pm install  # se package.json mudou
+pm2 restart encontro  # ou: node server.js
+```
+
+As migrations rodam automaticamente na inicialização. O banco `db/encontro.json` é mantido por ambiente (não vem do git).
+
+## Versão
+
+Atual: **v1.45.0** — Correção de Membros de Equipes Ausentes em Produção
