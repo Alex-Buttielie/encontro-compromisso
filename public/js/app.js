@@ -1423,7 +1423,7 @@ async function renderRelatorios() {
       <div class="relatorio-filters">
         <div class="filter-group">
           <span class="filter-label">Fase:</span>
-          <select id="rel-filter-phase" onchange="applyRelatorioFilters()">
+          <select id="rel-filter-phase">
             <option value="">Todas</option>
             <option value="pre">Pré-Encontro</option>
             <option value="during">Durante o Encontro</option>
@@ -1431,21 +1431,21 @@ async function renderRelatorios() {
         </div>
         <div class="filter-group">
           <span class="filter-label">Categoria:</span>
-          <select id="rel-filter-cat" onchange="applyRelatorioFilters()">
+          <select id="rel-filter-cat">
             <option value="">Todas</option>
             ${categories.map(c => `<option value="${c}">${c}</option>`).join('')}
           </select>
         </div>
         <div class="filter-group">
           <span class="filter-label">Equipe:</span>
-          <select id="rel-filter-team" onchange="applyRelatorioFilters()">
+          <select id="rel-filter-team">
             <option value="">Todas</option>
             ${teamNames.map(t => `<option value="${t}">${t}</option>`).join('')}
           </select>
         </div>
         <div class="filter-group">
           <span class="filter-label">Status:</span>
-          <select id="rel-filter-status" onchange="applyRelatorioFilters()">
+          <select id="rel-filter-status">
             <option value="">Todos</option>
             <option value="pendente">⭕ Pendente</option>
             <option value="em_andamento">⏳ Em Andamento</option>
@@ -1454,7 +1454,7 @@ async function renderRelatorios() {
         </div>
         <div class="filter-group">
           <span class="filter-label">Prioridade:</span>
-          <select id="rel-filter-priority" onchange="applyRelatorioFilters()">
+          <select id="rel-filter-priority">
             <option value="">Todas</option>
             <option value="alta">🔴 Alta</option>
             <option value="media">🟡 Média</option>
@@ -1462,17 +1462,6 @@ async function renderRelatorios() {
           </select>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="clearRelatorioFilters()">Limpar Filtros</button>
-      </div>
-    </div>
-
-    <div class="card" style="margin-bottom:16px">
-      <div class="card-title">📊 Dados Filtrados <span id="rel-filter-count" style="font-size:12px;color:var(--text-light);font-weight:400"></span></div>
-      <div class="relatorio-data-wrapper">
-        <table class="data-table" id="rel-data-table">
-          <thead><tr><th>#</th><th>Categoria</th><th>Tarefa</th><th>Equipe</th><th>Prazo</th><th>Prioridade</th><th>Status</th></tr></thead>
-          <tbody></tbody>
-        </table>
-        <div id="rel-data-cards"></div>
       </div>
     </div>
 
@@ -1582,7 +1571,6 @@ async function renderRelatorios() {
   `;
 
   renderRelatorioCategoryReports(categories);
-  applyRelatorioFilters();
 }
 
 function renderRelatorioCategoryReports(categories) {
@@ -1618,22 +1606,12 @@ function renderRelatorioCategoryReports(categories) {
   }).join('');
 }
 
-function applyRelatorioFilters() {
-  relatorioFilterPhase = document.getElementById('rel-filter-phase')?.value || '';
-  relatorioFilterCategory = document.getElementById('rel-filter-cat')?.value || '';
-  relatorioFilterTeam = document.getElementById('rel-filter-team')?.value || '';
-  relatorioFilterStatus = document.getElementById('rel-filter-status')?.value || '';
-  relatorioFilterPriority = document.getElementById('rel-filter-priority')?.value || '';
-  renderRelatorioDataTable();
-}
-
 function clearRelatorioFilters() {
   document.getElementById('rel-filter-phase').value = '';
   document.getElementById('rel-filter-cat').value = '';
   document.getElementById('rel-filter-team').value = '';
   document.getElementById('rel-filter-status').value = '';
   document.getElementById('rel-filter-priority').value = '';
-  applyRelatorioFilters();
 }
 
 function getFilteredRelatorioData() {
@@ -1644,51 +1622,6 @@ function getFilteredRelatorioData() {
   if (relatorioFilterStatus) list = list.filter(t => t.status === relatorioFilterStatus);
   if (relatorioFilterPriority) list = list.filter(t => t.priority === relatorioFilterPriority);
   return list.sort((a, b) => parseFloat(a.item_number || 0) - parseFloat(b.item_number || 0));
-}
-
-function renderRelatorioDataTable() {
-  const list = getFilteredRelatorioData();
-  const countEl = document.getElementById('rel-filter-count');
-  if (countEl) countEl.textContent = `(${list.length} tarefa${list.length !== 1 ? 's' : ''})`;
-
-  const tbody = document.querySelector('#rel-data-table tbody');
-  const cardsEl = document.getElementById('rel-data-cards');
-  if (!tbody) return;
-
-  const statusLabels = { concluido: '✅ Concluído', em_andamento: '⏳ Em Andamento', pendente: '⭕ Pendente' };
-  const statusColors = { concluido: 'var(--success)', em_andamento: 'var(--warning)', pendente: 'var(--text-light)' };
-  const priorityLabels = { alta: '🔴 Alta', media: '🟡 Média', baixa: '⚪ Baixa' };
-
-  if (list.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-light);padding:20px">Nenhuma tarefa encontrada com os filtros aplicados.</td></tr>';
-    cardsEl.innerHTML = '<div class="empty-state"><p>Nenhuma tarefa encontrada.</p></div>';
-    return;
-  }
-
-  tbody.innerHTML = list.slice(0, 100).map(t => `<tr>
-    <td style="font-weight:600;color:var(--primary)">${t.item_number || '—'}</td>
-    <td>${t.category || '—'}</td>
-    <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.title || '—'}</td>
-    <td>${t.responsible_team || '—'}</td>
-    <td>${t.deadline ? new Date(t.deadline + 'T00:00:00').toLocaleDateString('pt-BR') : '—'}</td>
-    <td>${priorityLabels[t.priority] || t.priority || '—'}</td>
-    <td><span style="color:${statusColors[t.status] || 'var(--text-light)'};font-weight:600;font-size:12px">${statusLabels[t.status] || t.status}</span></td>
-  </tr>`).join('');
-
-  if (list.length > 100) {
-    tbody.innerHTML += `<tr><td colspan="7" style="text-align:center;color:var(--text-light);padding:10px;font-style:italic">+ ${list.length - 100} tarefas não exibidas. Aplique filtros para refinar ou gere o PDF para ver tudo.</td></tr>`;
-  }
-
-  cardsEl.innerHTML = list.slice(0, 50).map(t => `<div class="rel-data-card">
-    <div class="rdc-top">
-      <span style="font-weight:600;color:var(--primary)">#${t.item_number || '—'}</span>
-      <span style="color:${statusColors[t.status] || 'var(--text-light)'};font-weight:600;font-size:11px">${statusLabels[t.status] || t.status}</span>
-    </div>
-    <div style="font-weight:600;margin:4px 0;font-size:13px">${t.title || '—'}</div>
-    <div style="font-size:11px;color:var(--text-light)">
-      📁 ${t.category || '—'} · 👥 ${t.responsible_team || '—'} · 📅 ${t.deadline ? new Date(t.deadline + 'T00:00:00').toLocaleDateString('pt-BR') : '—'} · ${priorityLabels[t.priority] || t.priority || '—'}
-    </div>
-  </div>`).join('');
 }
 
 // ============ CARDÁPIO ============
@@ -1957,7 +1890,7 @@ const TUTORIAL_GUIDES = [
     color: '#1a3a5c',
     steps: [
       { title: 'Módulo Relatórios', text: 'Acesse "Relatórios PDF" no menu. Você verá um sumário visual com estatísticas e um painel de filtros.', action: 'relatorios' },
-      { title: 'Filtros', text: 'Use os filtros (fase, categoria, equipe, status, prioridade) para refinar os dados antes de gerar o PDF. A tabela mostra os dados filtrados on-screen.', action: 'relatorios' },
+      { title: 'Filtros', text: 'Use os filtros (fase, categoria, equipe, status, prioridade) para refinar os dados antes de gerar o PDF.', action: 'relatorios' },
       { title: 'Gerar PDF', text: 'Os relatórios estão organizados em seções: Principais, Gerais, Equipes/MPs, Supervisão e por Categoria. Clique em qualquer card para gerar o PDF.', action: 'relatorios' },
       { title: 'Guia do Coordenador', text: 'O "Guia do Coordenador" é o relatório mais completo — contém tudo para os 3 dias: contatos, cronograma, alicerces, MPs, avisos e tarefas pendentes.', action: 'relatorios' },
     ]

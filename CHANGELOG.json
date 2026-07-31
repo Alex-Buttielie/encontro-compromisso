@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.32.0",
+    "date": "2026-07-30",
+    "title": "Limpeza da Tela de Relatórios",
+    "changes": [
+      "Removida seção 'Dados Filtrados' (tabela + cards) que poluía a tela de relatórios",
+      "Removidas funções applyRelatorioFilters e renderRelatorioDataTable",
+      "Filtros agora são apenas para seleção — PDFs são gerados com os filtros aplicados no backend",
+      "Tutorial atualizado para remover menção à tabela on-screen"
+    ]
+  },
+  {
     "version": "1.31.0",
     "date": "2026-07-30",
     "title": "Correção de Flickering/Piscagem nas Telas",
