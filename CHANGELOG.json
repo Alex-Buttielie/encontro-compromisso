@@ -1,5 +1,18 @@
 [
   {
+    "version": "1.36.0",
+    "date": "2026-07-31",
+    "title": "Agrupamento Harmonico de Relatorios PDF",
+    "changes": [
+      "Adicionada funcao ensureSpace() que verifica se um bloco inteiro cabe na pagina antes de renderizar",
+      "Relatorio de Lembretes: cards de resumo, progresso por modulo, lembretes automaticos e manuais agora sao agrupados harmonicamente",
+      "Relatorio de Preparacao: indicadores gerais, tarefas atrasadas, categorias, equipes, financeiro, inscritos, fornecedores, escolinhas, avisos, prazos e checklist final agora respeitam agrupamento",
+      "Blocos pequenos (titulo + 3 itens minimos) nao quebram mais para a proxima pagina deixando a anterior vazia",
+      "Cada categoria/modulo/secao agora verifica se o header + alguns itens cabem antes de comecar a renderizar",
+      "Linhas individuais dentro de blocos grandes continuam quebrando normalmente (scroll natural)"
+    ]
+  },
+  {
     "version": "1.35.0",
     "date": "2026-07-31",
     "title": "Cadastro de Tarefas Mais Intuitivo e Interativo",

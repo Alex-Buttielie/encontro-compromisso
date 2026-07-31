@@ -118,6 +118,11 @@ function sectionTitle(doc, title, y, color) {
   return y + 30;
 }
 
+function ensureSpace(doc, needed, y) {
+  if (y + needed > PAGE_BOTTOM) { doc.addPage(); return 50; }
+  return y;
+}
+
 function summaryCard(doc, label, value, x, y, w, h, color) {
   const c = color || COLORS.secondary;
   doc.fillColor(c).roundedRect(x, y, w, h, 6).fill();
@@ -1879,10 +1884,11 @@ function generatePreparationReport() {
     ['Avisos Ativos', `${avisos.c || 0}`, COLORS.secondary],
     ['Lembretes Pendentes', `${lembretes.c || 0}`, COLORS.secondary],
   ];
+  y = ensureSpace(doc, 20 + rows.length * 18 + 15, y);
   doc.fontSize(11).font('Helvetica-Bold').fillColor(COLORS.secondary).text('Indicadores Gerais', 50, y);
   y += 20;
   for (const [label, value, color] of rows) {
-    if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+    y = ensureSpace(doc, 18, y);
     zebraRow(doc, y, 18);
     doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(label, 58, y + 4, { width: 300 });
     doc.fillColor(color).font('Helvetica-Bold').text(value, 380, y + 4, { width: 170, align: 'right' });
@@ -1914,15 +1920,15 @@ function generatePreparationReport() {
     }
     overdueParsed.sort((a, b) => a.diff_days - b.diff_days);
     if (overdueParsed.length > 0) {
-      if (y > PAGE_BOTTOM - 60) { doc.addPage(); y = 50; }
+      y = ensureSpace(doc, 22 + Math.min(overdueParsed.length, 5) * 28 + 15, y);
       doc.fillColor(COLORS.red).fontSize(13).font('Helvetica-Bold').text(`Tarefas Atrasadas: ${overdueParsed.length}`, 50, y);
       y += 22;
       for (const t of overdueParsed.slice(0, 20)) {
-        if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
         const titleH = calcTextHeight(doc, t.title, 340, 10);
         const catH = calcTextHeight(doc, `${t.category}`, 340, 8);
         const teamH = calcTextHeight(doc, `Equipe: ${t.responsible_team || 'N/A'}`, 130, 8);
         const rowH = Math.max(28, titleH + catH + 4);
+        y = ensureSpace(doc, rowH, y);
         zebraRow(doc, y, rowH);
         doc.fillColor(COLORS.red).circle(55, y + 5, 3).fill();
         doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica-Bold').text(t.title, 65, y + 1, { width: 340 });
@@ -1945,22 +1951,22 @@ function generatePreparationReport() {
 
   const categories = [...new Set(tasks.map(t => t.category))].sort();
   for (const cat of categories) {
-    if (y > PAGE_BOTTOM - 60) { doc.addPage(); y = 50; }
     const catItems = tasks.filter(t => t.category === cat);
     const catDone = catItems.filter(t => t.status === 'concluido').length;
     const catPct = catItems.length > 0 ? Math.round((catDone / catItems.length) * 100) : 0;
     const catColor = catPct === 100 ? COLORS.green : catPct >= 50 ? COLORS.orange : COLORS.red;
 
+    y = ensureSpace(doc, 30 + 12 + Math.min(catItems.length, 3) * 24 + 10, y);
     y = sectionTitle(doc, cat, y, catColor);
     doc.fillColor(catColor).fontSize(10).text(`${catDone}/${catItems.length} (${catPct}%)`, 500, y - 14, { width: 60, align: 'right' });
     progressBar(doc, catPct, 50, y - 4, CONTENT_WIDTH);
     y += 12;
 
     for (const t of catItems) {
-      if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
       const titleH = calcTextHeight(doc, `[${t.item_number}] ${t.title}`, 350, 9);
       const metaH = calcTextHeight(doc, `${t.responsible_team || ''}  |  ${t.deadline || ''}`, 350, 8);
       const rowH = Math.max(24, titleH + metaH + 4);
+      y = ensureSpace(doc, rowH, y);
       zebraRow(doc, y, rowH);
       const sColor = t.status === 'concluido' ? COLORS.green : t.status === 'em_andamento' ? COLORS.orange : COLORS.gray;
       doc.fillColor(sColor).circle(55, y + 5, 3).fill();
@@ -1982,7 +1988,7 @@ function generatePreparationReport() {
     return { ...t, member_count: teamMembers.length };
   });
   for (const team of allTeams) {
-    if (y > PAGE_BOTTOM - 80) { doc.addPage(); y = 50; }
+    y = ensureSpace(doc, 80, y);
     y = sectionTitle(doc, team.name, y, COLORS.primary);
     doc.fillColor(COLORS.gray).fontSize(9).font('Helvetica').text(`${team.member_count} membro(s)`, 500, y - 14, { width: 60, align: 'right' });
     if (team.description) {
@@ -2056,7 +2062,7 @@ function generatePreparationReport() {
     { label: 'Saldo', x: 500, w: 60, align: 'right' },
   ], y);
   for (const [cat, vals] of Object.entries(finCats).sort((a, b) => b[1].receita - b[1].despesa - (a[1].receita - a[1].despesa))) {
-    if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+    y = ensureSpace(doc, 16, y);
     zebraRow(doc, y, 16);
     const saldo = vals.receita - vals.despesa;
     doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(cat, 54, y + 3, { width: 200 });
@@ -2086,7 +2092,7 @@ function generatePreparationReport() {
     { label: 'Pagto', x: 470, w: 80, align: 'right' },
   ], y);
   for (const p of prepParticipants) {
-    if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+    y = ensureSpace(doc, 16, y);
     zebraRow(doc, y, 16);
     doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(p.name || 'Sem nome', 56, y + 3, { width: 180 });
     doc.fillColor(COLORS.gray).text(p.padrinho || '-', 240, y + 3, { width: 150 });
@@ -2109,7 +2115,7 @@ function generatePreparationReport() {
     { label: 'Status', x: 462, w: 98 },
   ], y);
   for (const f of allForn) {
-    if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+    y = ensureSpace(doc, 16, y);
     zebraRow(doc, y, 16);
     doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(f.name || '-', 56, y + 3, { width: 140 });
     doc.fillColor(COLORS.gray).text(f.category || '-', 198, y + 3, { width: 90 });
@@ -2151,10 +2157,10 @@ function generatePreparationReport() {
       { label: 'Status', x: 483, w: 77, align: 'right' },
     ], y);
     for (const e of allEsc) {
-      if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
       const nameH = calcTextHeight(doc, e.name || '-', 155, 9);
       const descH = e.description ? calcTextHeight(doc, e.description, 380, 8) : 0;
       const rowH = Math.max(22, nameH + descH + 8);
+      y = ensureSpace(doc, rowH, y);
       zebraRow(doc, y, rowH);
       const dt = e.date ? new Date(e.date + 'T00:00:00').toLocaleDateString('pt-BR') : 'A definir';
       doc.fillColor(COLORS.primary).fontSize(9).font('Helvetica-Bold').text(dt, 56, y + 4, { width: 65 });
@@ -2188,7 +2194,8 @@ function generatePreparationReport() {
     doc.fillColor(COLORS.gray).fontSize(11).font('Helvetica-Oblique').text('Nenhum aviso cadastrado.', 55, y);
   } else {
     for (const a of allAvisos) {
-      if (y > PAGE_BOTTOM - 60) { doc.addPage(); y = 50; }
+      const blockH = 10 + (a.pinned ? 14 : 0) + 16 + (a.content ? calcTextHeight(doc, a.content, CONTENT_WIDTH, 10) + 8 : 0) + 18 + 14;
+      y = ensureSpace(doc, Math.min(blockH, 200), y);
       const pColor = a.priority === 'alta' ? COLORS.red : a.priority === 'media' ? COLORS.orange : COLORS.gray;
       doc.fillColor(pColor).roundedRect(50, y, CONTENT_WIDTH, 4, 2).fill();
       y += 10;
@@ -2251,7 +2258,7 @@ function generatePreparationReport() {
         { label: 'Dias', x: 510, w: 50, align: 'right' },
       ], y);
       for (const l of autoLembretes) {
-        if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+        y = ensureSpace(doc, 16, y);
         zebraRow(doc, y, 16);
         const dt = new Date(l.due_date + 'T00:00:00').toLocaleDateString('pt-BR');
         doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(dt, 56, y + 3, { width: 70 });
@@ -2285,10 +2292,10 @@ function generatePreparationReport() {
   ];
 
   for (const section of checklistItems) {
-    if (y > PAGE_BOTTOM - 60) { doc.addPage(); y = 50; }
+    y = ensureSpace(doc, 30 + Math.min(section.items.length, 3) * 18 + 8, y);
     y = sectionTitle(doc, section.area, y, COLORS.primary);
     for (const item of section.items) {
-      if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+      y = ensureSpace(doc, 18, y);
       zebraRow(doc, y, 18);
       doc.strokeColor(COLORS.gray).lineWidth(0.5).roundedRect(55, y + 2, 10, 10, 2).stroke();
       doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica').text(item, 72, y + 3, { width: 480 });
@@ -2358,6 +2365,7 @@ function generateLembretesReport() {
   const manualPending = manualLembretes.filter(l => l.status !== 'concluido');
   const manualDone = manualLembretes.filter(l => l.status === 'concluido');
 
+  y = ensureSpace(doc, 140, y);
   summaryCard(doc, 'Atrasados', overdue.length, 50, y, 100, 55, COLORS.red);
   summaryCard(doc, 'Urgentes', urgent.length, 160, y, 100, 55, COLORS.orange);
   summaryCard(doc, 'Atencao', warning.length, 270, y, 100, 55, COLORS.secondary);
@@ -2380,10 +2388,11 @@ function generateLembretesReport() {
   });
   const lemCatEntries = Object.entries(lemCats).sort((a, b) => b[1].total - a[1].total);
   if (lemCatEntries.length > 0) {
-    if (y > PAGE_BOTTOM - 60) { doc.addPage(); y = 50; }
+    const modBlockH = 30 + lemCatEntries.length * 32 + 10;
+    y = ensureSpace(doc, Math.min(modBlockH, 200), y);
     y = sectionTitle(doc, 'Progresso por Modulo', y, COLORS.secondary);
     for (const [cat, vals] of lemCatEntries) {
-      if (y > PAGE_BOTTOM - 30) { doc.addPage(); y = 50; }
+      y = ensureSpace(doc, 32, y);
       const catPct = vals.total > 0 ? Math.round((vals.done / vals.total) * 100) : 0;
       const catColor = catPct === 100 ? COLORS.green : catPct >= 50 ? COLORS.orange : COLORS.red;
       doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica-Bold').text(cat, 55, y, { width: 300 });
@@ -2396,7 +2405,7 @@ function generateLembretesReport() {
   }
 
   if (!encStart) {
-    if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
+    y = ensureSpace(doc, 30, y);
     doc.fillColor(COLORS.gray).fontSize(11).font('Helvetica-Oblique').text('Defina a data do Encontro para gerar lembretes automaticos baseados nos prazos do manual.', 50, y, { width: CONTENT_WIDTH });
     y += 30;
   }
@@ -2408,14 +2417,17 @@ function generateLembretesReport() {
 
   // === LEMBRETES AUTOMATICOS ===
   if (autoLembretes.length > 0 || !encStart) {
+    const autoBlockH = 30 + 20 + Math.min(autoLembretes.length, 5) * 22 + 12;
+    y = ensureSpace(doc, Math.min(autoBlockH, 200), y);
     y = sectionTitle(doc, 'Lembretes Automaticos (Prazos do Manual)', y, COLORS.primary);
-    if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
   }
 
   if (autoLembretes.length === 0) {
+    y = ensureSpace(doc, 25, y);
     doc.fillColor(COLORS.gray).fontSize(11).font('Helvetica-Oblique').text(encStart ? 'Nenhum prazo pendente. Todas as tarefas com prazo estao concluidas.' : 'Nenhum lembrete automatico disponivel.', 55, y, { width: CONTENT_WIDTH });
     y += 25;
   } else {
+    y = ensureSpace(doc, 100, y);
     y = tableHeader(doc, [
       { label: 'Prazo', x: 54, w: 70 },
       { label: 'Urgencia', x: 130, w: 70 },
@@ -2425,10 +2437,10 @@ function generateLembretesReport() {
     ], y);
 
     for (const l of autoLembretes) {
-      if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
       const titleH = calcTextHeight(doc, `[${l.item_number}] ${l.title}`, 200, 9);
       const teamH = calcTextHeight(doc, l.team || '-', 80, 9);
       const rowH = Math.max(18, Math.max(titleH, teamH) + 8);
+      y = ensureSpace(doc, rowH, y);
       zebraRow(doc, y, rowH);
       const dt = fmtDate(l.due_date);
       let urgency = 'Em dia', uColor = COLORS.green;
@@ -2446,11 +2458,11 @@ function generateLembretesReport() {
   }
 
   // === LEMBRETES MANUAIS (AGRUPADOS POR MODULO) ===
-  if (manualLembretes.length > 0 && y > PAGE_BOTTOM - 50) { doc.addPage(); y = 50; }
+  y = ensureSpace(doc, manualLembretes.length > 0 ? 120 : 60, y);
   y = sectionTitle(doc, 'Lembretes Manuais por Modulo', y, COLORS.secondary);
-  if (manualLembretes.length > 0 && y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
 
   if (manualLembretes.length === 0) {
+    y = ensureSpace(doc, 25, y);
     doc.fillColor(COLORS.gray).fontSize(11).font('Helvetica-Oblique').text('Nenhum lembrete manual cadastrado.', 55, y, { width: CONTENT_WIDTH });
     y += 25;
   } else {
@@ -2461,7 +2473,9 @@ function generateLembretesReport() {
       manualByCat[c].push(l);
     });
     for (const [cat, catItems] of Object.entries(manualByCat).sort((a, b) => a[0].localeCompare(b[0]))) {
-      if (y > PAGE_BOTTOM - 60) { doc.addPage(); y = 50; }
+      const catHeaderH = 16 + 16 + 20;
+      const minRowsH = Math.min(catItems.length, 3) * 22;
+      y = ensureSpace(doc, catHeaderH + minRowsH + 12, y);
       const cDone = catItems.filter(l => l.status === 'concluido').length;
       const cPct = catItems.length > 0 ? Math.round((cDone / catItems.length) * 100) : 0;
       doc.fillColor(COLORS.primary).fontSize(11).font('Helvetica-Bold').text(`${cat} (${cDone}/${catItems.length} - ${cPct}%)`, 55, y);
@@ -2478,10 +2492,10 @@ function generateLembretesReport() {
       ], y);
 
       for (const l of catItems) {
-        if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
         const titleH = calcTextHeight(doc, l.title || '-', 170, 9);
         const descH = calcTextHeight(doc, l.description || '-', 150, 9);
         const rowH = Math.max(20, Math.max(titleH, descH) + 8);
+        y = ensureSpace(doc, rowH, y);
         zebraRow(doc, y, rowH);
         doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica-Bold').text(l.title || '-', 56, y + 4, { width: 170 });
         doc.fillColor(COLORS.gray).font('Helvetica').text(l.description || '-', 228, y + 4, { width: 150 });
