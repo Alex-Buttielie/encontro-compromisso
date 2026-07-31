@@ -1,5 +1,32 @@
 [
   {
+    "version": "1.52.0",
+    "date": "2026-07-31",
+    "title": "Nomenclatura: Responsável → Encarregado",
+    "changes": [
+      "Troca de nomenclatura de \"Responsável\" para \"Encarregado\" em todo o contexto de equipes",
+      "Card da equipe: \"👤 Encarregado\" em vez de \"👤 Responsável\"",
+      "Modal de detalhes: \"👤 Encarregado\" em vez de \"👤 Responsável\"",
+      "Modal de edição: label \"Encarregado\" e dropdown \"— Selecionar encarregado —\"",
+      "Mensagens auxiliares: \"Adicione membros à equipe para selecionar um encarregado\"",
+      "Mensagem de erro do backend: \"O encarregado deve ser um membro da equipe\""
+    ]
+  },
+  {
+    "version": "1.51.0",
+    "date": "2026-07-31",
+    "title": "Modal de Edição de Equipes Mais Interativo",
+    "changes": [
+      "Campo Responsável agora é um dropdown que só lista membros da própria equipe",
+      "Validação no backend: responsável deve ser membro da equipe (retorna 400 se não for)",
+      "Preview de membros dentro do modal com chips clicáveis para editar/adicionar",
+      "Resumo de stats no topo do modal (membros, tarefas, % concluído)",
+      "Botão de fechar (✕) no canto do modal",
+      "Função api() aprimorada: extrai mensagem de erro do backend JSON",
+      "Tratamento de erro no saveTeam: exibe toast sem fechar o modal"
+    ]
+  },
+  {
     "version": "1.50.0",
     "date": "2026-07-31",
     "title": "Modal de Edição de Equipes Mais Interativo",

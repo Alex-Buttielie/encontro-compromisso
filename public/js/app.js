@@ -1176,7 +1176,7 @@ function renderTeamCard(t) {
       </div>
     </div>
     <p>${t.description || 'Sem descrição'}</p>
-    ${t.responsible ? `<p style="font-size:11px;color:var(--primary);font-weight:600;margin-top:-6px;margin-bottom:8px">👤 Responsável: ${t.responsible}</p>` : ''}
+    ${t.responsible ? `<p style="font-size:11px;color:var(--primary);font-weight:600;margin-top:-6px;margin-bottom:8px">👤 Encarregado: ${t.responsible}</p>` : ''}
 
     <div class="eq-tags">
       <span class="eq-tag ${teamTasks.length > 0 ? 'active' : ''}">📋 ${teamTasks.length} ${teamTasks.length === 1 ? 'tarefa' : 'tarefas'}</span>
@@ -1332,7 +1332,7 @@ async function viewTeamDetails(teamId) {
     </div>
     <div class="modal-body">
       ${team.description ? `<p class="team-details-desc">${team.description}</p>` : ''}
-      ${team.responsible ? `<p class="team-details-resp">👤 Responsável: <strong>${team.responsible}</strong></p>` : ''}
+      ${team.responsible ? `<p class="team-details-resp">👤 Encarregado: <strong>${team.responsible}</strong></p>` : ''}
 
       <div class="team-details-stats">
         <div class="td-stat"><span class="td-stat-icon">👥</span><span class="td-stat-val">${team.members?.length || 0}</span><span class="td-stat-label">Membros</span></div>
@@ -1439,13 +1439,13 @@ function openTeamModal(id) {
   const { teamTasks, tasksDone, tasksPct } = team ? getTeamStats(team) : { teamTasks: [], tasksDone: 0, tasksPct: 0 };
 
   const respOptions = members.length > 0
-    ? `<option value="">— Selecionar responsável —</option>` +
+    ? `<option value="">— Selecionar encarregado —</option>` +
       members.map(m => `<option value="${m.name.replace(/"/g,'&quot;')}" ${team && team.responsible === m.name ? 'selected' : ''}>${m.name}${m.role ? ' (' + m.role + ')' : ''}</option>`).join('')
     : `<option value="" ${!team?.responsible ? 'selected' : ''}>${team?.responsible ? team.responsible + ' (membro não cadastrado)' : 'Nenhum membro cadastrado'}</option>`;
 
   const respNote = members.length === 0
-    ? `<p style="font-size:11px;color:var(--text-light);margin-top:4px">⚠️ Adicione membros à equipe para selecionar um responsável</p>`
-    : `<p style="font-size:11px;color:var(--text-light);margin-top:4px">👤 Apenas membros da equipe podem ser responsáveis</p>`;
+    ? `<p style="font-size:11px;color:var(--text-light);margin-top:4px">⚠️ Adicione membros à equipe para selecionar um encarregado</p>`
+    : `<p style="font-size:11px;color:var(--text-light);margin-top:4px">👤 Apenas membros da equipe podem ser encarregados</p>`;
 
   const statsHtml = team ? `
     <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
@@ -1477,7 +1477,7 @@ function openTeamModal(id) {
     <div class="form-group"><label>Nome da equipe</label><input id="t-name" value="${team ? team.name.replace(/"/g,'&quot;') : ''}" placeholder="Ex: Cozinha" style="font-size:15px;font-weight:600"></div>
     <div class="form-group"><label>Descrição</label><textarea id="t-desc" rows="3" placeholder="Responsabilidades e atribuições da equipe">${team ? (team.description || '').replace(/</g,'&lt;') : ''}</textarea></div>
     <div class="form-group">
-      <label>Responsável</label>
+      <label>Encarregado</label>
       <select id="t-resp" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:#fff;cursor:pointer">
         ${respOptions}
       </select>
