@@ -3368,10 +3368,12 @@ let lembreteActiveTab = 'all';
 let lembreteFilterStatus = '';
 let lembreteFilterPriority = '';
 let lembreteSearchText = '';
+let lembreteSortBy = 'due';
 let autoFilterUrgency = '';
 let autoFilterCategory = '';
 let autoFilterTeam = '';
 let autoSearchText = '';
+let autoSectionExpanded = true;
 
 const LEMBRETE_CATEGORIES = [
   'Geral MOs', 'Espaço Físico', 'Mestres de Obras', 'Traslado', 'Materiais Gráficos',
@@ -3431,14 +3433,24 @@ async function renderLembretes() {
 
     ${auto.message ? `<div class="card" style="text-align:center;color:var(--text-light)">${auto.message}</div>` : `
     <div class="stats-grid">
-      <div class="stat-card"><div class="stat-icon pending">🚨</div><div class="stat-info"><h3>${overdue.length}</h3><p>Atrasados</p></div></div>
+      <div class="stat-card ${overdue.length > 0 ? 'stat-card-alert' : ''}"><div class="stat-icon pending">🚨</div><div class="stat-info"><h3>${overdue.length}</h3><p>Atrasados</p></div></div>
       <div class="stat-card"><div class="stat-icon progress">⚠️</div><div class="stat-info"><h3>${urgent.length}</h3><p>Urgentes</p></div></div>
       <div class="stat-card"><div class="stat-icon total">📅</div><div class="stat-info"><h3>${warning.length}</h3><p>Atenção</p></div></div>
       <div class="stat-card"><div class="stat-icon done">📋</div><div class="stat-info"><h3>${autoLembretesCache.length}</h3><p>Automáticos</p></div></div>
     </div>`}
 
-    <div class="card">
-      <div class="card-title">Lembretes Automáticos (baseados nos prazos do manual)</div>
+    ${auto.message ? '' : `
+    <div class="card lem-auto-card">
+      <div class="lem-section-header" onclick="toggleAutoSection()">
+        <span class="lem-section-title">⚡ Lembretes Automáticos <span class="lem-section-subtitle">baseados nos prazos do manual</span></span>
+        <div class="lem-section-controls">
+          <span class="lem-section-count">${autoLembretesCache.length}</span>
+          <button class="btn-icon" title="${autoSectionExpanded ? 'Recolher' : 'Expandir'}">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform:${autoSectionExpanded?'rotate(180deg)':'none'};transition:transform 0.2s"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+      </div>
+      ${autoSectionExpanded ? `
       <div class="lem-filters" id="auto-filters">
         <input type="text" class="lem-search" placeholder="🔍 Buscar lembrete automático..." oninput="autoSearch(this.value)" id="auto-search-input">
         <select onchange="autoFilterByUrgency(this.value)" id="auto-filter-urgency">
@@ -3456,13 +3468,14 @@ async function renderLembretes() {
         </select>
       </div>
       <div id="auto-lembretes"></div>
-    </div>
+      ` : ''}
+    </div>`}
 
     <div class="card">
-      <div class="card-title" style="display:flex;justify-content:space-between;align-items:center">
-        <span>Lembretes Manuais por Módulo</span>
+      <div class="lem-section-header lem-section-header-manual">
+        <span class="lem-section-title">📝 Lembretes Manuais por Módulo</span>
         <div style="display:flex;gap:8px">
-          <button class="btn btn-secondary btn-sm" onclick="syncLembretesTasks()">🔄 Sincronizar com Checklist</button>
+          <button class="btn btn-secondary btn-sm" onclick="syncLembretesTasks()">🔄 Sincronizar</button>
           <button class="btn btn-primary btn-sm" onclick="openLembreteModal()">+ Novo Lembrete</button>
         </div>
       </div>
@@ -3496,16 +3509,26 @@ async function renderLembretes() {
           <option value="media">Média</option>
           <option value="baixa">Baixa</option>
         </select>
+        <select onchange="lemSortChange(this.value)" id="lem-sort">
+          <option value="due" ${lembreteSortBy==='due'?'selected':''}>Ordenar: Vencimento</option>
+          <option value="title" ${lembreteSortBy==='title'?'selected':''}>Ordenar: Título</option>
+          <option value="priority" ${lembreteSortBy==='priority'?'selected':''}>Ordenar: Prioridade</option>
+          <option value="status" ${lembreteSortBy==='status'?'selected':''}>Ordenar: Status</option>
+          <option value="category" ${lembreteSortBy==='category'?'selected':''}>Ordenar: Categoria</option>
+        </select>
       </div>
 
       <div id="lem-progress-area"></div>
+      <div id="lem-results-bar"></div>
       <div id="manual-lembretes"></div>
     </div>
   `;
 
-  renderAutoLembretes(autoLembretesCache);
-  populateAutoFilters();
-  applyAutoFilters();
+  if (autoSectionExpanded && !auto.message) {
+    renderAutoLembretes(autoLembretesCache);
+    populateAutoFilters();
+    applyAutoFilters();
+  }
   applyLemFilters();
 }
 
@@ -3521,6 +3544,11 @@ function populateAutoFilters() {
 function autoSearch(text) {
   autoSearchText = text.toLowerCase();
   applyAutoFilters();
+}
+
+function toggleAutoSection() {
+  autoSectionExpanded = !autoSectionExpanded;
+  renderLembretes();
 }
 
 function autoFilterByUrgency(val) {
@@ -3574,6 +3602,35 @@ function lemFilterPriority(val) {
   applyLemFilters();
 }
 
+function lemSortChange(val) {
+  lembreteSortBy = val;
+  applyLemFilters();
+}
+
+function lemClearFilters() {
+  lembreteSearchText = '';
+  lembreteFilterStatus = '';
+  lembreteFilterPriority = '';
+  lembreteActiveTab = 'all';
+  applyLemFilters();
+  document.querySelectorAll('.lem-tab').forEach(t => t.classList.toggle('active', t.dataset.cat === 'all'));
+  const si = document.getElementById('lem-search-input'); if (si) si.value = '';
+  const ss = document.getElementById('lem-filter-status'); if (ss) ss.value = '';
+  const sp = document.getElementById('lem-filter-priority'); if (sp) sp.value = '';
+}
+
+function sortLembretes(list) {
+  const sorted = [...list];
+  const priorityOrder = { alta: 0, media: 1, baixa: 2 };
+  const statusOrder = { pendente: 0, concluido: 1 };
+  if (lembreteSortBy === 'title') sorted.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+  else if (lembreteSortBy === 'priority') sorted.sort((a, b) => (priorityOrder[a.priority] ?? 9) - (priorityOrder[b.priority] ?? 9));
+  else if (lembreteSortBy === 'status') sorted.sort((a, b) => (statusOrder[a.status] ?? 9) - (statusOrder[b.status] ?? 9));
+  else if (lembreteSortBy === 'category') sorted.sort((a, b) => (a.category || '').localeCompare(b.category || ''));
+  else sorted.sort((a, b) => (a.due_date || '9999-12-31').localeCompare(b.due_date || '9999-12-31'));
+  return sorted;
+}
+
 function applyLemFilters() {
   let list = [...lembretesCache];
   if (lembreteActiveTab !== 'all') list = list.filter(l => (l.category || 'Geral MOs') === lembreteActiveTab);
@@ -3581,8 +3638,11 @@ function applyLemFilters() {
   if (lembreteFilterPriority) list = list.filter(l => l.priority === lembreteFilterPriority);
   if (lembreteSearchText) list = list.filter(l =>
     (l.title || '').toLowerCase().includes(lembreteSearchText) ||
-    (l.description || '').toLowerCase().includes(lembreteSearchText)
+    (l.description || '').toLowerCase().includes(lembreteSearchText) ||
+    (l.category || '').toLowerCase().includes(lembreteSearchText)
   );
+
+  list = sortLembretes(list);
 
   const progArea = document.getElementById('lem-progress-area');
   if (progArea && lembreteActiveTab !== 'all') {
@@ -3601,6 +3661,14 @@ function applyLemFilters() {
     progArea.innerHTML = '';
   }
 
+  const resultsBar = document.getElementById('lem-results-bar');
+  if (resultsBar) {
+    const hasFilters = lembreteSearchText || lembreteFilterStatus || lembreteFilterPriority || lembreteActiveTab !== 'all';
+    resultsBar.innerHTML = hasFilters
+      ? `<div class="lem-results-info"><span>${list.length} de ${lembretesCache.length} lembretes</span><button class="lem-clear-btn" onclick="lemClearFilters()">✕ Limpar filtros</button></div>`
+      : '';
+  }
+
   renderManualLembretes(list);
 }
 
@@ -3608,13 +3676,14 @@ function renderAutoLembretes(list) {
   const container = document.getElementById('auto-lembretes');
   if (list.length === 0) {
     const hasData = autoLembretesCache.length > 0;
-    container.innerHTML = `<p style="color:var(--text-light);padding:12px">${hasData ? 'Nenhum lembrete automático encontrado com os filtros atuais.' : 'Nenhum lembrete automático. Defina a data do Encontro.'}</p>`;
+    container.innerHTML = `<div class="lem-empty"><div class="lem-empty-icon">${hasData ? '🔍' : '📅'}</div><p>${hasData ? 'Nenhum lembrete automático encontrado com os filtros atuais.' : 'Nenhum lembrete automático. Defina a data do Encontro.'}</p></div>`;
     return;
   }
   const icons = { overdue: '🚨', urgent: '⚠️', warning: '📅', info: 'ℹ️' };
   const labels = { overdue: 'Atrasado', urgent: 'Urgente', warning: 'Atenção', info: 'Em dia' };
   const showingAll = list.length === autoLembretesCache.length;
-  const countBar = showingAll ? '' : '<div style="font-size:11px;color:var(--text-light);padding:4px 12px">Mostrando ' + list.length + ' de ' + autoLembretesCache.length + ' lembretes</div>';
+  const hasAutoFilters = autoFilterUrgency || autoFilterCategory || autoFilterTeam || autoSearchText;
+  const countBar = showingAll ? '' : `<div class="lem-results-info"><span>${list.length} de ${autoLembretesCache.length} lembretes</span>${hasAutoFilters ? '<button class="lem-clear-btn" onclick="autoClearFilters()">✕ Limpar filtros</button>' : ''}</div>`;
   const cards = list.map(l => `<div class="lembrete-card ${l.urgency}">
     <div class="lembrete-icon">${icons[l.urgency]}</div>
     <div class="lembrete-info">
@@ -3633,6 +3702,18 @@ function renderAutoLembretes(list) {
     </div>
   </div>`).join('');
   container.innerHTML = countBar + cards;
+}
+
+function autoClearFilters() {
+  autoSearchText = '';
+  autoFilterUrgency = '';
+  autoFilterCategory = '';
+  autoFilterTeam = '';
+  const si = document.getElementById('auto-search-input'); if (si) si.value = '';
+  const su = document.getElementById('auto-filter-urgency'); if (su) su.value = '';
+  const sc = document.getElementById('auto-filter-category'); if (sc) sc.value = '';
+  const st = document.getElementById('auto-filter-team'); if (st) st.value = '';
+  applyAutoFilters();
 }
 
 async function openAutoLembreteDetails(taskId) {
@@ -3735,28 +3816,42 @@ function showConfirmDialog(opts) {
 function renderManualLembretes(list) {
   const container = document.getElementById('manual-lembretes');
   if (list.length === 0) {
-    container.innerHTML = '<p style="color:var(--text-light);padding:12px">Nenhum lembrete encontrado com os filtros atuais.</p>';
+    const hasFilters = lembreteSearchText || lembreteFilterStatus || lembreteFilterPriority || lembreteActiveTab !== 'all';
+    container.innerHTML = `<div class="lem-empty"><div class="lem-empty-icon">${hasFilters ? '🔍' : '📝'}</div><p>${hasFilters ? 'Nenhum lembrete encontrado com os filtros atuais.' : 'Nenhum lembrete cadastrado. Clique em "+ Novo Lembrete" para começar.'}</p></div>`;
     return;
   }
   const statusBadges = { pendente: 'badge-warning', concluido: 'badge-success' };
   const priorityBadges = { alta: 'badge-danger', media: 'badge-warning', baixa: 'badge-info' };
   const catIcons = LEMBRETE_CATEGORY_ICONS;
+  const today = new Date(); today.setHours(0,0,0,0);
   container.innerHTML = list.map(l => {
     const cat = l.category || 'Geral MOs';
     const linked = l.related_task_id ? '<span class="badge-sm badge-info" title="Vinculado ao checklist">🔗 Checklist</span>' : '<span class="badge-sm badge-gray" title="Não vinculado">⚠️ Sem vínculo</span>';
-    return `<div class="lembrete-card ${l.status === 'concluido' ? '' : 'info'}">
+    let dueClass = '';
+    let dueText = '';
+    if (l.due_date && l.status !== 'concluido') {
+      const due = new Date(l.due_date + 'T00:00:00');
+      const diff = Math.floor((due - today) / 86400000);
+      if (diff < 0) { dueClass = 'lem-due-overdue'; dueText = `⚠️ ${Math.abs(diff)}d atrasado`; }
+      else if (diff === 0) { dueClass = 'lem-due-today'; dueText = '📌 Vence hoje'; }
+      else if (diff <= 7) { dueClass = 'lem-due-soon'; dueText = `📅 Em ${diff}d`; }
+      else { dueText = `📅 ${due.toLocaleDateString('pt-BR')}`; }
+    } else if (l.due_date) {
+      dueText = `📅 ${new Date(l.due_date).toLocaleDateString('pt-BR')}`;
+    }
+    return `<div class="lembrete-card ${l.status === 'concluido' ? 'lem-done' : 'info'}">
     <div class="lembrete-icon">${l.status === 'concluido' ? '✅' : '🔔'}</div>
     <div class="lembrete-info">
-      <div class="lembrete-title">${l.title}</div>
+      <div class="lembrete-title ${l.status === 'concluido' ? 'lem-title-done' : ''}">${l.title}</div>
       ${l.description ? `<div class="lembrete-meta">${l.description}</div>` : ''}
       <div class="lembrete-meta" style="margin-top:2px">
         <span class="lem-cat-badge">${catIcons[cat] || '📌'} ${cat}</span>
-        ${l.due_date ? ` · <span class="lembrete-due" style="display:inline">Vence em ${new Date(l.due_date).toLocaleDateString('pt-BR')}</span>` : ''}
+        ${dueText ? ` · <span class="lembrete-due ${dueClass}" style="display:inline">${dueText}</span>` : ''}
         · ${linked}
       </div>
     </div>
     <div style="display:flex;flex-direction:column;align-items:end;gap:4px">
-      <span class="badge-sm ${statusBadges[l.status] || 'badge-gray'}">${l.status}</span>
+      <span class="badge-sm ${statusBadges[l.status] || 'badge-gray'}">${l.status === 'concluido' ? 'Concluído' : 'Pendente'}</span>
       <span class="badge-sm ${priorityBadges[l.priority] || 'badge-gray'}">${l.priority}</span>
       <div style="display:flex;gap:4px;margin-top:4px">
         <button class="btn-icon" onclick="openLembreteDetails(${l.id})" title="Ver detalhes">
@@ -3825,10 +3920,21 @@ async function saveLembrete(id, btn) {
 }
 
 async function deleteLembrete(id) {
-  if (!confirm('Excluir este lembrete?')) return;
-  await api(`/lembretes/${id}`, { method: 'DELETE' });
-  toast('Lembrete excluído', 'error');
-  renderLembretes();
+  const l = lembretesCache.find(l => l.id === id);
+  showConfirmDialog({
+    icon: '🗑️',
+    title: 'Excluir Lembrete',
+    message: 'Tem certeza que deseja excluir?',
+    detail: l?.title || '',
+    subdetail: 'Esta ação não pode ser desfeita.',
+    confirmText: 'Sim, excluir',
+    cancelText: 'Cancelar',
+    onConfirm: async () => {
+      await api(`/lembretes/${id}`, { method: 'DELETE' });
+      toast('Lembrete excluído', 'error');
+      renderLembretes();
+    }
+  });
 }
 
 // ============ PADRINHOS ============

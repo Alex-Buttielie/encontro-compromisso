@@ -3369,6 +3369,55 @@ select:focus, input:focus, textarea:focus { border-color: var(--primary); }
 .escolinha-item.status-cancelada::before { background: var(--danger); box-shadow: 0 0 0 1px var(--danger); }
 
 /* LEMBRETES */
+.lem-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  cursor: pointer;
+}
+
+.lem-section-header-manual { cursor: default; }
+
+.lem-section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--dark);
+}
+
+.lem-section-subtitle {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-light);
+}
+
+.lem-section-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lem-section-count {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 12px;
+  background: rgba(0,0,0,0.06);
+  color: var(--text-light);
+}
+
+.lem-auto-card { border-left: 3px solid var(--info); }
+
+.stat-card-alert {
+  animation: lemPulse 2s infinite;
+  border-color: var(--danger) !important;
+}
+
+@keyframes lemPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(231,76,60,0.3); }
+  50% { box-shadow: 0 0 0 6px rgba(231,76,60,0); }
+}
+
 .lembrete-card {
   display: flex;
   align-items: center;
@@ -3379,21 +3428,61 @@ select:focus, input:focus, textarea:focus { border-color: var(--primary); }
   margin-bottom: 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   border-left: 4px solid var(--border);
+  transition: box-shadow 0.15s, transform 0.15s;
 }
+
+.lembrete-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); transform: translateX(2px); }
 
 .lembrete-card.urgent { border-left-color: var(--danger); }
 .lembrete-card.warning { border-left-color: var(--warning); }
 .lembrete-card.overdue { border-left-color: var(--danger); background: rgba(231,76,60,0.05); }
 .lembrete-card.info { border-left-color: var(--info); }
+.lembrete-card.lem-done { border-left-color: var(--success); opacity: 0.75; }
 
 .lembrete-icon { font-size: 24px; flex-shrink: 0; }
 .lembrete-info { flex: 1; }
 .lembrete-title { font-size: 14px; font-weight: 600; }
+.lem-title-done { text-decoration: line-through; color: var(--text-light); }
 .lembrete-meta { font-size: 12px; color: var(--text-light); margin-top: 2px; }
 .lembrete-due { font-size: 13px; font-weight: 600; margin-top: 4px; }
 .lembrete-due.overdue { color: var(--danger); }
 .lembrete-due.urgent { color: var(--danger); }
 .lembrete-due.warning { color: var(--warning); }
+.lem-due-overdue { color: var(--danger) !important; font-weight: 700; }
+.lem-due-today { color: var(--warning) !important; font-weight: 700; }
+.lem-due-soon { color: var(--info) !important; font-weight: 600; }
+
+.lem-results-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--text-light);
+  padding: 0 4px;
+}
+
+.lem-clear-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 3px 10px;
+  font-size: 11px;
+  color: var(--text-light);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.lem-clear-btn:hover { border-color: var(--danger); color: var(--danger); }
+
+.lem-empty {
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--text-light);
+}
+
+.lem-empty-icon { font-size: 36px; margin-bottom: 10px; }
+.lem-empty p { font-size: 13px; }
 
 .lem-tab-bar {
   display: flex;
