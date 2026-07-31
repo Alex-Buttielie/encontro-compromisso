@@ -4146,6 +4146,213 @@ select:focus, input:focus, textarea:focus { border-color: var(--primary); }
   }
 }
 
+/* ============ FINANCE MOBILE ENHANCEMENTS ============ */
+
+/* Scrollable tab bar with scroll indicators */
+#fin-tabs.tab-bar {
+  position: relative;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+#fin-tabs.tab-bar::-webkit-scrollbar { display: none; }
+#fin-tabs.tab-bar {
+  overflow-x: auto;
+  flex-wrap: nowrap;
+}
+#fin-tabs .tab-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Finance summary — compact horizontal scroll on very small screens */
+@media (max-width: 480px) {
+  .finance-summary {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .finance-summary::-webkit-scrollbar { display: none; }
+  .finance-card {
+    flex: 1 0 140px;
+    min-width: 140px;
+    padding: 10px;
+  }
+  .finance-card .amount { font-size: 15px; margin: 2px 0; }
+  .finance-card .label { font-size: 9px; }
+}
+
+/* Fechamento — mobile table to card conversion */
+@media (max-width: 768px) {
+  /* Fechamento detail tables — make scrollable */
+  #fechamento-detail .data-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+  }
+  #fechamento-detail .data-table thead {
+    display: table-header-group;
+  }
+  #fechamento-detail .data-table tbody {
+    display: table-row-group;
+  }
+  #fechamento-detail .data-table tr {
+    display: table-row;
+  }
+  #fechamento-detail .data-table th,
+  #fechamento-detail .data-table td {
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+
+  /* Fechamento history table — horizontal scroll */
+  #fechamento-history .data-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+  }
+
+  /* Fechamento summary cards — 2 per row on mobile */
+  #fechamento-detail .finance-summary {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  /* Fechamento month selector — full width */
+  #fechamento-month {
+    width: 100%;
+  }
+
+  /* Finance filters — touch-friendly */
+  .filters .filter-group select,
+  .filters .filter-group input {
+    min-height: 40px;
+    font-size: 14px;
+  }
+
+  /* Finance buttons — larger touch targets */
+  .finance-item-actions .btn-icon,
+  .fin-cat-card-actions .btn-icon,
+  .fin-budget-card-actions .btn-icon,
+  .fin-event-actions .btn-icon {
+    min-width: 36px;
+    min-height: 36px;
+    font-size: 16px;
+  }
+
+  /* Charts — full width, reduced height */
+  .fin-charts-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .fin-charts-grid .card {
+    padding: 10px 8px;
+  }
+  .fin-charts-grid canvas {
+    max-height: 200px !important;
+  }
+
+  /* Top lists — compact horizontal */
+  .fin-top-item {
+    padding: 6px 8px;
+    gap: 6px;
+  }
+  .fin-top-desc { font-size: 12px; }
+  .fin-top-val { font-size: 12px; }
+
+  /* Finance item cards — swipeable feel */
+  .finance-item-card {
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: var(--radius);
+  }
+  .finance-item-top {
+    margin-bottom: 4px;
+  }
+  .finance-item-amount { font-size: 16px; }
+  .finance-item-desc { font-size: 13px; margin-bottom: 4px; }
+  .finance-item-meta {
+    flex-wrap: wrap;
+    gap: 4px;
+    font-size: 10px;
+  }
+  .finance-item-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+  }
+
+  /* Event cards — stacked stats */
+  .fin-event-card { padding: 12px 10px; }
+  .fin-event-header h3 { font-size: 14px !important; }
+  .fin-event-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+  .fin-event-stat { padding: 6px 4px; }
+  .fin-event-stat .value { font-size: 12px; }
+  .fin-event-stat .label { font-size: 8px; }
+
+  /* Category & Budget cards — compact */
+  .fin-cat-card, .fin-budget-card, .fin-bva-card {
+    padding: 10px 12px;
+  }
+  .fin-cat-card-name, .fin-budget-card-name, .fin-bva-card-name {
+    font-size: 13px;
+  }
+  .fin-cat-card-meta, .fin-budget-card-amount {
+    font-size: 12px;
+  }
+
+  /* Modal — full screen on mobile */
+  .modal {
+    max-width: 95vw !important;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 14px 12px;
+  }
+  .modal .form-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .modal .form-row .form-group { width: 100%; }
+  .modal input, .modal select, .modal textarea {
+    font-size: 15px !important; /* prevents iOS zoom */
+    min-height: 40px;
+  }
+
+  /* Fechamento actions — full width buttons */
+  #fechamento-detail > div[style*="display:flex;gap:8px"] {
+    flex-direction: column;
+    gap: 8px;
+  }
+  #fechamento-detail > div[style*="display:flex;gap:8px"] .btn {
+    width: 100%;
+  }
+}
+
+/* Very small screens — single column everything */
+@media (max-width: 380px) {
+  .finance-summary {
+    grid-template-columns: 1fr;
+  }
+  .fin-event-stats {
+    grid-template-columns: 1fr;
+  }
+  .fin-bva-card-stats {
+    grid-template-columns: 1fr;
+  }
+  .tab-btn { padding: 6px 8px; font-size: 11px; }
+  .page-title { font-size: 16px; }
+  .page-subtitle { font-size: 12px; }
+}
+
 /* DASHBOARD MOBILE */
 .dashboard-tabs.mobile {
   display: flex;

@@ -129,9 +129,13 @@ window.addEventListener('hashchange', () => {
 
 let resizeTimer = null;
 let lastRenderedPage = null;
+let lastWindowWidth = window.innerWidth;
 window.addEventListener('resize', () => {
   if (resizeTimer) clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => {
+    const newWidth = window.innerWidth;
+    if (newWidth === lastWindowWidth) return; // Skip if width didn't change (mobile URL bar)
+    lastWindowWidth = newWidth;
     if (currentPage && currentPage !== 'tutorial' && currentPage === lastRenderedPage) {
       refreshCurrentPage();
     }
@@ -139,6 +143,7 @@ window.addEventListener('resize', () => {
 });
 window.addEventListener('orientationchange', () => {
   setTimeout(() => {
+    lastWindowWidth = window.innerWidth;
     if (currentPage && currentPage !== 'tutorial' && currentPage === lastRenderedPage) {
       refreshCurrentPage();
     }
@@ -2582,6 +2587,20 @@ async function renderFinanceiro() {
   await switchFinanceTab(financeTab);
 }
 
+async function refreshFinanceTab() {
+  financeCache = await api('/finance');
+  const content = document.getElementById('fin-tab-content');
+  if (!content) return;
+  Object.values(financeCharts).forEach(c => { try { c.destroy(); } catch(e){} });
+  financeCharts = {};
+  if (financeTab === 'overview') await renderFinOverview(content);
+  else if (financeTab === 'lancamentos') await renderFinLancamentos(content);
+  else if (financeTab === 'categorias') await renderFinCategorias(content);
+  else if (financeTab === 'eventos') await renderFinEventos(content);
+  else if (financeTab === 'orcamento') await renderFinOrcamento(content);
+  else if (financeTab === 'fechamento') await renderFinFechamento(content);
+}
+
 async function switchFinanceTab(tab) {
   financeTab = tab;
   document.querySelectorAll('#fin-tabs .tab-btn').forEach(b => b.classList.remove('active'));
@@ -2829,14 +2848,14 @@ async function saveFinance(id, btn) {
   else await api('/finance', { method: 'POST', body: JSON.stringify(data) });
   btn.closest('.modal-overlay').remove();
   toast('Lançamento salvo!', 'success');
-  renderFinanceiro();
+  refreshFinanceTab();
 }
 
 async function deleteFinance(id) {
   if (!confirm('Excluir este lançamento?')) return;
   await api(`/finance/${id}`, { method: 'DELETE' });
   toast('Lançamento excluído', 'error');
-  renderFinanceiro();
+  refreshFinanceTab();
 }
 
 // ===== CATEGORIAS =====
@@ -3374,7 +3393,7 @@ async function confirmFechamento(period, btn) {
     await api('/finance/closings', { method: 'POST', body: JSON.stringify({ period, notes, closed_by: closedBy }) });
     btn.closest('.modal-overlay').remove();
     toast('Mês fechado com sucesso!', 'success');
-    renderFinanceiro();
+    refreshFinanceTab();
   } catch (err) {
     btn.disabled = false;
     btn.textContent = '🔒 Confirmar Fechamento';
@@ -3387,7 +3406,7 @@ async function reopenFechamento(id, period) {
   try {
     await api(`/finance/closings/${id}`, { method: 'DELETE' });
     toast('Mês reaberto!', 'success');
-    renderFinanceiro();
+    refreshFinanceTab();
   } catch (err) {
     toast(err.message || 'Erro ao reabrir mês', 'error');
   }

@@ -1,5 +1,24 @@
 [
   {
+    "version": "1.56.0",
+    "date": "2026-07-31",
+    "title": "Correção de sincronização + Versão Mobile do Financeiro",
+    "changes": [
+      "Corrigido loop de re-renderização do módulo financeiro (resize em mobile disparava renderFinanceiro completo)",
+      "Resize handler agora verifica se a largura da tela realmente mudou antes de re-renderizar",
+      "Criada função refreshFinanceTab() que atualiza apenas a aba atual sem reconstruir toda a página",
+      "saveFinance, deleteFinance, confirmFechamento e reopenFechamento agora usam refreshFinanceTab()",
+      "Tab bar do financeiro agora é horizontalmente scrollável com scroll suave (touch)",
+      "Cards de resumo financeiro viram carrossel horizontal em telas muito pequenas (<=480px)",
+      "Tabelas do Fechamento com scroll horizontal otimizado para mobile",
+      "Botões com alvos de toque maiores (36px) para mobile",
+      "Modais em tela cheia no mobile com inputs em font-size 15px (previne zoom no iOS)",
+      "Charts com altura reduzida e layout single-column no mobile",
+      "Cards de lançamentos, eventos, categorias e orçamento compactados para mobile",
+      "Breakpoint extra para telas muito pequenas (<=380px) com layout single-column"
+    ]
+  },
+  {
     "version": "1.55.0",
     "date": "2026-07-31",
     "title": "Fechamento de Caixa Mensal no Financeiro",
