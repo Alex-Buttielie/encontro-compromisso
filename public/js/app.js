@@ -86,7 +86,7 @@ function prettifyPersonName(raw, opts = {}) {
 }
 
 // ============ NAVIGATION (Hash Routing) ============
-const VALID_PAGES = ['dashboard','checklist','cronograma','equipes','encontro','inscritos','padrinhos','pais','fornecedores','escolinhas','alicerces','lembretes','avisos','financeiro','lembrancinhas','kit','relatorios','orcamento','doacoes','cardapio'];
+const VALID_PAGES = ['dashboard','checklist','cronograma','equipes','encontro','inscritos','padrinhos','pais','fornecedores','escolinhas','alicerces','lembretes','avisos','financeiro','lembrancinhas','kit','relatorios','orcamento','doacoes','cardapio','tutorial'];
 
 function getPageFromHash() {
   const hash = window.location.hash.replace('#/', '').replace('#', '');
@@ -167,6 +167,7 @@ function renderPage() {
   else if (currentPage === 'orcamento') renderOrcamento();
   else if (currentPage === 'doacoes') renderDoacoes();
   else if (currentPage === 'cardapio') renderCardapio();
+  else if (currentPage === 'tutorial') renderTutorial();
 }
 
 // ============ DASHBOARD ============
@@ -1816,6 +1817,229 @@ async function deleteCardapioMeal(id) {
   await api(`/cardapio/${id}`, { method: 'DELETE' });
   toast('Refeição excluída', 'error');
   renderCardapio();
+}
+
+// ============ TUTORIAL ============
+let tutorialActiveGuide = null;
+let tutorialStep = 0;
+
+const TUTORIAL_GUIDES = [
+  {
+    id: 'inicio',
+    icon: '🚀',
+    title: 'Primeiros Passos',
+    description: 'Aprenda o básico para começar a usar o sistema',
+    color: 'var(--primary)',
+    steps: [
+      { title: 'Bem-vindo ao Meu Coordenador', text: 'Este sistema ajuda a organizar todo o Encontro Compromisso Trin — tarefas, equipes, pessoas, finanças e muito mais. Use o menu lateral para navegar entre os módulos.', action: null },
+      { title: 'Navegação', text: 'O menu lateral (à esquerda) agrupa os módulos em seções: Geral, Pessoas, Preparação e Recursos. No celular, toque no botão ☰ no topo para abrir o menu.', action: null },
+      { title: 'Dashboard', text: 'O Dashboard é a página inicial. Mostra estatísticas gerais, gráficos de progresso, contagem regressiva e tarefas urgentes. Use as abas Geral/Pré/Durante para filtrar.', action: 'dashboard' },
+      { title: 'Checklist', text: 'O Checklist contém todas as tarefas de preparação. Cada tarefa tem número, categoria, equipe responsável, prazo, prioridade e status. Clique em uma tarefa para editar.', action: 'checklist' },
+      { title: 'Cronograma', text: 'O Cronograma mostra a programação dos 3 dias do Encontro (Sexta, Sábado, Domingo) com horários, atividades e equipes responsáveis.', action: 'cronograma' },
+    ]
+  },
+  {
+    id: 'equipes',
+    icon: '👥',
+    title: 'Gestão de Equipes',
+    description: 'Como criar equipes, adicionar membros e ver detalhes',
+    color: '#234c72',
+    steps: [
+      { title: 'Módulo de Equipes', text: 'Acesse "Equipes" no menu. Você verá cards com cada equipe, seus membros, tarefas atribuídas e progresso.', action: 'equipes' },
+      { title: 'Criar Equipe', text: 'Clique em "+ Nova Equipe". Defina nome, descrição e responsável. A equipe será criada e aparecerá no grid.', action: 'equipes' },
+      { title: 'Adicionar Membros', text: 'Dentro de cada card de equipe, clique em "+ Adicionar Membro". Informe nome, role (função) e telefone opcional.', action: 'equipes' },
+      { title: 'Ver Detalhes', text: 'Clique em "👁️ Detalhes" para abrir o modal completo com estatísticas, membros, cronograma, tarefas, lembrancinhas e alicerces da equipe.', action: 'equipes' },
+      { title: 'Expandir/Recolher', text: 'Use a seta no cado do card para expandir e ver rapidamente tarefas, cronograma e lembrancinhas sem abrir o modal.', action: 'equipes' },
+    ]
+  },
+  {
+    id: 'tarefas',
+    icon: '📋',
+    title: 'Tarefas e Checklist',
+    description: 'Como gerenciar tarefas de preparação',
+    color: '#2d8659',
+    steps: [
+      { title: 'Módulo Checklist', text: 'Acesse "Checklist" no menu. Todas as tarefas aparecem agrupadas por categoria, com filtros por fase, status e prioridade.', action: 'checklist' },
+      { title: 'Criar Tarefa', text: 'Clique em "+ Nova Tarefa". Defina título, categoria, equipe responsável, prazo, prioridade e fase (Pré/Durante o Encontro).', action: 'checklist' },
+      { title: 'Mudar Status', text: 'Clique no status da tarefa (Pendente → Em Andamento → Concluído) para atualizar o progresso. A barra lateral mostra o % geral.', action: 'checklist' },
+      { title: 'Filtros', text: 'Use os filtros no topo para ver tarefas por fase (Pré/Durante), status (Pendente/Em Andamento/Concluído) ou prioridade (Alta/Média/Baixa).', action: 'checklist' },
+    ]
+  },
+  {
+    id: 'pessoas',
+    icon: '🧑',
+    title: 'Gestão de Pessoas',
+    description: 'MPs, padrinhos, pais e fornecedores',
+    color: '#8e44ad',
+    steps: [
+      { title: 'Matérias-primas (MPs)', text: 'Acesse "Matérias-primas" para cadastrar os inscritos no Encontro. Cada MP tem grupo, quarto, gênero e status.', action: 'inscritos' },
+      { title: 'Padrinhos', text: 'O módulo "Padrinhos" gerencia os padrinhos de cada MP — acompanhamento antes, durante e depois do Encontro.', action: 'padrinhos' },
+      { title: 'Pais de MPs', text: 'Em "Pais de MPs" você cadastra os responsáveis pelos MPs menores de idade, com contato e autorizações.', action: 'pais' },
+      { title: 'Fornecedores', text: 'O módulo "Fornecedores" controla fornecedores do Encontro: contato, serviço, valor e status (Orçado → Contratado).', action: 'fornecedores' },
+    ]
+  },
+  {
+    id: 'financeiro',
+    icon: '💰',
+    title: 'Controle Financeiro',
+    description: 'Lançamentos, categorias, eventos e orçamento',
+    color: '#d4a017',
+    steps: [
+      { title: 'Visão Geral', text: 'A aba "Visão Geral" mostra gráficos de receitas vs despesas, despesas por categoria, receitas por categoria e status de pagamentos.', action: 'financeiro' },
+      { title: 'Lançamentos', text: 'Na aba "Lançamentos", registre receitas e despesas. Use os filtros por tipo e categoria. No mobile, a tabela vira cards automáticos.', action: 'financeiro' },
+      { title: 'Categorias', text: 'Crie categorias personalizadas (ex: "Alimentação", "Transporte") com cor e orçamento planejado para melhor organização.', action: 'financeiro' },
+      { title: 'Eventos', text: 'Registre eventos financeiros (jantares, bazares, rifas) com receita/despesa prevista e real para acompanhar o lucro.', action: 'financeiro' },
+      { title: 'Orçamento', text: 'A aba "Orçamento" compara o planejado vs realizado por categoria, ajudando a controlar gastos.', action: 'financeiro' },
+    ]
+  },
+  {
+    id: 'recursos',
+    icon: '📦',
+    title: 'Recursos e Logística',
+    description: 'Lembrancinhas, kit, orçamento, doações e cardápio',
+    color: '#e67e22',
+    steps: [
+      { title: 'Lembrancinhas', text: 'Controle os itens que serão distribuídos no Encontro: quantidade necessária, produzida e status de cada item.', action: 'lembrancinhas' },
+      { title: 'Kit das MPs', text: 'Define o kit que cada MP recebe (sacochila, squeez, terço, etc). Marque os itens conforme são montados.', action: 'kit' },
+      { title: 'Orçamento', text: 'O módulo "Orçamento" lista todos os itens que precisam ser comprados, com quantidade, custo estimado e status (orçado/comprado/recebido).', action: 'orcamento' },
+      { title: 'Doações', text: 'Registre doações em dinheiro ou material. Doações em dinheiro podem ser consolidadas no financeiro automaticamente.', action: 'doacoes' },
+      { title: 'Cardápio', text: 'O "Cardápio" mostra as refeições dos 3 dias do Encontro e a lista de compras da cozinha com todos os itens necessários.', action: 'cardapio' },
+    ]
+  },
+  {
+    id: 'relatorios',
+    icon: '📊',
+    title: 'Relatórios e PDFs',
+    description: 'Como gerar relatórios profissionais com filtros',
+    color: '#1a3a5c',
+    steps: [
+      { title: 'Módulo Relatórios', text: 'Acesse "Relatórios PDF" no menu. Você verá um sumário visual com estatísticas e um painel de filtros.', action: 'relatorios' },
+      { title: 'Filtros', text: 'Use os filtros (fase, categoria, equipe, status, prioridade) para refinar os dados antes de gerar o PDF. A tabela mostra os dados filtrados on-screen.', action: 'relatorios' },
+      { title: 'Gerar PDF', text: 'Os relatórios estão organizados em seções: Principais, Gerais, Equipes/MPs, Supervisão e por Categoria. Clique em qualquer card para gerar o PDF.', action: 'relatorios' },
+      { title: 'Guia do Coordenador', text: 'O "Guia do Coordenador" é o relatório mais completo — contém tudo para os 3 dias: contatos, cronograma, alicerces, MPs, avisos e tarefas pendentes.', action: 'relatorios' },
+    ]
+  },
+];
+
+function renderTutorial() {
+  const main = document.getElementById('main-content');
+  main.innerHTML = `
+    <h1 class="page-title">Tutorial do Sistema</h1>
+    <p class="page-subtitle">Aprenda a usar cada módulo do Meu Coordenador passo a passo</p>
+
+    <div class="tutorial-welcome-card">
+      <div class="tutorial-welcome-icon">🎓</div>
+      <div class="tutorial-welcome-text">
+        <h2>Bem-vindo ao tutorial!</h2>
+        <p>Selecione um guia abaixo para começar. Cada guia mostra passo a passo como usar um módulo do sistema, com dicas práticas e botões para navegar diretamente.</p>
+      </div>
+    </div>
+
+    <div class="tutorial-guides-grid" id="tutorial-guides-grid">
+      ${TUTORIAL_GUIDES.map(g => `
+        <div class="tutorial-guide-card" onclick="startTutorialGuide('${g.id}')" style="border-left-color:${g.color}">
+          <div class="tutorial-guide-icon" style="background:${g.color}20;color:${g.color}">${g.icon}</div>
+          <div class="tutorial-guide-body">
+            <h3>${g.title}</h3>
+            <p>${g.description}</p>
+            <span class="tutorial-guide-steps">${g.steps.length} passos →</span>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="tutorial-quick-tips">
+      <div class="card">
+        <div class="card-title">💡 Dicas Rápidas</div>
+        <ul class="tutorial-tips-list">
+          <li><strong>Menu lateral:</strong> Use para navegar entre módulos. No celular, toque em ☰</li>
+          <li><strong>Barra de progresso:</strong> Mostra o % de tarefas concluídas no rodapé do menu</li>
+          <li><strong>Filtros:</strong> Vários módulos têm filtros no topo para refinar a visualização</li>
+          <li><strong>Modais:</strong> Clique fora do modal ou no × para fechar</li>
+          <li><strong>Toasts:</strong> Confirmações aparecem como notificações no canto da tela</li>
+          <li><strong>Mobile:</strong> Todas as páginas são responsivas — tabelas viram cards no celular</li>
+          <li><strong>Relatórios PDF:</strong> Use os filtros antes de gerar para personalizar o conteúdo</li>
+          <li><strong>Detalhes da equipe:</strong> Clique em 👁️ Detalhes para ver tudo sobre uma equipe</li>
+        </ul>
+      </div>
+    </div>
+  `;
+}
+
+function startTutorialGuide(guideId) {
+  const guide = TUTORIAL_GUIDES.find(g => g.id === guideId);
+  if (!guide) return;
+  tutorialActiveGuide = guide;
+  tutorialStep = 0;
+  renderTutorialStep();
+}
+
+function renderTutorialStep() {
+  if (!tutorialActiveGuide) return;
+  const guide = tutorialActiveGuide;
+  const step = guide.steps[tutorialStep];
+  const isLast = tutorialStep === guide.steps.length - 1;
+  const isFirst = tutorialStep === 0;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay active tutorial-overlay';
+  overlay.innerHTML = `<div class="modal tutorial-step-modal" style="border-left:4px solid ${guide.color}">
+    <div class="tutorial-step-header" style="background:${guide.color}10">
+      <div class="tutorial-step-guide-info">
+        <span class="tutorial-step-guide-icon">${guide.icon}</span>
+        <span class="tutorial-step-guide-name">${guide.title}</span>
+      </div>
+      <button class="tutorial-step-close" onclick="closeTutorial()">×</button>
+    </div>
+    <div class="tutorial-step-body">
+      <div class="tutorial-step-progress">
+        ${guide.steps.map((_, i) => `<div class="tutorial-step-dot ${i <= tutorialStep ? 'active' : ''}" style="${i <= tutorialStep ? 'background:' + guide.color : ''}"></div>`).join('')}
+      </div>
+      <span class="tutorial-step-counter">Passo ${tutorialStep + 1} de ${guide.steps.length}</span>
+      <h2 class="tutorial-step-title">${step.title}</h2>
+      <p class="tutorial-step-text">${step.text}</p>
+    </div>
+    <div class="tutorial-step-footer">
+      ${isFirst ? '<span></span>' : `<button class="btn btn-secondary" onclick="tutorialPrev()">← Anterior</button>`}
+      <div class="tutorial-step-footer-right">
+        ${step.action ? `<button class="btn btn-secondary" onclick="tutorialGoTo('${step.action}')">Abrir módulo ↗</button>` : ''}
+        ${isLast ? `<button class="btn btn-primary" onclick="closeTutorial()" style="background:${guide.color}">Concluir ✓</button>` : `<button class="btn btn-primary" onclick="tutorialNext()" style="background:${guide.color}">Próximo →</button>`}
+      </div>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+function tutorialNext() {
+  if (!tutorialActiveGuide) return;
+  const overlay = document.querySelector('.tutorial-overlay');
+  if (overlay) overlay.remove();
+  tutorialStep++;
+  if (tutorialStep >= tutorialActiveGuide.steps.length) {
+    closeTutorial();
+  } else {
+    renderTutorialStep();
+  }
+}
+
+function tutorialPrev() {
+  if (!tutorialActiveGuide) return;
+  const overlay = document.querySelector('.tutorial-overlay');
+  if (overlay) overlay.remove();
+  tutorialStep = Math.max(0, tutorialStep - 1);
+  renderTutorialStep();
+}
+
+function closeTutorial() {
+  const overlay = document.querySelector('.tutorial-overlay');
+  if (overlay) overlay.remove();
+  tutorialActiveGuide = null;
+  tutorialStep = 0;
+}
+
+function tutorialGoTo(page) {
+  closeTutorial();
+  navigateTo(page);
 }
 
 // ============ HELPERS ============

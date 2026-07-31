@@ -2055,6 +2055,321 @@ select:focus, input:focus, textarea:focus { border-color: var(--primary); }
   }
 }
 
+/* TUTORIAL */
+.tutorial-welcome-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px;
+  background: linear-gradient(135deg, var(--jumire-green), #3eb678);
+  border-radius: var(--radius);
+  color: #fff;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+}
+
+.tutorial-welcome-icon {
+  font-size: 48px;
+  flex-shrink: 0;
+}
+
+.tutorial-welcome-text h2 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.tutorial-welcome-text p {
+  font-size: 14px;
+  opacity: 0.95;
+  line-height: 1.5;
+}
+
+.tutorial-guides-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.tutorial-guide-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--primary);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+
+.tutorial-guide-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow);
+}
+
+.tutorial-guide-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.tutorial-guide-body h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--dark);
+  margin-bottom: 4px;
+}
+
+.tutorial-guide-body p {
+  font-size: 13px;
+  color: var(--text-light);
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.tutorial-guide-steps {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.tutorial-quick-tips {
+  margin-top: 8px;
+}
+
+.tutorial-tips-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tutorial-tips-list li {
+  padding: 10px 14px;
+  background: var(--light-card);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--dark);
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.tutorial-tips-list li::before {
+  content: '→';
+  color: var(--primary);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.tutorial-tips-list li strong {
+  color: var(--primary);
+}
+
+/* TUTORIAL STEP MODAL */
+.tutorial-step-modal {
+  max-width: 560px;
+  width: 92vw;
+  padding: 0;
+  overflow: hidden;
+}
+
+.tutorial-step-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tutorial-step-guide-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tutorial-step-guide-icon {
+  font-size: 22px;
+}
+
+.tutorial-step-guide-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--dark);
+}
+
+.tutorial-step-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--text-light);
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.tutorial-step-close:hover {
+  background: var(--light-alt);
+}
+
+.tutorial-step-body {
+  padding: 24px 20px;
+  text-align: center;
+}
+
+.tutorial-step-progress {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.tutorial-step-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: background 0.3s, transform 0.3s;
+}
+
+.tutorial-step-dot.active {
+  transform: scale(1.3);
+}
+
+.tutorial-step-counter {
+  font-size: 11px;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: block;
+  margin-bottom: 16px;
+}
+
+.tutorial-step-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--dark);
+  margin-bottom: 12px;
+}
+
+.tutorial-step-text {
+  font-size: 15px;
+  color: var(--text);
+  line-height: 1.6;
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+.tutorial-step-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  background: var(--light-card);
+}
+
+.tutorial-step-footer-right {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* TUTORIAL MOBILE */
+@media (max-width: 768px) {
+  .tutorial-welcome-card {
+    flex-direction: column;
+    text-align: center;
+    padding: 20px 16px;
+    gap: 12px;
+  }
+
+  .tutorial-welcome-icon {
+    font-size: 40px;
+  }
+
+  .tutorial-welcome-text h2 {
+    font-size: 18px;
+  }
+
+  .tutorial-welcome-text p {
+    font-size: 13px;
+  }
+
+  .tutorial-guides-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .tutorial-guide-card {
+    padding: 14px 12px;
+    gap: 10px;
+  }
+
+  .tutorial-guide-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+
+  .tutorial-guide-body h3 {
+    font-size: 14px;
+  }
+
+  .tutorial-guide-body p {
+    font-size: 12px;
+  }
+
+  .tutorial-tips-list li {
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+
+  .tutorial-step-modal {
+    width: 95vw;
+  }
+
+  .tutorial-step-body {
+    padding: 20px 16px;
+  }
+
+  .tutorial-step-title {
+    font-size: 18px;
+  }
+
+  .tutorial-step-text {
+    font-size: 14px;
+  }
+
+  .tutorial-step-footer {
+    flex-direction: column-reverse;
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  .tutorial-step-footer-right {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .tutorial-step-footer .btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+
 /* MODAL */
 .modal-overlay {
   position: fixed;

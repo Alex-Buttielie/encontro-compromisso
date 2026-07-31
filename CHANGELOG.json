@@ -1,5 +1,20 @@
 [
   {
+    "version": "1.27.0",
+    "date": "2026-07-30",
+    "title": "Módulo Tutorial do Sistema",
+    "changes": [
+      "Nova página Tutorial no menu lateral com ícone de ajuda",
+      "Card de boas-vindas com gradiente verde explicando o propósito",
+      "7 guias interativos: Primeiros Passos, Equipes, Tarefas, Pessoas, Financeiro, Recursos, Relatórios",
+      "Cada guia abre modal passo a passo com barra de progresso (dots)",
+      "Botão Abrir módulo em cada passo para navegar diretamente ao módulo",
+      "Navegação Anterior/Próximo/Concluir entre os passos",
+      "Seção Dicas Rápidas com 8 atalhos práticos do sistema",
+      "CSS responsivo: welcome card em coluna no mobile, guias em 1 coluna, footer empilhado"
+    ]
+  },
+  {
     "version": "1.26.0",
     "date": "2026-07-30",
     "title": "Detalhes da Equipe",
