@@ -1,5 +1,21 @@
 [
   {
+    "version": "1.33.0",
+    "date": "2026-07-30",
+    "title": "Refatoração da Tela de Relatórios",
+    "changes": [
+      "Relatórios agora data-driven: definições em array RELATORIO_REPORTS em vez de HTML hardcoded",
+      "Função reportCardHTML reutilizável para renderizar cards de relatório",
+      "Removidos filtros mortos (5 dropdowns que não afetavam nada) e card de filtros",
+      "Removidas funções mortas: clearRelatorioFilters, getFilteredRelatorioData, renderRelatorioCategoryReports",
+      "Removidas variáveis mortas: relatorioFilterPhase, relatorioFilterCategory, relatorioFilterTeam, relatorioFilterStatus, relatorioFilterPriority, relatorioDataCache, relatorioTeamsCache",
+      "API calls reduzidas de 6 para 4 (removidas /teams e /lembrancinhas que só alimentavam filtros mortos)",
+      "Cards de resumo reduzidos de 6 para 5 (removido card Pendentes redundante)",
+      "Card Concluídas agora mostra percentual de progresso",
+      "CSS limpo: removidos estilos de .relatorio-filters-card, .relatorio-filters, .filter-group, .filter-label, .relatorio-data-wrapper, .rel-data-card, .rdc-top"
+    ]
+  },
+  {
     "version": "1.32.0",
     "date": "2026-07-30",
     "title": "Limpeza da Tela de Relatórios",

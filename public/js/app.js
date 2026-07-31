@@ -1380,248 +1380,116 @@ async function saveEncontro(id, btn) {
 }
 
 // ============ RELATÓRIOS ============
-let relatorioFilterPhase = '';
-let relatorioFilterCategory = '';
-let relatorioFilterTeam = '';
-let relatorioFilterStatus = '';
-let relatorioFilterPriority = '';
-let relatorioDataCache = [];
-let relatorioTeamsCache = [];
+const RELATORIO_REPORTS = [
+  {
+    section: '⭐ Relatórios Principais',
+    reports: [
+      { icon: '🛠️', color: 'var(--jumire-green)', bg: 'rgba(45,134,89,0.15)', title: 'Relatório de Preparação', desc: 'Sumário executivo completo: progresso, tarefas atrasadas, equipes, financeiro, MP\'s, fornecedores e checklist final', url: '/reports/preparation', featured: true },
+      { icon: '📕', color: 'var(--primary)', bg: 'rgba(192,57,43,0.15)', title: 'Guia do Coordenador', desc: 'Tudo para os 3 dias do Encontro: contatos, cronograma, alicerces, MP\'s, avisos, tarefas pendentes e anotações', url: '/reports/coordinator-guide', featured: true },
+    ]
+  },
+  {
+    section: '📋 Relatórios Gerais',
+    reports: [
+      { icon: '📄', color: 'var(--primary)', bg: 'rgba(192,57,43,0.15)', title: 'Relatório Geral', desc: 'Todas as tarefas, cronograma e equipes', url: '/reports/full' },
+      { icon: '🗓️', color: 'var(--secondary)', bg: 'rgba(26,58,92,0.15)', title: 'Roteiro do Encontro', desc: 'Cronograma completo Sexta a Domingo', url: '/reports/schedule' },
+      { icon: '👥', color: 'var(--info)', bg: 'rgba(52,152,219,0.15)', title: 'Equipes', desc: 'Progresso e membros de cada equipe', url: '/reports/teams' },
+      { icon: '📅', color: 'var(--warning)', bg: 'rgba(241,196,15,0.15)', title: 'Programa por Equipe', desc: 'Cronograma e tarefas de cada equipe', url: '/reports/team-schedule' },
+    ]
+  },
+  {
+    section: '👥 Equipes e Matérias-primas',
+    reports: [
+      { icon: '🧍', color: 'var(--primary)', bg: 'rgba(192,57,43,0.15)', title: 'Lista de MP\'s', desc: 'Inscritos, grupos, quartos, restrições e pagamentos', url: '/reports/participants' },
+      { icon: '🎒', color: 'var(--jumire-green)', bg: 'rgba(45,134,89,0.15)', title: 'Kit da MP', desc: 'Checklist do RH — itens e controle por inscrito', url: '/reports/kit' },
+      { icon: '🏛️', color: '#9b59b6', bg: 'rgba(155,89,182,0.15)', title: 'Mapa de Alicerces', desc: 'Construtores, horários e conteúdo das pistas', url: '/reports/alicerces' },
+      { icon: '🎁', color: 'var(--accent)', bg: 'rgba(230,126,34,0.15)', title: 'Lembrancinhas', desc: 'Status de confecção por equipe e quantidades', url: '/reports/lembrancinhas' },
+    ]
+  },
+  {
+    section: '📊 Supervisão e Coordenação',
+    reports: [
+      { icon: '💰', color: 'var(--success)', bg: 'rgba(39,174,96,0.15)', title: 'Financeiro', desc: 'Receitas, despesas, saldo e lançamentos por categoria', url: '/reports/finance' },
+      { icon: '📦', color: 'var(--info)', bg: 'rgba(52,152,219,0.15)', title: 'Fornecedores', desc: 'Contatos, cotações e status de contratação', url: '/reports/fornecedores' },
+      { icon: '📢', color: 'var(--warning)', bg: 'rgba(241,196,15,0.15)', title: 'Mural de Avisos', desc: 'Comunicados fixados e prioritários', url: '/reports/avisos' },
+      { icon: '🔔', color: 'var(--primary)', bg: 'rgba(192,57,43,0.15)', title: 'Lembretes', desc: 'Prazos automáticos e lembretes manuais por módulo', url: '/reports/lembretes' },
+      { icon: '📅', color: 'var(--primary)', bg: 'rgba(44,123,229,0.15)', title: 'Calendário de Escolinhas', desc: 'Eventos e escolinhas de preparação com datas', url: '/reports/escolinhas' },
+    ]
+  },
+];
+
+const CATEGORY_ICONS = {
+  'Espaço Físico - Canteiro de Obras': '🏗️',
+  'Traslado': '🚛',
+  'Impressos e Materiais Gráficos': '📋',
+  'Cozinha e Serviços Gerais': '🍳',
+  'Materiais para Capela': '⛪',
+  'Mestres de Obras': '👷',
+};
+const CATEGORY_COLORS = {
+  'Espaço Físico - Canteiro de Obras': 'var(--success)',
+  'Traslado': 'var(--accent)',
+  'Impressos e Materiais Gráficos': '#9b59b6',
+  'Cozinha e Serviços Gerais': 'var(--warning)',
+  'Materiais para Capela': 'var(--accent)',
+  'Mestres de Obras': 'var(--secondary)',
+};
+
+function reportCardHTML(r) {
+  const cls = r.featured ? 'relatorio-report-card featured' : 'relatorio-report-card';
+  return `<div class="${cls}" onclick="window.open('${r.url}', '_blank')">
+    <div class="rrc-icon" style="background:${r.bg};color:${r.color}">${r.icon}</div>
+    <div class="rrc-body"><h4>${r.title}</h4><p>${r.desc}</p></div>
+    <div class="rrc-action">${r.featured ? 'Gerar PDF →' : 'PDF →'}</div>
+  </div>`;
+}
 
 async function renderRelatorios() {
-  const [tasks, teams, stats, fin, participants, lembrancinhas] = await Promise.all([
+  const [tasks, stats, fin, participants] = await Promise.all([
     api('/tasks'),
-    api('/teams'),
     api('/stats'),
     api('/finance/summary'),
     api('/participants'),
-    api('/lembrancinhas'),
   ]);
-  relatorioDataCache = tasks;
-  relatorioTeamsCache = teams;
 
-  const categories = [...new Set(tasks.map(t => t.category))].sort();
-  const teamNames = teams.map(t => t.name).sort();
+  const categories = [...new Set(tasks.map(t => t.category).filter(Boolean))].sort();
+  const pct = stats.total > 0 ? Math.round((stats.done / stats.total) * 100) : 0;
 
   const main = document.getElementById('main-content');
   main.innerHTML = `
     <h1 class="page-title">Relatórios</h1>
-    <p class="page-subtitle">Visualize dados e gere relatórios em PDF profissionais com filtros personalizados</p>
+    <p class="page-subtitle">Gere relatórios em PDF profissionais para impressão e compartilhamento</p>
 
     <div class="relatorio-summary">
       <div class="relatorio-sum-card"><div class="rs-icon" style="background:rgba(192,57,43,0.12);color:var(--primary)">📋</div><div class="rs-info"><h3>${stats.total}</h3><p>Total de Tarefas</p></div></div>
-      <div class="relatorio-sum-card"><div class="rs-icon" style="background:rgba(39,174,96,0.12);color:var(--success)">✅</div><div class="rs-info"><h3>${stats.done}</h3><p>Concluídas</p></div></div>
+      <div class="relatorio-sum-card"><div class="rs-icon" style="background:rgba(39,174,96,0.12);color:var(--success)">✅</div><div class="rs-info"><h3>${stats.done}</h3><p>Concluídas (${pct}%)</p></div></div>
       <div class="relatorio-sum-card"><div class="rs-icon" style="background:rgba(241,196,15,0.12);color:var(--warning)">⏳</div><div class="rs-info"><h3>${stats.inProgress}</h3><p>Em Andamento</p></div></div>
-      <div class="relatorio-sum-card"><div class="rs-icon" style="background:rgba(192,57,43,0.12);color:var(--danger)">⭕</div><div class="rs-info"><h3>${stats.pending}</h3><p>Pendentes</p></div></div>
       <div class="relatorio-sum-card"><div class="rs-icon" style="background:rgba(52,152,219,0.12);color:var(--info)">👥</div><div class="rs-info"><h3>${participants.length}</h3><p>MP's Inscritos</p></div></div>
       <div class="relatorio-sum-card"><div class="rs-icon" style="background:rgba(39,174,96,0.12);color:var(--success)">💰</div><div class="rs-info"><h3>R$ ${fin.balance.toFixed(0)}</h3><p>Saldo Atual</p></div></div>
     </div>
 
-    <div class="card relatorio-filters-card">
-      <div class="card-title">🔍 Filtros de Relatório</div>
-      <p style="font-size:12px;color:var(--text-light);margin-bottom:12px">Aplique filtros para visualizar dados específicos e gerar PDFs personalizados</p>
-      <div class="relatorio-filters">
-        <div class="filter-group">
-          <span class="filter-label">Fase:</span>
-          <select id="rel-filter-phase">
-            <option value="">Todas</option>
-            <option value="pre">Pré-Encontro</option>
-            <option value="during">Durante o Encontro</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <span class="filter-label">Categoria:</span>
-          <select id="rel-filter-cat">
-            <option value="">Todas</option>
-            ${categories.map(c => `<option value="${c}">${c}</option>`).join('')}
-          </select>
-        </div>
-        <div class="filter-group">
-          <span class="filter-label">Equipe:</span>
-          <select id="rel-filter-team">
-            <option value="">Todas</option>
-            ${teamNames.map(t => `<option value="${t}">${t}</option>`).join('')}
-          </select>
-        </div>
-        <div class="filter-group">
-          <span class="filter-label">Status:</span>
-          <select id="rel-filter-status">
-            <option value="">Todos</option>
-            <option value="pendente">⭕ Pendente</option>
-            <option value="em_andamento">⏳ Em Andamento</option>
-            <option value="concluido">✅ Concluído</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <span class="filter-label">Prioridade:</span>
-          <select id="rel-filter-priority">
-            <option value="">Todas</option>
-            <option value="alta">🔴 Alta</option>
-            <option value="media">🟡 Média</option>
-            <option value="baixa">⚪ Baixa</option>
-          </select>
-        </div>
-        <button class="btn btn-secondary btn-sm" onclick="clearRelatorioFilters()">Limpar Filtros</button>
-      </div>
-    </div>
-
-    <div class="relatorio-section">
-      <div class="relatorio-section-title">⭐ Relatórios Principais</div>
-      <div class="relatorio-report-grid">
-        <div class="relatorio-report-card featured" onclick="window.open('/reports/preparation', '_blank')">
-          <div class="rrc-icon" style="background:rgba(45,134,89,0.15);color:var(--jumire-green)">🛠️</div>
-          <div class="rrc-body"><h4>Relatório de Preparação</h4><p>Sumário executivo completo: progresso, tarefas atrasadas, equipes, financeiro, MP's, fornecedores e checklist final</p></div>
-          <div class="rrc-action">Gerar PDF →</div>
-        </div>
-        <div class="relatorio-report-card featured" onclick="window.open('/reports/coordinator-guide', '_blank')">
-          <div class="rrc-icon" style="background:rgba(192,57,43,0.15);color:var(--primary)">📕</div>
-          <div class="rrc-body"><h4>Guia do Coordenador</h4><p>Tudo para os 3 dias do Encontro: contatos, cronograma, alicerces, MP's, avisos, tarefas pendentes e anotações</p></div>
-          <div class="rrc-action">Gerar PDF →</div>
+    ${RELATORIO_REPORTS.map(sec => `
+      <div class="relatorio-section">
+        <div class="relatorio-section-title">${sec.section}</div>
+        <div class="relatorio-report-grid">
+          ${sec.reports.map(reportCardHTML).join('')}
         </div>
       </div>
-    </div>
-
-    <div class="relatorio-section">
-      <div class="relatorio-section-title">📋 Relatórios Gerais</div>
-      <div class="relatorio-report-grid">
-        <div class="relatorio-report-card" onclick="window.open('/reports/full', '_blank')">
-          <div class="rrc-icon" style="background:rgba(192,57,43,0.15);color:var(--primary)">📄</div>
-          <div class="rrc-body"><h4>Relatório Geral</h4><p>Todas as tarefas, cronograma e equipes</p></div>
-          <div class="rrc-action">PDF →</div>
-        </div>
-        <div class="relatorio-report-card" onclick="window.open('/reports/schedule', '_blank')">
-          <div class="rrc-icon" style="background:rgba(26,58,92,0.15);color:var(--secondary)">🗓️</div>
-          <div class="rrc-body"><h4>Roteiro do Encontro</h4><p>Cronograma completo Sexta a Domingo</p></div>
-          <div class="rrc-action">PDF →</div>
-        </div>
-        <div class="relatorio-report-card" onclick="window.open('/reports/teams', '_blank')">
-          <div class="rrc-icon" style="background:rgba(52,152,219,0.15);color:var(--info)">👥</div>
-          <div class="rrc-body"><h4>Equipes</h4><p>Progresso e membros de cada equipe</p></div>
-          <div class="rrc-action">PDF →</div>
-        </div>
-        <div class="relatorio-report-card" onclick="window.open('/reports/team-schedule', '_blank')">
-          <div class="rrc-icon" style="background:rgba(241,196,15,0.15);color:var(--warning)">📅</div>
-          <div class="rrc-body"><h4>Programa por Equipe</h4><p>Cronograma e tarefas de cada equipe</p></div>
-          <div class="rrc-action">PDF →</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="relatorio-section">
-      <div class="relatorio-section-title">👥 Equipes e Matérias-primas</div>
-      <div class="relatorio-report-grid">
-        <div class="relatorio-report-card" onclick="window.open('/reports/participants', '_blank')">
-          <div class="rrc-icon" style="background:rgba(192,57,43,0.15);color:var(--primary)">🧍</div>
-          <div class="rrc-body"><h4>Lista de MP's</h4><p>Inscritos, grupos, quartos, restrições e pagamentos</p></div>
-          <div class="rrc-action">PDF →</div>
-        </div>
-        <div class="relatorio-report-card" onclick="window.open('/reports/kit', '_blank')">
-          <div class="rrc-icon" style="background:rgba(45,134,89,0.15);color:var(--jumire-green)">🎒</div>
-          <div class="rrc-body"><h4>Kit da MP</h4><p>Checklist do RH — itens e controle por inscrito</p></div>
-          <div class="rrc-action">PDF →</div>
-        </div>
-        <div class="relatorio-report-card" onclick="window.open('/reports/alicerces', '_blank')">
-          <div class="rrc-icon" style="background:rgba(155,89,182,0.15);color:#9b59b6">🏛️</div>
-          <div class="rrc-body"><h4>Mapa de Alicerces</h4><p>Construtores, horários e conteúdo das pistas</p></div>
-          <div class="rrc-action">PDF →</div>
-        </div>
-        <div class="relatorio-report-card" onclick="window.open('/reports/lembrancinhas', '_blank')">
-          <div class="rrc-icon" style="background:rgba(230,126,34,0.15);color:var(--accent)">🎁</div>
-          <div class="rrc-body"><h4>Lembrancinhas</h4><p>Status de confecção por equipe e quantidades</p></div>
-          <div class="rrc-action">PDF →</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="relatorio-section">
-      <div class="relatorio-section-title">📊 Supervisão e Coordenação</div>
-      <div class="relatorio-report-grid">
-        <div class="relatorio-report-card" onclick="window.open('/reports/finance', '_blank')">
-          <div class="rrc-icon" style="background:rgba(39,174,96,0.15);color:var(--success)">💰</div>
-          <div class="rrc-body"><h4>Financeiro</h4><p>Receitas, despesas, saldo e lançamentos por categoria</p></div>
-          <div class="rrc-action">PDF →</div>
-        </div>
-        <div class="relatorio-report-card" onclick="window.open('/reports/fornecedores', '_blank')">
-          <div class="rrc-icon" style="background:rgba(52,152,219,0.15);color:var(--info)">📦</div>
-          <div class="rrc-body"><h4>Fornecedores</h4><p>Contatos, cotações e status de contratação</p></div>
-          <div class="rrc-action">PDF →</div>
-        </div>
-        <div class="relatorio-report-card" onclick="window.open('/reports/avisos', '_blank')">
-          <div class="rrc-icon" style="background:rgba(241,196,15,0.15);color:var(--warning)">📢</div>
-          <div class="rrc-body"><h4>Mural de Avisos</h4><p>Comunicados fixados e prioritários</p></div>
-          <div class="rrc-action">PDF →</div>
-        </div>
-        <div class="relatorio-report-card" onclick="window.open('/reports/lembretes', '_blank')">
-          <div class="rrc-icon" style="background:rgba(192,57,43,0.15);color:var(--primary)">🔔</div>
-          <div class="rrc-body"><h4>Lembretes</h4><p>Prazos automáticos e lembretes manuais por módulo</p></div>
-          <div class="rrc-action">PDF →</div>
-        </div>
-        <div class="relatorio-report-card" onclick="window.open('/reports/escolinhas', '_blank')">
-          <div class="rrc-icon" style="background:rgba(44,123,229,0.15);color:var(--primary)">📅</div>
-          <div class="rrc-body"><h4>Calendário de Escolinhas</h4><p>Eventos e escolinhas de preparação com datas</p></div>
-          <div class="rrc-action">PDF →</div>
-        </div>
-      </div>
-    </div>
+    `).join('')}
 
     <div class="relatorio-section">
       <div class="relatorio-section-title">🏗️ Relatórios por Categoria</div>
-      <div class="relatorio-report-grid" id="rel-category-reports"></div>
+      <div class="relatorio-report-grid">
+        ${categories.map(c => {
+          const icon = CATEGORY_ICONS[c] || '📁';
+          const color = CATEGORY_COLORS[c] || 'var(--info)';
+          const bg = color.startsWith('var(') ? `rgba(52,152,219,0.15)` : color.replace(/[^,]+(?=\))/, '0.15');
+          const encoded = encodeURIComponent(c);
+          return reportCardHTML({ icon, color, bg, title: c, desc: 'Tarefas da categoria com progresso e detalhes', url: `/reports/category/${encoded}` });
+        }).join('')}
+      </div>
     </div>
   `;
-
-  renderRelatorioCategoryReports(categories);
-}
-
-function renderRelatorioCategoryReports(categories) {
-  const container = document.getElementById('rel-category-reports');
-  if (!container) return;
-
-  const icons = {
-    'Espaço Físico - Canteiro de Obras': '🏗️',
-    'Traslado': '🚛',
-    'Impressos e Materiais Gráficos': '📋',
-    'Cozinha e Serviços Gerais': '🍳',
-    'Materiais para Capela': '⛪',
-    'Mestres de Obras': '👷',
-  };
-  const colors = {
-    'Espaço Físico - Canteiro de Obras': 'rgba(39,174,96,0.15);color:var(--success)',
-    'Traslado': 'rgba(230,126,34,0.15);color:var(--accent)',
-    'Impressos e Materiais Gráficos': 'rgba(155,89,182,0.15);color:#9b59b6',
-    'Cozinha e Serviços Gerais': 'rgba(241,196,15,0.15);color:var(--warning)',
-    'Materiais para Capela': 'rgba(243,156,18,0.15);color:var(--accent)',
-    'Mestres de Obras': 'rgba(44,62,80,0.15);color:var(--secondary)',
-  };
-
-  container.innerHTML = categories.map(c => {
-    const icon = icons[c] || '📁';
-    const colorStyle = colors[c] || 'rgba(52,152,219,0.15);color:var(--info)';
-    const encoded = encodeURIComponent(c);
-    return `<div class="relatorio-report-card" onclick="window.open('/reports/category/${encoded}', '_blank')">
-      <div class="rrc-icon" style="background:${colorStyle}">${icon}</div>
-      <div class="rrc-body"><h4>${c}</h4><p>Tarefas da categoria com progresso e detalhes</p></div>
-      <div class="rrc-action">PDF →</div>
-    </div>`;
-  }).join('');
-}
-
-function clearRelatorioFilters() {
-  document.getElementById('rel-filter-phase').value = '';
-  document.getElementById('rel-filter-cat').value = '';
-  document.getElementById('rel-filter-team').value = '';
-  document.getElementById('rel-filter-status').value = '';
-  document.getElementById('rel-filter-priority').value = '';
-}
-
-function getFilteredRelatorioData() {
-  let list = relatorioDataCache;
-  if (relatorioFilterPhase) list = list.filter(t => (t.phase || 'pre') === relatorioFilterPhase);
-  if (relatorioFilterCategory) list = list.filter(t => t.category === relatorioFilterCategory);
-  if (relatorioFilterTeam) list = list.filter(t => t.responsible_team === relatorioFilterTeam);
-  if (relatorioFilterStatus) list = list.filter(t => t.status === relatorioFilterStatus);
-  if (relatorioFilterPriority) list = list.filter(t => t.priority === relatorioFilterPriority);
-  return list.sort((a, b) => parseFloat(a.item_number || 0) - parseFloat(b.item_number || 0));
 }
 
 // ============ CARDÁPIO ============

@@ -1605,77 +1605,6 @@ select:focus, input:focus, textarea:focus { border-color: var(--primary); }
   margin-top: 2px;
 }
 
-.relatorio-filters-card {
-  margin-bottom: 20px;
-  border: 1px solid var(--border);
-  background: linear-gradient(135deg, var(--card-bg), #fafafa);
-}
-
-.relatorio-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: flex-end;
-}
-
-.filter-group {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.filter-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-light);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.filter-group select {
-  padding: 8px 12px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  font-size: 13px;
-  background: var(--card-bg);
-  color: var(--dark);
-  cursor: pointer;
-  transition: border-color 0.2s;
-  min-width: 140px;
-}
-
-.filter-group select:hover {
-  border-color: var(--primary);
-}
-
-.filter-group select:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(192,57,43,0.1);
-}
-
-.relatorio-data-wrapper {
-  margin-top: 12px;
-}
-
-#rel-data-cards {
-  display: none;
-}
-
-.rel-data-card {
-  padding: 12px 14px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  margin-bottom: 8px;
-  background: var(--card-bg);
-}
-
-.rdc-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
 .relatorio-section {
   margin-bottom: 24px;
 }
@@ -1792,27 +1721,6 @@ select:focus, input:focus, textarea:focus { border-color: var(--primary); }
   .rs-info p {
     font-size: 10px;
   }
-
-  .relatorio-filters {
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .filter-group {
-    width: 100%;
-  }
-
-  .filter-group select {
-    width: 100%;
-    min-width: 0;
-  }
-
-  .relatorio-filters button {
-    width: 100%;
-  }
-
-  #rel-data-table { display: none; }
-  #rel-data-cards { display: block; }
 
   .relatorio-report-grid {
     grid-template-columns: 1fr;
