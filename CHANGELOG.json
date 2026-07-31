@@ -1,5 +1,25 @@
 [
   {
+    "version": "1.28.0",
+    "date": "2026-07-30",
+    "title": "Todos os Módulos Mobile",
+    "changes": [
+      "Orçamento: tabela escondida no mobile, cards alternativos exibidos (budget-cards)",
+      "Doações: tabela escondida no mobile, cards alternativos exibidos (don-cards)",
+      "Kit das MPs: tabela escondida no mobile, cards com toggles Conferido/Squeeze/Entregue",
+      "Padrinhos: header empilhado verticalmente, steps em 2 colunas (1 col em ≤480px)",
+      "Escolinhas: items compactos com header empilhado no mobile",
+      "Alicerces: cards empilhados verticalmente com actions em linha no mobile",
+      "Lembrancinhas: barra de progresso compacta no mobile",
+      "Inscritos: cards compactos com fontes reduzidas no mobile",
+      "Fornecedores: cards compactos com fontes reduzidas no mobile",
+      "Encontro: info items com fontes reduzidas no mobile",
+      "Kit items list: wrapping com nome em linha completa no mobile",
+      "Resize/orientationchange agora re-renderiza qualquer página ativa (não só dashboard/financeiro)",
+      "Budget/donation cards: padding compacto e wrapping no mobile"
+    ]
+  },
+  {
     "version": "1.27.0",
     "date": "2026-07-30",
     "title": "Módulo Tutorial do Sistema",

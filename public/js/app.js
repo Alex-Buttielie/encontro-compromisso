@@ -115,14 +115,12 @@ let resizeTimer = null;
 window.addEventListener('resize', () => {
   if (resizeTimer) clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => {
-    if (currentPage === 'dashboard') renderDashboard();
-    else if (currentPage === 'financeiro') renderFinanceiro();
+    if (currentPage && currentPage !== 'tutorial') renderPage();
   }, 300);
 });
 window.addEventListener('orientationchange', () => {
   setTimeout(() => {
-    if (currentPage === 'dashboard') renderDashboard();
-    else if (currentPage === 'financeiro') renderFinanceiro();
+    if (currentPage && currentPage !== 'tutorial') renderPage();
   }, 300);
 });
 
@@ -4032,7 +4030,9 @@ async function renderKit() {
           <tbody id="kit-tbody">
           </tbody>
         </table>
-      </div>`}
+      </div>
+      <div class="kit-mobile-cards" id="kit-mobile-cards"></div>
+      `}
     </div>
   `;
   renderKitTable();
@@ -4040,6 +4040,7 @@ async function renderKit() {
 
 function renderKitTable() {
   const tbody = document.getElementById('kit-tbody');
+  const mobileCards = document.getElementById('kit-mobile-cards');
   if (!tbody) return;
   tbody.innerHTML = kitParticipantsCache.map((p, i) => `<tr>
     <td>${i + 1}</td>
@@ -4060,6 +4061,28 @@ function renderKitTable() {
       </div>
     </td>
   </tr>`).join('');
+
+  if (mobileCards) {
+    mobileCards.innerHTML = kitParticipantsCache.map((p, i) => `<div class="kit-mobile-card">
+      <div class="kit-mobile-card-top">
+        <span class="kit-mobile-card-name">${i + 1}. ${p.name || '—'}</span>
+      </div>
+      <div class="kit-mobile-card-toggles">
+        <div class="kit-mobile-toggle">
+          <span class="kit-mobile-toggle-label">Conferido</span>
+          <div class="kit-toggle ${p.kit_conferido ? 'checked' : ''}" onclick="toggleKitField(${p.id}, 'kit_conferido')">${p.kit_conferido ? '✓' : ''}</div>
+        </div>
+        <div class="kit-mobile-toggle">
+          <span class="kit-mobile-toggle-label">Squeeze</span>
+          <div class="kit-toggle ${p.squeeze_personalizada ? 'checked' : ''}" onclick="toggleKitField(${p.id}, 'squeeze_personalizada')">${p.squeeze_personalizada ? '✓' : ''}</div>
+        </div>
+        <div class="kit-mobile-toggle">
+          <span class="kit-mobile-toggle-label">Entregue</span>
+          <div class="kit-toggle ${p.kit_entregue ? 'checked' : ''}" onclick="toggleKitField(${p.id}, 'kit_entregue')">${p.kit_entregue ? '✓' : ''}</div>
+        </div>
+      </div>
+    </div>`).join('');
+  }
 }
 
 async function toggleKitField(participantId, field) {

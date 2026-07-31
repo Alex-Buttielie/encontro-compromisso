@@ -4028,3 +4028,168 @@ select:focus, input:focus, textarea:focus { border-color: var(--primary); }
   .budget-summary-grid { grid-template-columns: 1fr; }
   .budget-summary-item.total { grid-column: 1; }
 }
+
+/* ===== ALL MODULES MOBILE ===== */
+
+/* Hide budget & donation cards on desktop, show on mobile */
+#budget-cards, #don-cards {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  /* Orçamento — hide table, show cards */
+  #budget-table { display: none !important; }
+  #budget-cards { display: flex; flex-direction: column; gap: 8px; }
+
+  /* Doações — hide table, show cards */
+  #don-table { display: none !important; }
+  #don-cards { display: flex; flex-direction: column; gap: 8px; }
+
+  /* Budget & donation cards — compact */
+  .budget-item-card {
+    padding: 12px 14px;
+  }
+  .budget-item-top {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  /* Kit table → cards */
+  .kit-table-wrapper { display: none; }
+  .kit-mobile-cards { display: flex; flex-direction: column; gap: 8px; }
+  .kit-mobile-card {
+    padding: 12px 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .kit-mobile-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .kit-mobile-card-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--dark);
+  }
+  .kit-mobile-card-toggles {
+    display: flex;
+    gap: 10px;
+  }
+  .kit-mobile-toggle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .kit-mobile-toggle-label {
+    font-size: 9px;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .kit-mobile-toggle .kit-toggle {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+
+  /* Kit items list — wrap */
+  .kit-item-row {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 10px;
+  }
+  .kit-item-name { font-size: 13px; flex: 1 1 100%; }
+  .kit-item-moment { font-size: 11px; }
+  .kit-item-anexo { font-size: 10px; }
+
+  /* Padrinhos — stack header */
+  .padrinho-card {
+    padding: 12px 10px;
+  }
+  .padrinho-header {
+    flex-direction: column !important;
+    gap: 8px;
+    align-items: stretch !important;
+  }
+  .padrinho-header > div:last-child {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+  .padrinho-name { font-size: 14px; }
+  .padrinho-meta { font-size: 11px; }
+  .padrinho-step {
+    flex: 1 1 45%;
+    padding: 6px 4px;
+    font-size: 10px;
+  }
+  .padrinho-step-num { font-size: 14px; }
+
+  /* Escolinhas — compact items */
+  .escolinha-item {
+    padding: 10px 10px;
+  }
+  .escolinha-item > div:first-child {
+    flex-direction: column !important;
+    gap: 6px;
+  }
+  .escolinha-item > div:first-child > div:last-child {
+    align-self: flex-start;
+  }
+
+  /* Alicerces — stack card */
+  .alicerce-card {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px;
+    padding: 12px 10px;
+  }
+  .alicerce-number {
+    align-self: flex-start;
+  }
+  .alicerce-card > div:last-child {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100%;
+  }
+  .alicerce-title { font-size: 14px; }
+  .alicerce-desc { font-size: 12px; }
+  .alicerce-constructor { font-size: 11px; }
+
+  /* Lembrancinhas — compact team-card */
+  .lembrancinha-progress { height: 6px; }
+
+  /* Participant card — compact */
+  .participant-card { padding: 12px 10px; }
+  .participant-name { font-size: 14px; }
+  .participant-info-row { font-size: 12px; }
+
+  /* Fornecedor card — compact */
+  .fornecedor-card { padding: 12px 10px; }
+  .fornecedor-name { font-size: 14px; }
+  .fornecedor-service { font-size: 12px; }
+  .fornecedor-contact { font-size: 12px; }
+  .fornecedor-cost { font-size: 12px; }
+
+  /* Encounter info — compact */
+  .info-item label { font-size: 11px; }
+  .info-item .info-value { font-size: 14px; }
+}
+
+@media (max-width: 480px) {
+  .kit-mobile-card-toggles {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .padrinho-step {
+    flex: 1 1 100%;
+  }
+  .budget-item-card {
+    padding: 10px 12px;
+  }
+}
