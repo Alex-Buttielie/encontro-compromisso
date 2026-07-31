@@ -1,5 +1,21 @@
 [
   {
+    "version": "1.34.0",
+    "date": "2026-07-31",
+    "title": "Correção Crítica: Reload Constante das Telas",
+    "changes": [
+      "renderPage() não substitui mais todo o conteúdo por LOADING_HTML a cada chamada — só mostra spinner se a tela está vazia",
+      "resize/orientationchange agora chamam refreshCurrentPage() (sem blanking) em vez de renderPage() (com blanking)",
+      "Debounce de resize aumentado de 300ms para 400ms",
+      "Guard lastRenderedPage: resize só re-renderiza se a página não mudou desde a última renderização",
+      "api() agora verifica res.ok e lança erro em vez de retornar undefined silenciosamente",
+      "renderPage() envolve render fn em try/catch — erro mostra mensagem + botão 'Tentar novamente' em vez de spinner preso",
+      "dashboardInterval limpo ao trocar de página (acumulação de intervalos causava re-renders fantasma)",
+      "goToEquipesFromChecklist agora usa navigateTo() (hash routing) em vez de renderPage() direto",
+      "PAGE_RENDERERS lookup table substitui cadeia if/else de 20+ branches"
+    ]
+  },
+  {
     "version": "1.33.0",
     "date": "2026-07-30",
     "title": "Refatoração da Tela de Relatórios",

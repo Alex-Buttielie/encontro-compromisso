@@ -18,6 +18,7 @@ async function api(path, opts = {}) {
     headers: { 'Content-Type': 'application/json' },
     ...opts
   });
+  if (!res.ok) throw new Error(`API ${path}: ${res.status}`);
   return res.json();
 }
 
@@ -122,16 +123,21 @@ window.addEventListener('hashchange', () => {
 });
 
 let resizeTimer = null;
+let lastRenderedPage = null;
 window.addEventListener('resize', () => {
   if (resizeTimer) clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => {
-    if (currentPage && currentPage !== 'tutorial') renderPage();
-  }, 300);
+    if (currentPage && currentPage !== 'tutorial' && currentPage === lastRenderedPage) {
+      refreshCurrentPage();
+    }
+  }, 400);
 });
 window.addEventListener('orientationchange', () => {
   setTimeout(() => {
-    if (currentPage && currentPage !== 'tutorial') renderPage();
-  }, 300);
+    if (currentPage && currentPage !== 'tutorial' && currentPage === lastRenderedPage) {
+      refreshCurrentPage();
+    }
+  }, 400);
 });
 
 document.querySelectorAll('.nav-item').forEach(item => {
@@ -153,30 +159,49 @@ backdrop.addEventListener('click', closeSidebar);
 document.getElementById('sidebar-close-btn').addEventListener('click', closeSidebar);
 
 function renderPage() {
+  if (dashboardInterval) { clearInterval(dashboardInterval); dashboardInterval = null; }
   const main = document.getElementById('main-content');
-  main.innerHTML = LOADING_HTML;
-  if (currentPage === 'dashboard') renderDashboard();
-  else if (currentPage === 'checklist') renderChecklist();
-  else if (currentPage === 'cronograma') renderCronograma();
-  else if (currentPage === 'equipes') renderEquipes();
-  else if (currentPage === 'inscritos') renderInscritos();
-  else if (currentPage === 'financeiro') renderFinanceiro();
-  else if (currentPage === 'lembrancinhas') renderLembrancinhas();
-  else if (currentPage === 'escolinhas') renderEscolinhas();
-  else if (currentPage === 'alicerces') renderAlicerces();
-  else if (currentPage === 'encontro') renderEncontro();
-  else if (currentPage === 'lembretes') renderLembretes();
-  else if (currentPage === 'padrinhos') renderPadrinhos();
-  else if (currentPage === 'fornecedores') renderFornecedores();
-  else if (currentPage === 'pais') renderPaisMP();
-  else if (currentPage === 'avisos') renderAvisos();
-  else if (currentPage === 'kit') renderKit();
-  else if (currentPage === 'relatorios') renderRelatorios();
-  else if (currentPage === 'orcamento') renderOrcamento();
-  else if (currentPage === 'doacoes') renderDoacoes();
-  else if (currentPage === 'cardapio') renderCardapio();
-  else if (currentPage === 'tutorial') renderTutorial();
+  if (!main.innerHTML.trim() || main.querySelector('.loading-overlay')) {
+    main.innerHTML = LOADING_HTML;
+  }
+  lastRenderedPage = currentPage;
+  const renderFn = PAGE_RENDERERS[currentPage];
+  if (renderFn) {
+    renderFn().catch(err => {
+      console.error('Render error:', err);
+      main.innerHTML = `<div class="empty-state"><p style="color:var(--danger);font-size:14px">Erro ao carregar: ${err.message}</p><button class="btn btn-primary" style="margin-top:12px" onclick="renderPage()">Tentar novamente</button></div>`;
+    });
+  }
 }
+
+function refreshCurrentPage() {
+  const renderFn = PAGE_RENDERERS[currentPage];
+  if (renderFn) renderFn().catch(() => {});
+}
+
+const PAGE_RENDERERS = {
+  dashboard: renderDashboard,
+  checklist: renderChecklist,
+  cronograma: renderCronograma,
+  equipes: renderEquipes,
+  inscritos: renderInscritos,
+  financeiro: renderFinanceiro,
+  lembrancinhas: renderLembrancinhas,
+  escolinhas: renderEscolinhas,
+  alicerces: renderAlicerces,
+  encontro: renderEncontro,
+  lembretes: renderLembretes,
+  padrinhos: renderPadrinhos,
+  fornecedores: renderFornecedores,
+  pais: renderPaisMP,
+  avisos: renderAvisos,
+  kit: renderKit,
+  relatorios: renderRelatorios,
+  orcamento: renderOrcamento,
+  doacoes: renderDoacoes,
+  cardapio: renderCardapio,
+  tutorial: renderTutorial,
+};
 
 // ============ DASHBOARD ============
 let dashboardCharts = {};
@@ -807,11 +832,7 @@ async function saveTask(id, btn) {
 }
 
 function goToEquipesFromChecklist() {
-  currentPage = 'equipes';
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  const target = document.querySelector('.nav-item[data-page="equipes"]');
-  if (target) target.classList.add('active');
-  renderPage();
+  navigateTo('equipes');
 }
 
 // ============ CRONOGRAMA ============
