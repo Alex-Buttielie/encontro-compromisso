@@ -1195,130 +1195,315 @@ async function saveEncontro(id, btn) {
 }
 
 // ============ RELATÓRIOS ============
-function renderRelatorios() {
+let relatorioFilterPhase = '';
+let relatorioFilterCategory = '';
+let relatorioFilterTeam = '';
+let relatorioFilterStatus = '';
+let relatorioFilterPriority = '';
+let relatorioDataCache = [];
+let relatorioTeamsCache = [];
+
+async function renderRelatorios() {
+  const [tasks, teams, stats, fin, participants, lembrancinhas] = await Promise.all([
+    api('/tasks'),
+    api('/teams'),
+    api('/stats'),
+    api('/finance/summary'),
+    api('/participants'),
+    api('/lembrancinhas'),
+  ]);
+  relatorioDataCache = tasks;
+  relatorioTeamsCache = teams;
+
+  const categories = [...new Set(tasks.map(t => t.category))].sort();
+  const teamNames = teams.map(t => t.name).sort();
+
   const main = document.getElementById('main-content');
   main.innerHTML = `
-    <h1 class="page-title">Relatórios PDF</h1>
-    <p class="page-subtitle">Gere relatórios em PDF para análise, acompanhamento e impressão</p>
+    <h1 class="page-title">Relatórios</h1>
+    <p class="page-subtitle">Visualize dados e gere relatórios em PDF profissionais com filtros personalizados</p>
 
-    <div class="card" style="margin-bottom:20px;border:2px solid var(--jumire-green);border-left:6px solid var(--jumire-green)">
-      <div class="card-title">🛠️ Relatório de Preparação — Antes do Encontro</div>
-      <p style="font-size:12px;color:var(--text-light);margin-bottom:12px">Relatório completo e profissional de tudo que envolve a preparação pré-encontro: sumário executivo, progresso por categoria, tarefas atrasadas, equipes e membros, situação financeira detalhada, matérias-primas, fornecedores, escolinhas, avisos, prazos automáticos e checklist final.</p>
-      <a class="btn-pdf" href="/reports/preparation" target="_blank" style="border-left:4px solid var(--jumire-green)">
-        <div class="btn-pdf-icon" style="background:rgba(45,134,89,0.15);color:var(--jumire-green);font-size:28px">🛠️</div>
-        <div class="btn-pdf-info"><h4>Relatório de Preparação (Completo)</h4><p>Visão total da preparação pré-encontro para coordenação</p></div>
-      </a>
+    <div class="relatorio-summary">
+      <div class="relatorio-sum-card"><div class="rs-icon" style="background:rgba(192,57,43,0.12);color:var(--primary)">📋</div><div class="rs-info"><h3>${stats.total}</h3><p>Total de Tarefas</p></div></div>
+      <div class="relatorio-sum-card"><div class="rs-icon" style="background:rgba(39,174,96,0.12);color:var(--success)">✅</div><div class="rs-info"><h3>${stats.done}</h3><p>Concluídas</p></div></div>
+      <div class="relatorio-sum-card"><div class="rs-icon" style="background:rgba(241,196,15,0.12);color:var(--warning)">⏳</div><div class="rs-info"><h3>${stats.inProgress}</h3><p>Em Andamento</p></div></div>
+      <div class="relatorio-sum-card"><div class="rs-icon" style="background:rgba(192,57,43,0.12);color:var(--danger)">⭕</div><div class="rs-info"><h3>${stats.pending}</h3><p>Pendentes</p></div></div>
+      <div class="relatorio-sum-card"><div class="rs-icon" style="background:rgba(52,152,219,0.12);color:var(--info)">👥</div><div class="rs-info"><h3>${participants.length}</h3><p>MP's Inscritos</p></div></div>
+      <div class="relatorio-sum-card"><div class="rs-icon" style="background:rgba(39,174,96,0.12);color:var(--success)">💰</div><div class="rs-info"><h3>R$ ${fin.balance.toFixed(0)}</h3><p>Saldo Atual</p></div></div>
     </div>
 
-    <div class="card" style="margin-bottom:20px;border:2px solid var(--primary);border-left:6px solid var(--jumire-green)">
-      <div class="card-title">📕 Guia do Coordenador — Dias do Encontro</div>
-      <p style="font-size:12px;color:var(--text-light);margin-bottom:12px">Relatório completo para impressão e uso durante os 3 dias do Encontro. Inclui contatos de equipes, cronograma, alicerces/alvenarias, matérias-primas com restrições, padrinhos, avisos, tarefas pendentes, fornecedores e espaço para anotações.</p>
-      <a class="btn-pdf" href="/reports/coordinator-guide" target="_blank" style="border-left:4px solid var(--primary)">
-        <div class="btn-pdf-icon" style="background:rgba(192,57,43,0.15);color:var(--primary);font-size:28px">📕</div>
-        <div class="btn-pdf-info"><h4>Guia do Coordenador (Completo)</h4><p>Tudo que o coordenador precisa durante o Encontro em um só PDF</p></div>
-      </a>
-    </div>
-
-    <div class="card" style="margin-bottom:20px">
-      <div class="card-title">📋 Relatórios Gerais</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px">
-        <a class="btn-pdf" href="/reports/full" target="_blank">
-          <div class="btn-pdf-icon" style="background:rgba(192,57,43,0.15);color:var(--primary)">📄</div>
-          <div class="btn-pdf-info"><h4>Relatório Geral Completo</h4><p>Todas as tarefas, cronograma e equipes</p></div>
-        </a>
-        <a class="btn-pdf" href="/reports/schedule" target="_blank">
-          <div class="btn-pdf-icon" style="background:rgba(26,58,92,0.15);color:var(--secondary)">🗓️</div>
-          <div class="btn-pdf-info"><h4>Roteiro Geral do Encontro</h4><p>Cronograma completo Sexta a Domingo</p></div>
-        </a>
-        <a class="btn-pdf" href="/reports/teams" target="_blank">
-          <div class="btn-pdf-icon" style="background:rgba(52,152,219,0.15);color:var(--info)">👥</div>
-          <div class="btn-pdf-info"><h4>Relatório por Equipes</h4><p>Progresso e membros de cada equipe</p></div>
-        </a>
-        <a class="btn-pdf" href="/reports/team-schedule" target="_blank">
-          <div class="btn-pdf-icon" style="background:rgba(241,196,15,0.15);color:var(--warning)">📅</div>
-          <div class="btn-pdf-info"><h4>Programa por Equipe</h4><p>Cronograma e tarefas de cada equipe no Encontro</p></div>
-        </a>
+    <div class="card relatorio-filters-card">
+      <div class="card-title">🔍 Filtros de Relatório</div>
+      <p style="font-size:12px;color:var(--text-light);margin-bottom:12px">Aplique filtros para visualizar dados específicos e gerar PDFs personalizados</p>
+      <div class="relatorio-filters">
+        <div class="filter-group">
+          <span class="filter-label">Fase:</span>
+          <select id="rel-filter-phase" onchange="applyRelatorioFilters()">
+            <option value="">Todas</option>
+            <option value="pre">Pré-Encontro</option>
+            <option value="during">Durante o Encontro</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Categoria:</span>
+          <select id="rel-filter-cat" onchange="applyRelatorioFilters()">
+            <option value="">Todas</option>
+            ${categories.map(c => `<option value="${c}">${c}</option>`).join('')}
+          </select>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Equipe:</span>
+          <select id="rel-filter-team" onchange="applyRelatorioFilters()">
+            <option value="">Todas</option>
+            ${teamNames.map(t => `<option value="${t}">${t}</option>`).join('')}
+          </select>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Status:</span>
+          <select id="rel-filter-status" onchange="applyRelatorioFilters()">
+            <option value="">Todos</option>
+            <option value="pendente">⭕ Pendente</option>
+            <option value="em_andamento">⏳ Em Andamento</option>
+            <option value="concluido">✅ Concluído</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Prioridade:</span>
+          <select id="rel-filter-priority" onchange="applyRelatorioFilters()">
+            <option value="">Todas</option>
+            <option value="alta">🔴 Alta</option>
+            <option value="media">🟡 Média</option>
+            <option value="baixa">⚪ Baixa</option>
+          </select>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="clearRelatorioFilters()">Limpar Filtros</button>
       </div>
     </div>
 
-    <div class="card" style="margin-bottom:20px">
-      <div class="card-title">👥 Para Equipes e MO's</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px">
-        <a class="btn-pdf" href="/reports/participants" target="_blank">
-          <div class="btn-pdf-icon" style="background:rgba(192,57,43,0.15);color:var(--primary)">🧍</div>
-          <div class="btn-pdf-info"><h4>Lista de Matérias-primas</h4><p>Inscritos, grupos, quartos, restrições e pagamentos</p></div>
-        </a>
-        <a class="btn-pdf" href="/reports/kit" target="_blank">
-          <div class="btn-pdf-icon" style="background:rgba(45,134,89,0.15);color:var(--jumire-green)">🎒</div>
-          <div class="btn-pdf-info"><h4>Kit da Matéria-prima</h4><p>Checklist do RH — itens e controle por inscrito</p></div>
-        </a>
-        <a class="btn-pdf" href="/reports/alicerces" target="_blank">
-          <div class="btn-pdf-icon" style="background:rgba(155,89,182,0.15);color:#9b59b6">🏛️</div>
-          <div class="btn-pdf-info"><h4>Mapa de Alicerces e Alvenarias</h4><p>Construtores, horários e conteúdo das pistas</p></div>
-        </a>
-        <a class="btn-pdf" href="/reports/lembrancinhas" target="_blank">
-          <div class="btn-pdf-icon" style="background:rgba(230,126,34,0.15);color:var(--accent)">🎁</div>
-          <div class="btn-pdf-info"><h4>Lista de Lembrancinhas</h4><p>Status de confecção por equipe e quantidades</p></div>
-        </a>
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">📊 Dados Filtrados <span id="rel-filter-count" style="font-size:12px;color:var(--text-light);font-weight:400"></span></div>
+      <div class="relatorio-data-wrapper">
+        <table class="data-table" id="rel-data-table">
+          <thead><tr><th>#</th><th>Categoria</th><th>Tarefa</th><th>Equipe</th><th>Prazo</th><th>Prioridade</th><th>Status</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <div id="rel-data-cards"></div>
       </div>
     </div>
 
-    <div class="card" style="margin-bottom:20px">
-      <div class="card-title">📊 Para Supervisores e Coordenação</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px">
-        <a class="btn-pdf" href="/reports/finance" target="_blank">
-          <div class="btn-pdf-icon" style="background:rgba(39,174,96,0.15);color:var(--success)">💰</div>
-          <div class="btn-pdf-info"><h4>Relatório Financeiro</h4><p>Receitas, despesas, saldo e lançamentos por categoria</p></div>
-        </a>
-        <a class="btn-pdf" href="/reports/fornecedores" target="_blank">
-          <div class="btn-pdf-icon" style="background:rgba(52,152,219,0.15);color:var(--info)">📦</div>
-          <div class="btn-pdf-info"><h4>Fornecedores</h4><p>Contatos, cotações e status de contratação</p></div>
-        </a>
-        <a class="btn-pdf" href="/reports/avisos" target="_blank">
-          <div class="btn-pdf-icon" style="background:rgba(241,196,15,0.15);color:var(--warning)">📢</div>
-          <div class="btn-pdf-info"><h4>Mural de Avisos</h4><p>Comunicados fixados e prioritários para impressão</p></div>
-        </a>
-        <a class="btn-pdf" href="/reports/lembretes" target="_blank">
-          <div class="btn-pdf-icon" style="background:rgba(192,57,43,0.15);color:var(--primary)">🔔</div>
-          <div class="btn-pdf-info"><h4>Relatório de Lembretes</h4><p>Prazos automáticos e lembretes manuais por módulo</p></div>
-        </a>
-        <a class="btn-pdf" href="/reports/escolinhas" target="_blank">
-          <div class="btn-pdf-icon" style="background:rgba(44,123,229,0.15);color:var(--primary)">📅</div>
-          <div class="btn-pdf-info"><h4>Calendário de Escolinhas 2026</h4><p>Eventos e escolinhas de preparação com datas</p></div>
-        </a>
+    <div class="relatorio-section">
+      <div class="relatorio-section-title">⭐ Relatórios Principais</div>
+      <div class="relatorio-report-grid">
+        <div class="relatorio-report-card featured" onclick="window.open('/reports/preparation', '_blank')">
+          <div class="rrc-icon" style="background:rgba(45,134,89,0.15);color:var(--jumire-green)">🛠️</div>
+          <div class="rrc-body"><h4>Relatório de Preparação</h4><p>Sumário executivo completo: progresso, tarefas atrasadas, equipes, financeiro, MP's, fornecedores e checklist final</p></div>
+          <div class="rrc-action">Gerar PDF →</div>
+        </div>
+        <div class="relatorio-report-card featured" onclick="window.open('/reports/coordinator-guide', '_blank')">
+          <div class="rrc-icon" style="background:rgba(192,57,43,0.15);color:var(--primary)">📕</div>
+          <div class="rrc-body"><h4>Guia do Coordenador</h4><p>Tudo para os 3 dias do Encontro: contatos, cronograma, alicerces, MP's, avisos, tarefas pendentes e anotações</p></div>
+          <div class="rrc-action">Gerar PDF →</div>
+        </div>
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-title">🏗️ Relatórios por Categoria de Tarefa</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px">
-        <a class="btn-pdf" href="/reports/category/Espa%C3%A7o%20F%C3%ADsico%20-%20Canteiro%20de%20Obras" target="_blank">
-          <div class="btn-pdf-icon" style="background:rgba(39,174,96,0.15);color:var(--success)">🏗️</div>
-          <div class="btn-pdf-info"><h4>Espaço Físico</h4><p>Canteiro de Obras e momentos extras</p></div>
-        </a>
-        <a class="btn-pdf" href="/reports/category/Traslado" target="_blank">
-          <div class="btn-pdf-icon" style="background:rgba(230,126,34,0.15);color:var(--accent)">🚛</div>
-          <div class="btn-pdf-info"><h4>Traslado</h4><p>Transporte, ônibus e logística</p></div>
-        </a>
-        <a class="btn-pdf" href="/reports/category/Impressos%20e%20Materiais%20Gr%C3%A1ficos" target="_blank">
-          <div class="btn-pdf-icon" style="background:rgba(155,89,182,0.15);color:#9b59b6">📋</div>
-          <div class="btn-pdf-info"><h4>Impressos e Gráficos</h4><p>Materiais gráficos e lembrancinhas</p></div>
-        </a>
-        <a class="btn-pdf" href="/reports/category/Cozinha%20e%20Servi%C3%A7os%20Gerais" target="_blank">
-          <div class="btn-pdf-icon" style="background:rgba(241,196,15,0.15);color:var(--warning)">🍳</div>
-          <div class="btn-pdf-info"><h4>Cozinha e Serviços</h4><p>Alimentação e produtos de limpeza</p></div>
-        </a>
-        <a class="btn-pdf" href="/reports/category/Materiais%20para%20Capela" target="_blank">
-          <div class="btn-pdf-icon" style="background:rgba(243,156,18,0.15);color:var(--accent)">⛪</div>
-          <div class="btn-pdf-info"><h4>Materiais para Capela</h4><p>Sacrário, ostensório e itens litúrgicos</p></div>
-        </a>
-        <a class="btn-pdf" href="/reports/category/Mestres%20de%20Obras" target="_blank">
-          <div class="btn-pdf-icon" style="background:rgba(44,62,80,0.15);color:var(--secondary)">👷</div>
-          <div class="btn-pdf-info"><h4>Mestres de Obras</h4><p>Tarefas específicas dos Mestres</p></div>
-        </a>
+    <div class="relatorio-section">
+      <div class="relatorio-section-title">📋 Relatórios Gerais</div>
+      <div class="relatorio-report-grid">
+        <div class="relatorio-report-card" onclick="window.open('/reports/full', '_blank')">
+          <div class="rrc-icon" style="background:rgba(192,57,43,0.15);color:var(--primary)">📄</div>
+          <div class="rrc-body"><h4>Relatório Geral</h4><p>Todas as tarefas, cronograma e equipes</p></div>
+          <div class="rrc-action">PDF →</div>
+        </div>
+        <div class="relatorio-report-card" onclick="window.open('/reports/schedule', '_blank')">
+          <div class="rrc-icon" style="background:rgba(26,58,92,0.15);color:var(--secondary)">🗓️</div>
+          <div class="rrc-body"><h4>Roteiro do Encontro</h4><p>Cronograma completo Sexta a Domingo</p></div>
+          <div class="rrc-action">PDF →</div>
+        </div>
+        <div class="relatorio-report-card" onclick="window.open('/reports/teams', '_blank')">
+          <div class="rrc-icon" style="background:rgba(52,152,219,0.15);color:var(--info)">👥</div>
+          <div class="rrc-body"><h4>Equipes</h4><p>Progresso e membros de cada equipe</p></div>
+          <div class="rrc-action">PDF →</div>
+        </div>
+        <div class="relatorio-report-card" onclick="window.open('/reports/team-schedule', '_blank')">
+          <div class="rrc-icon" style="background:rgba(241,196,15,0.15);color:var(--warning)">📅</div>
+          <div class="rrc-body"><h4>Programa por Equipe</h4><p>Cronograma e tarefas de cada equipe</p></div>
+          <div class="rrc-action">PDF →</div>
+        </div>
       </div>
+    </div>
+
+    <div class="relatorio-section">
+      <div class="relatorio-section-title">👥 Equipes e Matérias-primas</div>
+      <div class="relatorio-report-grid">
+        <div class="relatorio-report-card" onclick="window.open('/reports/participants', '_blank')">
+          <div class="rrc-icon" style="background:rgba(192,57,43,0.15);color:var(--primary)">🧍</div>
+          <div class="rrc-body"><h4>Lista de MP's</h4><p>Inscritos, grupos, quartos, restrições e pagamentos</p></div>
+          <div class="rrc-action">PDF →</div>
+        </div>
+        <div class="relatorio-report-card" onclick="window.open('/reports/kit', '_blank')">
+          <div class="rrc-icon" style="background:rgba(45,134,89,0.15);color:var(--jumire-green)">🎒</div>
+          <div class="rrc-body"><h4>Kit da MP</h4><p>Checklist do RH — itens e controle por inscrito</p></div>
+          <div class="rrc-action">PDF →</div>
+        </div>
+        <div class="relatorio-report-card" onclick="window.open('/reports/alicerces', '_blank')">
+          <div class="rrc-icon" style="background:rgba(155,89,182,0.15);color:#9b59b6">🏛️</div>
+          <div class="rrc-body"><h4>Mapa de Alicerces</h4><p>Construtores, horários e conteúdo das pistas</p></div>
+          <div class="rrc-action">PDF →</div>
+        </div>
+        <div class="relatorio-report-card" onclick="window.open('/reports/lembrancinhas', '_blank')">
+          <div class="rrc-icon" style="background:rgba(230,126,34,0.15);color:var(--accent)">🎁</div>
+          <div class="rrc-body"><h4>Lembrancinhas</h4><p>Status de confecção por equipe e quantidades</p></div>
+          <div class="rrc-action">PDF →</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="relatorio-section">
+      <div class="relatorio-section-title">📊 Supervisão e Coordenação</div>
+      <div class="relatorio-report-grid">
+        <div class="relatorio-report-card" onclick="window.open('/reports/finance', '_blank')">
+          <div class="rrc-icon" style="background:rgba(39,174,96,0.15);color:var(--success)">💰</div>
+          <div class="rrc-body"><h4>Financeiro</h4><p>Receitas, despesas, saldo e lançamentos por categoria</p></div>
+          <div class="rrc-action">PDF →</div>
+        </div>
+        <div class="relatorio-report-card" onclick="window.open('/reports/fornecedores', '_blank')">
+          <div class="rrc-icon" style="background:rgba(52,152,219,0.15);color:var(--info)">📦</div>
+          <div class="rrc-body"><h4>Fornecedores</h4><p>Contatos, cotações e status de contratação</p></div>
+          <div class="rrc-action">PDF →</div>
+        </div>
+        <div class="relatorio-report-card" onclick="window.open('/reports/avisos', '_blank')">
+          <div class="rrc-icon" style="background:rgba(241,196,15,0.15);color:var(--warning)">📢</div>
+          <div class="rrc-body"><h4>Mural de Avisos</h4><p>Comunicados fixados e prioritários</p></div>
+          <div class="rrc-action">PDF →</div>
+        </div>
+        <div class="relatorio-report-card" onclick="window.open('/reports/lembretes', '_blank')">
+          <div class="rrc-icon" style="background:rgba(192,57,43,0.15);color:var(--primary)">🔔</div>
+          <div class="rrc-body"><h4>Lembretes</h4><p>Prazos automáticos e lembretes manuais por módulo</p></div>
+          <div class="rrc-action">PDF →</div>
+        </div>
+        <div class="relatorio-report-card" onclick="window.open('/reports/escolinhas', '_blank')">
+          <div class="rrc-icon" style="background:rgba(44,123,229,0.15);color:var(--primary)">📅</div>
+          <div class="rrc-body"><h4>Calendário de Escolinhas</h4><p>Eventos e escolinhas de preparação com datas</p></div>
+          <div class="rrc-action">PDF →</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="relatorio-section">
+      <div class="relatorio-section-title">🏗️ Relatórios por Categoria</div>
+      <div class="relatorio-report-grid" id="rel-category-reports"></div>
     </div>
   `;
+
+  renderRelatorioCategoryReports(categories);
+  applyRelatorioFilters();
+}
+
+function renderRelatorioCategoryReports(categories) {
+  const container = document.getElementById('rel-category-reports');
+  if (!container) return;
+
+  const icons = {
+    'Espaço Físico - Canteiro de Obras': '🏗️',
+    'Traslado': '🚛',
+    'Impressos e Materiais Gráficos': '📋',
+    'Cozinha e Serviços Gerais': '🍳',
+    'Materiais para Capela': '⛪',
+    'Mestres de Obras': '👷',
+  };
+  const colors = {
+    'Espaço Físico - Canteiro de Obras': 'rgba(39,174,96,0.15);color:var(--success)',
+    'Traslado': 'rgba(230,126,34,0.15);color:var(--accent)',
+    'Impressos e Materiais Gráficos': 'rgba(155,89,182,0.15);color:#9b59b6',
+    'Cozinha e Serviços Gerais': 'rgba(241,196,15,0.15);color:var(--warning)',
+    'Materiais para Capela': 'rgba(243,156,18,0.15);color:var(--accent)',
+    'Mestres de Obras': 'rgba(44,62,80,0.15);color:var(--secondary)',
+  };
+
+  container.innerHTML = categories.map(c => {
+    const icon = icons[c] || '📁';
+    const colorStyle = colors[c] || 'rgba(52,152,219,0.15);color:var(--info)';
+    const encoded = encodeURIComponent(c);
+    return `<div class="relatorio-report-card" onclick="window.open('/reports/category/${encoded}', '_blank')">
+      <div class="rrc-icon" style="background:${colorStyle}">${icon}</div>
+      <div class="rrc-body"><h4>${c}</h4><p>Tarefas da categoria com progresso e detalhes</p></div>
+      <div class="rrc-action">PDF →</div>
+    </div>`;
+  }).join('');
+}
+
+function applyRelatorioFilters() {
+  relatorioFilterPhase = document.getElementById('rel-filter-phase')?.value || '';
+  relatorioFilterCategory = document.getElementById('rel-filter-cat')?.value || '';
+  relatorioFilterTeam = document.getElementById('rel-filter-team')?.value || '';
+  relatorioFilterStatus = document.getElementById('rel-filter-status')?.value || '';
+  relatorioFilterPriority = document.getElementById('rel-filter-priority')?.value || '';
+  renderRelatorioDataTable();
+}
+
+function clearRelatorioFilters() {
+  document.getElementById('rel-filter-phase').value = '';
+  document.getElementById('rel-filter-cat').value = '';
+  document.getElementById('rel-filter-team').value = '';
+  document.getElementById('rel-filter-status').value = '';
+  document.getElementById('rel-filter-priority').value = '';
+  applyRelatorioFilters();
+}
+
+function getFilteredRelatorioData() {
+  let list = relatorioDataCache;
+  if (relatorioFilterPhase) list = list.filter(t => (t.phase || 'pre') === relatorioFilterPhase);
+  if (relatorioFilterCategory) list = list.filter(t => t.category === relatorioFilterCategory);
+  if (relatorioFilterTeam) list = list.filter(t => t.responsible_team === relatorioFilterTeam);
+  if (relatorioFilterStatus) list = list.filter(t => t.status === relatorioFilterStatus);
+  if (relatorioFilterPriority) list = list.filter(t => t.priority === relatorioFilterPriority);
+  return list.sort((a, b) => parseFloat(a.item_number || 0) - parseFloat(b.item_number || 0));
+}
+
+function renderRelatorioDataTable() {
+  const list = getFilteredRelatorioData();
+  const countEl = document.getElementById('rel-filter-count');
+  if (countEl) countEl.textContent = `(${list.length} tarefa${list.length !== 1 ? 's' : ''})`;
+
+  const tbody = document.querySelector('#rel-data-table tbody');
+  const cardsEl = document.getElementById('rel-data-cards');
+  if (!tbody) return;
+
+  const statusLabels = { concluido: '✅ Concluído', em_andamento: '⏳ Em Andamento', pendente: '⭕ Pendente' };
+  const statusColors = { concluido: 'var(--success)', em_andamento: 'var(--warning)', pendente: 'var(--text-light)' };
+  const priorityLabels = { alta: '🔴 Alta', media: '🟡 Média', baixa: '⚪ Baixa' };
+
+  if (list.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-light);padding:20px">Nenhuma tarefa encontrada com os filtros aplicados.</td></tr>';
+    cardsEl.innerHTML = '<div class="empty-state"><p>Nenhuma tarefa encontrada.</p></div>';
+    return;
+  }
+
+  tbody.innerHTML = list.slice(0, 100).map(t => `<tr>
+    <td style="font-weight:600;color:var(--primary)">${t.item_number || '—'}</td>
+    <td>${t.category || '—'}</td>
+    <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.title || '—'}</td>
+    <td>${t.responsible_team || '—'}</td>
+    <td>${t.deadline ? new Date(t.deadline + 'T00:00:00').toLocaleDateString('pt-BR') : '—'}</td>
+    <td>${priorityLabels[t.priority] || t.priority || '—'}</td>
+    <td><span style="color:${statusColors[t.status] || 'var(--text-light)'};font-weight:600;font-size:12px">${statusLabels[t.status] || t.status}</span></td>
+  </tr>`).join('');
+
+  if (list.length > 100) {
+    tbody.innerHTML += `<tr><td colspan="7" style="text-align:center;color:var(--text-light);padding:10px;font-style:italic">+ ${list.length - 100} tarefas não exibidas. Aplique filtros para refinar ou gere o PDF para ver tudo.</td></tr>`;
+  }
+
+  cardsEl.innerHTML = list.slice(0, 50).map(t => `<div class="rel-data-card">
+    <div class="rdc-top">
+      <span style="font-weight:600;color:var(--primary)">#${t.item_number || '—'}</span>
+      <span style="color:${statusColors[t.status] || 'var(--text-light)'};font-weight:600;font-size:11px">${statusLabels[t.status] || t.status}</span>
+    </div>
+    <div style="font-weight:600;margin:4px 0;font-size:13px">${t.title || '—'}</div>
+    <div style="font-size:11px;color:var(--text-light)">
+      📁 ${t.category || '—'} · 👥 ${t.responsible_team || '—'} · 📅 ${t.deadline ? new Date(t.deadline + 'T00:00:00').toLocaleDateString('pt-BR') : '—'} · ${priorityLabels[t.priority] || t.priority || '—'}
+    </div>
+  </div>`).join('');
 }
 
 // ============ HELPERS ============

@@ -1,5 +1,23 @@
 [
   {
+    "version": "1.23.0",
+    "date": "2026-07-30",
+    "title": "Relatórios Profissionais com Filtros",
+    "changes": [
+      "Redesign completo da página de Relatórios com visual profissional",
+      "Painel de filtros: fase, categoria, equipe, status e prioridade",
+      "Tabela de dados filtrados visível on-screen antes de gerar PDF",
+      "Cards de dados filtrados no mobile (table vira cards responsivos)",
+      "Sumário visual com 6 cards de estatísticas (tarefas, MP's, saldo)",
+      "Relatórios PDF organizados em 5 seções: Principais, Gerais, Equipes/MP's, Supervisão, por Categoria",
+      "Cards de relatório com hover effect, ícones coloridos e descrições",
+      "Relatórios por categoria gerados dinamicamente a partir das tarefas existentes",
+      "Botão Limpar Filtros para resetar todos os critérios",
+      "Contador de tarefas filtradas em tempo real",
+      "CSS responsivo: filtros em coluna no mobile, cards 1 por linha, sumário 2x2"
+    ]
+  },
+  {
     "version": "1.22.2",
     "date": "2026-07-30",
     "title": "Dashboard Mobile",
