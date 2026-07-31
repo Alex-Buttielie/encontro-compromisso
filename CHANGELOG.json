@@ -1,5 +1,29 @@
 [
   {
+    "version": "1.50.0",
+    "date": "2026-07-31",
+    "title": "Modal de Edição de Equipes Mais Interativo",
+    "changes": [
+      "Campo Responsável agora é um dropdown que só lista membros da própria equipe",
+      "Validação no backend: responsável deve ser membro da equipe (retorna 400 se não for)",
+      "Preview de membros dentro do modal com chips clicáveis para editar/adicionar",
+      "Resumo de stats no topo do modal (membros, tarefas, % concluído)",
+      "Botão de fechar (✕) no canto do modal",
+      "Função api() aprimorada: extrai mensagem de erro do backend JSON",
+      "Tratamento de erro no saveTeam: exibe toast sem fechar o modal"
+    ]
+  },
+  {
+    "version": "1.49.0",
+    "date": "2026-07-31",
+    "title": "Atualização do CHANGELOG e Limpeza",
+    "changes": [
+      "Adicionada entrada v1.47.0 ao CHANGELOG",
+      "Remoção de scripts temporários de diagnóstico da VPS",
+      "Atualização da seção de Deploy no README"
+    ]
+  },
+  {
     "version": "1.48.0",
     "date": "2026-07-31",
     "title": "Atualização do CHANGELOG e Limpeza",
