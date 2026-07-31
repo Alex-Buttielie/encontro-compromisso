@@ -4391,20 +4391,47 @@ let budgetCache = [];
 let budgetSummaryCache = null;
 let budgetFilterCategory = '';
 let budgetFilterStatus = '';
+let budgetActiveCategory = '';
+let budgetCollapsedCats = new Set();
 
 const BUDGET_CATEGORIES = ['Alimentação', 'Limpeza', 'Decoração', 'Materiais Diversos', 'Logística', 'Espaço Físico', 'Som e Técnica', 'Primeiros Socorros', 'Capela', 'Hospedagem', 'Honorários', 'Outros'];
 const BUDGET_STATUSES = ['orcado', 'comprado', 'recebido', 'cancelado'];
 const BUDGET_STATUS_LABELS = { orcado: 'Orçado', comprado: 'Comprado', recebido: 'Recebido', cancelado: 'Cancelado' };
 const BUDGET_STATUS_COLORS = { orcado: 'var(--text-light)', comprado: 'var(--success)', recebido: 'var(--primary)', cancelado: 'var(--danger)' };
+const BUDGET_CATEGORY_ICONS = {
+  'Alimentação': '🍲', 'Limpeza': '🧹', 'Decoração': '🎨', 'Materiais Diversos': '📦',
+  'Logística': '🚐', 'Espaço Físico': '🏠', 'Som e Técnica': '🔊', 'Primeiros Socorros': '⚕️',
+  'Capela': '⛪', 'Hospedagem': '🛏️', 'Honorários': '💼', 'Outros': '📋'
+};
+const BUDGET_CATEGORY_COLORS = {
+  'Alimentação': '#e67e22', 'Limpeza': '#3498db', 'Decoração': '#e74c3c', 'Materiais Diversos': '#9b59b6',
+  'Logística': '#f39c12', 'Espaço Físico': '#1abc9c', 'Som e Técnica': '#34495e', 'Primeiros Socorros': '#e91e63',
+  'Capela': '#f1c40f', 'Hospedagem': '#2ecc71', 'Honorários': '#95a5a6', 'Outros': '#7f8c8d'
+};
 
 async function renderOrcamento() {
   budgetCache = await api('/budget');
   budgetSummaryCache = await api('/budget/summary');
   const main = document.getElementById('main-content');
   const s = budgetSummaryCache;
+
+  const catStats = BUDGET_CATEGORIES.map(cat => {
+    const items = budgetCache.filter(b => b.category === cat);
+    const estimated = items.reduce((sum, b) => sum + ((b.quantity || 0) * (b.estimated_unit_cost || 0)), 0);
+    const actual = items.reduce((sum, b) => sum + (b.actual_cost || 0), 0);
+    const received = items.filter(b => b.status === 'recebido').length;
+    const purchased = items.filter(b => b.status === 'comprado').length;
+    const pct = estimated > 0 ? Math.round((actual / estimated) * 100) : 0;
+    return { cat, items, estimated, actual, received, purchased, pct, count: items.length };
+  }).filter(c => c.count > 0);
+
+  const totalEstimated = catStats.reduce((s, c) => s + c.estimated, 0);
+  const totalActual = catStats.reduce((s, c) => s + c.actual, 0);
+  const overallPct = totalEstimated > 0 ? Math.round((totalActual / totalEstimated) * 100) : 0;
+
   main.innerHTML = `
     <h1 class="page-title">Orçamento do Encontro</h1>
-    <p class="page-subtitle">Planeje e acompanhe todos os custos: materiais, comida, limpeza, decoração e mais</p>
+    <p class="page-subtitle">Planeje e acompanhe todos os custos por categoria — clique numa categoria para ver os itens</p>
 
     <div class="stats-grid" style="margin-bottom:16px">
       <div class="stat-card"><div class="stat-icon total">📋</div><div class="stat-info"><h3>${s.itemCount}</h3><p>Itens Orçados</p></div></div>
@@ -4426,14 +4453,41 @@ async function renderOrcamento() {
       </div>
     </div>
 
-    <div class="filters">
-      <div class="filter-group">
-        <span class="filter-label">Categoria:</span>
-        <select id="budget-filter-cat" onchange="filterBudget()">
-          <option value="">Todas</option>
-          ${BUDGET_CATEGORIES.map(c => `<option value="${c}" ${budgetFilterCategory===c?'selected':''}>${c}</option>`).join('')}
-        </select>
+    <div class="budget-overview-bar">
+      <div class="budget-overview-info">
+        <span>Gasto Geral: <strong>R$ ${totalActual.toFixed(2)}</strong> / R$ ${totalEstimated.toFixed(2)}</span>
+        <span class="budget-overview-pct ${overallPct > 100 ? 'over' : ''}">${overallPct}%</span>
       </div>
+      <div class="budget-overview-progress">
+        <div class="budget-overview-fill" style="width:${Math.min(overallPct, 100)}%;background:${overallPct > 100 ? 'var(--danger)' : overallPct > 80 ? 'var(--warning)' : 'var(--success)'}"></div>
+      </div>
+    </div>
+
+    <div class="budget-cat-grid" id="budget-cat-grid">
+      <div class="budget-cat-card ${budgetActiveCategory===''?'active':''}" onclick="selectBudgetCategory('')">
+        <div class="budget-cat-icon" style="background:var(--primary)">📊</div>
+        <div class="budget-cat-body">
+          <div class="budget-cat-name">Todas</div>
+          <div class="budget-cat-stats">${s.itemCount} itens · R$ ${totalEstimated.toFixed(0)}</div>
+        </div>
+      </div>
+      ${catStats.map(c => {
+        const color = BUDGET_CATEGORY_COLORS[c.cat] || 'var(--primary)';
+        return `<div class="budget-cat-card ${budgetActiveCategory===c.cat?'active':''}" onclick="selectBudgetCategory('${c.cat.replace(/'/g,"\\'")}')" style="border-left-color:${color}">
+          <div class="budget-cat-icon" style="background:${color}1a;color:${color}">${BUDGET_CATEGORY_ICONS[c.cat] || '📋'}</div>
+          <div class="budget-cat-body">
+            <div class="budget-cat-name">${c.cat}</div>
+            <div class="budget-cat-stats">${c.count} itens · R$ ${c.estimated.toFixed(0)}</div>
+            <div class="budget-cat-mini-progress">
+              <div class="budget-cat-mini-fill" style="width:${Math.min(c.pct,100)}%;background:${c.pct > 100 ? 'var(--danger)' : c.pct > 80 ? 'var(--warning)' : 'var(--success)'}"></div>
+            </div>
+            <div class="budget-cat-mini-pct">${c.pct}% gasto · ${c.purchased + c.received}/${c.count} comprados</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <div class="filters">
       <div class="filter-group">
         <span class="filter-label">Status:</span>
         <select id="budget-filter-status" onchange="filterBudget()">
@@ -4441,83 +4495,133 @@ async function renderOrcamento() {
           ${BUDGET_STATUSES.map(st => `<option value="${st}" ${budgetFilterStatus===st?'selected':''}>${BUDGET_STATUS_LABELS[st]}</option>`).join('')}
         </select>
       </div>
-      <button class="btn btn-primary btn-sm" onclick="openBudgetModal()">+ Item</button>
+      <button class="btn btn-primary btn-sm" onclick="openBudgetModal()">+ Novo Item</button>
     </div>
 
-    <div class="card">
-      <table class="data-table" id="budget-table">
-        <thead><tr><th>Categoria</th><th>Item</th><th>Qtd</th><th>Unit.</th><th>Custo Unit.</th><th>Total Est.</th><th>Custo Real</th><th>Status</th><th>Fornecedor</th><th></th></tr></thead>
-        <tbody></tbody>
-      </table>
-      <div id="budget-cards"></div>
-    </div>
+    <div id="budget-items-container"></div>
   `;
-  renderBudgetTable();
+  renderBudgetItems();
+}
+
+function selectBudgetCategory(cat) {
+  budgetActiveCategory = cat;
+  document.querySelectorAll('.budget-cat-card').forEach(card => card.classList.remove('active'));
+  const cards = document.querySelectorAll('.budget-cat-card');
+  if (cat === '') { if (cards[0]) cards[0].classList.add('active'); }
+  else { cards.forEach(c => { if (c.textContent.includes(cat)) c.classList.add('active'); }); }
+  renderBudgetItems();
+}
+
+function toggleBudgetCategory(cat) {
+  if (budgetCollapsedCats.has(cat)) budgetCollapsedCats.delete(cat);
+  else budgetCollapsedCats.add(cat);
+  renderBudgetItems();
 }
 
 function filterBudget() {
-  budgetFilterCategory = document.getElementById('budget-filter-cat').value;
-  budgetFilterStatus = document.getElementById('budget-filter-status').value;
-  renderBudgetTable();
+  budgetFilterStatus = document.getElementById('budget-filter-status')?.value || '';
+  renderBudgetItems();
 }
 
-function renderBudgetTable() {
+function renderBudgetItems() {
+  const container = document.getElementById('budget-items-container');
+  if (!container) return;
+
   let list = budgetCache;
-  if (budgetFilterCategory) list = list.filter(b => b.category === budgetFilterCategory);
   if (budgetFilterStatus) list = list.filter(b => b.status === budgetFilterStatus);
 
-  const tbody = document.querySelector('#budget-table tbody');
-  const cards = document.getElementById('budget-cards');
-  if (!tbody) return;
+  const cats = budgetActiveCategory ? [budgetActiveCategory] : [...new Set(list.map(b => b.category).filter(Boolean))].sort();
 
   if (list.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-light);padding:20px">Nenhum item no orçamento.</td></tr>';
-    cards.innerHTML = '<div class="empty-state"><p>Nenhum item.</p></div>';
+    container.innerHTML = '<div class="card"><div class="empty-state"><p>Nenhum item no orçamento.</p></div></div>';
     return;
   }
 
-  tbody.innerHTML = list.map(b => `<tr>
-    <td>${b.category || '—'}</td>
-    <td>${b.item_name || '—'}</td>
-    <td>${b.quantity || 0} ${b.unit || ''}</td>
-    <td>${b.unit || '—'}</td>
-    <td>R$ ${(b.estimated_unit_cost || 0).toFixed(2)}</td>
-    <td style="font-weight:600">R$ ${((b.quantity || 0) * (b.estimated_unit_cost || 0)).toFixed(2)}</td>
-    <td style="color:${(b.actual_cost || 0) > 0 ? 'var(--danger)' : 'var(--text-light)'}">${(b.actual_cost || 0) > 0 ? 'R$ ' + b.actual_cost.toFixed(2) : '—'}</td>
-    <td><span class="badge-sm" style="background:${BUDGET_STATUS_COLORS[b.status] || 'var(--border)'};color:#fff">${BUDGET_STATUS_LABELS[b.status] || b.status}</span></td>
-    <td>${b.supplier || '—'}</td>
-    <td>
-      <button class="btn-icon" onclick="openBudgetModal(${b.id})">✏️</button>
-      <button class="btn-icon" onclick="deleteBudgetItem(${b.id})">🗑️</button>
-    </td>
-  </tr>`).join('');
+  container.innerHTML = cats.map(cat => {
+    const catItems = list.filter(b => b.category === cat);
+    if (catItems.length === 0) return '';
+    const estimated = catItems.reduce((s, b) => s + ((b.quantity || 0) * (b.estimated_unit_cost || 0)), 0);
+    const actual = catItems.reduce((s, b) => s + (b.actual_cost || 0), 0);
+    const pct = estimated > 0 ? Math.round((actual / estimated) * 100) : 0;
+    const received = catItems.filter(b => b.status === 'recebido').length;
+    const purchased = catItems.filter(b => b.status === 'comprado').length;
+    const collapsed = budgetCollapsedCats.has(cat);
+    const color = BUDGET_CATEGORY_COLORS[cat] || 'var(--primary)';
+    const icon = BUDGET_CATEGORY_ICONS[cat] || '📋';
 
-  cards.innerHTML = list.map(b => `<div class="budget-item-card">
-    <div class="budget-item-top">
-      <span class="badge-sm" style="background:${BUDGET_STATUS_COLORS[b.status] || 'var(--border)'};color:#fff">${BUDGET_STATUS_LABELS[b.status] || b.status}</span>
-      <span style="font-weight:600">R$ ${((b.quantity || 0) * (b.estimated_unit_cost || 0)).toFixed(2)}</span>
-    </div>
-    <div style="font-weight:600;margin:4px 0">${b.item_name || '—'}</div>
-    <div style="font-size:11px;color:var(--text-light)">
-      📁 ${b.category || '—'} · 📦 ${b.quantity || 0} ${b.unit || ''} · R$ ${(b.estimated_unit_cost || 0).toFixed(2)}/un
-      ${b.supplier ? ' · 🏪 ' + b.supplier : ''}
-      ${(b.actual_cost || 0) > 0 ? ' · 💰 R$ ' + b.actual_cost.toFixed(2) : ''}
-    </div>
-    <div class="budget-item-actions">
-      <button class="btn-icon" onclick="openBudgetModal(${b.id})">✏️</button>
-      <button class="btn-icon" onclick="deleteBudgetItem(${b.id})">🗑️</button>
-    </div>
-  </div>`).join('');
+    return `<div class="budget-section ${collapsed ? 'collapsed' : ''}" style="border-left-color:${color}">
+      <div class="budget-section-header" onclick="toggleBudgetCategory('${cat.replace(/'/g,"\\'")}')">
+        <div class="budget-section-left">
+          <span class="budget-section-icon" style="background:${color}1a;color:${color}">${icon}</span>
+          <div>
+            <div class="budget-section-title">${cat}</div>
+            <div class="budget-section-subtitle">${catItems.length} itens · ${purchased + received} comprados · ${received} recebidos</div>
+          </div>
+        </div>
+        <div class="budget-section-right">
+          <div class="budget-section-amounts">
+            <span class="budget-section-est">R$ ${estimated.toFixed(2)}</span>
+            <span class="budget-section-act ${pct > 100 ? 'over' : ''}">R$ ${actual.toFixed(2)} (${pct}%)</span>
+          </div>
+          <div class="budget-section-progress">
+            <div class="budget-section-fill" style="width:${Math.min(pct,100)}%;background:${pct > 100 ? 'var(--danger)' : pct > 80 ? 'var(--warning)' : 'var(--success)'}"></div>
+          </div>
+          <svg class="budget-section-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform:${collapsed?'':'rotate(180deg)'};transition:transform 0.2s"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+      ${collapsed ? '' : `
+        <div class="budget-section-body">
+          <table class="data-table budget-cat-table">
+            <thead><tr><th>Item</th><th>Qtd</th><th>Custo Unit.</th><th>Total Est.</th><th>Custo Real</th><th>Status</th><th>Fornecedor</th><th></th></tr></thead>
+            <tbody>
+              ${catItems.map(b => `<tr>
+                <td>${b.item_name || '—'}${b.description ? `<div style="font-size:11px;color:var(--text-light)">${b.description}</div>` : ''}</td>
+                <td>${b.quantity || 0} ${b.unit || ''}</td>
+                <td>R$ ${(b.estimated_unit_cost || 0).toFixed(2)}</td>
+                <td style="font-weight:600">R$ ${((b.quantity || 0) * (b.estimated_unit_cost || 0)).toFixed(2)}</td>
+                <td style="color:${(b.actual_cost || 0) > 0 ? 'var(--danger)' : 'var(--text-light)'}">${(b.actual_cost || 0) > 0 ? 'R$ ' + b.actual_cost.toFixed(2) : '—'}</td>
+                <td><span class="badge-sm" style="background:${BUDGET_STATUS_COLORS[b.status] || 'var(--border)'};color:#fff">${BUDGET_STATUS_LABELS[b.status] || b.status}</span></td>
+                <td>${b.supplier || '—'}</td>
+                <td>
+                  <button class="btn-icon" onclick="openBudgetModal(${b.id})">✏️</button>
+                  <button class="btn-icon" onclick="deleteBudgetItem(${b.id})">🗑️</button>
+                </td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+          <div class="budget-cat-cards">
+            ${catItems.map(b => `<div class="budget-item-card">
+              <div class="budget-item-top">
+                <span class="badge-sm" style="background:${BUDGET_STATUS_COLORS[b.status] || 'var(--border)'};color:#fff">${BUDGET_STATUS_LABELS[b.status] || b.status}</span>
+                <span style="font-weight:600">R$ ${((b.quantity || 0) * (b.estimated_unit_cost || 0)).toFixed(2)}</span>
+              </div>
+              <div style="font-weight:600;margin:4px 0">${b.item_name || '—'}</div>
+              <div style="font-size:11px;color:var(--text-light)">
+                📦 ${b.quantity || 0} ${b.unit || ''} · R$ ${(b.estimated_unit_cost || 0).toFixed(2)}/un
+                ${b.supplier ? ' · 🏪 ' + b.supplier : ''}
+                ${(b.actual_cost || 0) > 0 ? ' · 💰 R$ ' + b.actual_cost.toFixed(2) : ''}
+              </div>
+              <div class="budget-item-actions">
+                <button class="btn-icon" onclick="openBudgetModal(${b.id})">✏️</button>
+                <button class="btn-icon" onclick="deleteBudgetItem(${b.id})">🗑️</button>
+              </div>
+            </div>`).join('')}
+          </div>
+          <button class="btn btn-secondary btn-sm" style="margin-top:10px" onclick="openBudgetModal(null,'${cat.replace(/'/g,"\\'")}')">+ Adicionar item em ${cat}</button>
+        </div>
+      `}
+    </div>`;
+  }).join('');
 }
 
-function openBudgetModal(id) {
+function openBudgetModal(id, defaultCategory) {
   const b = id ? budgetCache.find(b => b.id === id) : null;
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay active';
   overlay.innerHTML = `<div class="modal">
     <h3>${b ? 'Editar Item' : 'Novo Item de Orçamento'}</h3>
     <div class="form-row">
-      <div class="form-group"><label>Categoria</label><select id="b-category">${BUDGET_CATEGORIES.map(c => `<option value="${c}" ${b?.category===c?'selected':''}>${c}</option>`).join('')}</select></div>
+      <div class="form-group"><label>Categoria</label><select id="b-category">${BUDGET_CATEGORIES.map(c => `<option value="${c}" ${(b?.category||defaultCategory)===c?'selected':''}>${c}</option>`).join('')}</select></div>
       <div class="form-group"><label>Status</label><select id="b-status">${BUDGET_STATUSES.map(st => `<option value="${st}" ${b?.status===st?'selected':''}>${BUDGET_STATUS_LABELS[st]}</option>`).join('')}</select></div>
     </div>
     <div class="form-group"><label>Item</label><input id="b-name" value="${b ? (b.item_name || '').replace(/"/g,'&quot;') : ''}"></div>

@@ -3988,6 +3988,246 @@ select:focus, input:focus, textarea:focus { border-color: var(--primary); }
   font-size: 18px;
 }
 
+/* BUDGET CATEGORY CARDS */
+.budget-overview-bar {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+.budget-overview-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.budget-overview-info strong {
+  color: var(--dark);
+}
+
+.budget-overview-pct {
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--success);
+}
+
+.budget-overview-pct.over {
+  color: var(--danger);
+}
+
+.budget-overview-progress {
+  height: 10px;
+  background: var(--border);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.budget-overview-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.4s ease;
+}
+
+.budget-cat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.budget-cat-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--primary);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+
+.budget-cat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.budget-cat-card.active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(44,123,229,0.15);
+}
+
+.budget-cat-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.budget-cat-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.budget-cat-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--dark);
+  margin-bottom: 2px;
+}
+
+.budget-cat-stats {
+  font-size: 12px;
+  color: var(--text-light);
+  margin-bottom: 6px;
+}
+
+.budget-cat-mini-progress {
+  height: 5px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.budget-cat-mini-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.budget-cat-mini-pct {
+  font-size: 10px;
+  color: var(--text-light);
+}
+
+/* BUDGET SECTIONS (collapsible) */
+.budget-section {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--primary);
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+
+.budget-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.budget-section-header:hover {
+  background: var(--bg);
+}
+
+.budget-section-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.budget-section-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.budget-section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--dark);
+}
+
+.budget-section-subtitle {
+  font-size: 12px;
+  color: var(--text-light);
+  margin-top: 2px;
+}
+
+.budget-section-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.budget-section-amounts {
+  text-align: right;
+}
+
+.budget-section-est {
+  display: block;
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.budget-section-act {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--success);
+}
+
+.budget-section-act.over {
+  color: var(--danger);
+}
+
+.budget-section-progress {
+  width: 80px;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.budget-section-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.budget-section-chevron {
+  color: var(--text-light);
+  flex-shrink: 0;
+}
+
+.budget-section-body {
+  padding: 0 16px 16px;
+}
+
+.budget-cat-table {
+  margin-bottom: 10px;
+}
+
+.budget-cat-cards {
+  display: none;
+}
+
+.budget-section-body .btn {
+  width: 100%;
+  text-align: center;
+}
+
 .budget-item-card {
   background: var(--bg);
   border: 1px solid var(--border);
@@ -4027,6 +4267,17 @@ select:focus, input:focus, textarea:focus { border-color: var(--primary); }
 @media (max-width: 768px) {
   .budget-summary-grid { grid-template-columns: 1fr; }
   .budget-summary-item.total { grid-column: 1; }
+}
+
+/* Budget category cards & sections mobile */
+@media (max-width: 768px) {
+  .budget-cat-grid { grid-template-columns: 1fr; }
+  .budget-section-header { flex-direction: column; align-items: stretch; gap: 8px; padding: 12px 14px; }
+  .budget-section-right { justify-content: space-between; width: 100%; }
+  .budget-section-progress { flex: 1; max-width: 120px; }
+  .budget-section-body { padding: 0 12px 12px; }
+  .budget-cat-table { display: none; }
+  .budget-cat-cards { display: flex; flex-direction: column; gap: 8px; }
 }
 
 /* ===== ALL MODULES MOBILE ===== */

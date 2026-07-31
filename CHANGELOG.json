@@ -1,5 +1,23 @@
 [
   {
+    "version": "1.29.0",
+    "date": "2026-07-30",
+    "title": "Orçamento Interativo por Categorias",
+    "changes": [
+      "Grid de cards de categorias no topo (clicáveis, com ícone, contagem, total estimado e barra de progresso)",
+      "12 categorias com ícones e cores próprias: Alimentação, Limpeza, Decoração, Materiais, Logística, etc",
+      "Card 'Todas' mostra visão geral; clicar numa categoria filtra os itens",
+      "Barra de progresso geral (Gasto Geral) com cor dinâmica (verde/amarelo/vermelho)",
+      "Seções colapsáveis por categoria: header com ícone, nome, stats, totais e barra de progresso",
+      "Clique no header para expandir/recolher cada categoria",
+      "Botão '+ Adicionar item em [categoria]' dentro de cada seção",
+      "Tabela dentro de cada categoria (desktop) com Item, Qtd, Custo Unit, Total, Custo Real, Status, Fornecedor",
+      "Cards compactos no mobile (tabela escondida, cards exibidos)",
+      "Filtro de status mantido; filtro de categoria substituído pelos cards interativos",
+      "CSS responsivo: category grid 1 coluna, section header empilhado, table→cards no mobile"
+    ]
+  },
+  {
     "version": "1.28.0",
     "date": "2026-07-30",
     "title": "Todos os Módulos Mobile",
