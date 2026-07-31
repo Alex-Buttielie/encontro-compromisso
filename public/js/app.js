@@ -116,10 +116,14 @@ window.addEventListener('resize', () => {
   if (resizeTimer) clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => {
     if (currentPage === 'dashboard') renderDashboard();
+    else if (currentPage === 'financeiro') renderFinanceiro();
   }, 300);
 });
 window.addEventListener('orientationchange', () => {
-  setTimeout(() => { if (currentPage === 'dashboard') renderDashboard(); }, 300);
+  setTimeout(() => {
+    if (currentPage === 'dashboard') renderDashboard();
+    else if (currentPage === 'financeiro') renderFinanceiro();
+  }, 300);
 });
 
 document.querySelectorAll('.nav-item').forEach(item => {
@@ -2166,7 +2170,7 @@ async function renderFinCategorias(container) {
       <h3 class="card-title" style="margin:0">Categorias de Lançamentos</h3>
       <button class="btn btn-primary btn-sm" onclick="openFinCategoryModal()">+ Categoria</button>
     </div>
-    <div class="card">
+    <div class="card fin-cat-table-card">
       ${financeCategoriesCache.length === 0 ? '<div class="empty-state"><p>Nenhuma categoria cadastrada. Crie uma nova!</p></div>' : `
       <table class="data-table" id="fin-cat-table">
         <thead><tr><th>Nome</th><th>Tipo</th><th>Cor</th><th>Orçamento (R$)</th><th>Descrição</th><th></th></tr></thead>
@@ -2183,7 +2187,24 @@ async function renderFinCategorias(container) {
             </td>
           </tr>`).join('')}
         </tbody>
-      </table>`}
+      </table>
+      <div class="fin-cat-cards">
+        ${financeCategoriesCache.map(c => `<div class="fin-cat-card">
+          <div class="fin-cat-card-top">
+            <span class="fin-cat-card-name">${c.name}</span>
+            <span style="display:inline-block;width:18px;height:18px;border-radius:4px;background:${c.color||'#ccc'}"></span>
+          </div>
+          <div class="fin-cat-card-meta">
+            <span class="badge-sm ${c.type==='receita'?'badge-success':'badge-danger'}">${c.type==='receita'?'Receita':'Despesa'}</span>
+            <span>Orçamento: R$ ${(c.budget_limit||0).toFixed(2)}</span>
+          </div>
+          ${c.description ? `<div style="font-size:12px;color:var(--text-light)">${c.description}</div>` : ''}
+          <div class="fin-cat-card-actions">
+            <button class="btn-icon" onclick="openFinCategoryModal(${c.id})">✏️</button>
+            <button class="btn-icon" onclick="deleteFinCategory(${c.id})">🗑️</button>
+          </div>
+        </div>`).join('')}
+      </div>`}
     </div>
   `;
 }
@@ -2336,7 +2357,7 @@ async function renderFinOrcamento(container) {
       <button class="btn btn-primary btn-sm" onclick="openFinBudgetModal()">+ Item de Orçamento</button>
     </div>
     ${bva.length > 0 ? `
-    <div class="card" style="margin-bottom:16px">
+    <div class="card fin-bva-table-card" style="margin-bottom:16px">
       <div class="card-title">Orçamento vs Realizado</div>
       <table class="data-table" id="fin-bva-table">
         <thead><tr><th>Categoria</th><th>Tipo</th><th>Planejado</th><th>Realizado</th><th>Diferença</th><th>% Uso</th></tr></thead>
@@ -2355,8 +2376,26 @@ async function renderFinOrcamento(container) {
           }).join('')}
         </tbody>
       </table>
+      <div class="fin-bva-cards">
+        ${bva.map(b => {
+          const pct = b.planned > 0 ? Math.round((b.actual / b.planned) * 100) : 0;
+          const diffColor = b.difference >= 0 ? 'var(--success)' : 'var(--danger)';
+          return `<div class="fin-bva-card">
+            <div class="fin-bva-card-top">
+              <span class="fin-bva-card-name">${b.category}</span>
+              <span class="badge-sm ${b.type==='receita'?'badge-success':'badge-danger'}">${b.type==='receita'?'Receita':'Despesa'}</span>
+            </div>
+            <div class="fin-bva-card-stats">
+              <div class="fin-bva-card-stat"><span class="label">Planejado</span><span class="value">R$ ${b.planned.toFixed(2)}</span></div>
+              <div class="fin-bva-card-stat"><span class="label">Realizado</span><span class="value">R$ ${b.actual.toFixed(2)}</span></div>
+              <div class="fin-bva-card-stat"><span class="label">Diferença</span><span class="value" style="color:${diffColor}">R$ ${b.difference.toFixed(2)}</span></div>
+              <div class="fin-bva-card-stat"><span class="label">% Uso</span><span class="value">${pct}%</span></div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
     </div>` : ''}
-    <div class="card">
+    <div class="card fin-budget-table-card">
       <div class="card-title">Itens de Orçamento</div>
       ${financeBudgetCache.length === 0 ? '<div class="empty-state"><p>Nenhum item de orçamento. Crie um novo!</p></div>' : `
       <table class="data-table" id="fin-budget-table">
@@ -2373,7 +2412,21 @@ async function renderFinOrcamento(container) {
             </td>
           </tr>`).join('')}
         </tbody>
-      </table>`}
+      </table>
+      <div class="fin-budget-cards">
+        ${financeBudgetCache.map(b => `<div class="fin-budget-card">
+          <div class="fin-budget-card-top">
+            <span class="fin-budget-card-name">${b.category}</span>
+            <span class="badge-sm ${b.type==='receita'?'badge-success':'badge-danger'}">${b.type==='receita'?'Receita':'Despesa'}</span>
+          </div>
+          <div class="fin-budget-card-amount" style="color:${b.type==='receita'?'var(--success)':'var(--danger)'}">R$ ${(b.planned_amount||0).toFixed(2)}</div>
+          ${b.notes ? `<div class="fin-budget-card-notes">${b.notes}</div>` : ''}
+          <div class="fin-budget-card-actions">
+            <button class="btn-icon" onclick="openFinBudgetModal(${b.id})">✏️</button>
+            <button class="btn-icon" onclick="deleteFinBudget(${b.id})">🗑️</button>
+          </div>
+        </div>`).join('')}
+      </div>`}
     </div>
   `;
 }

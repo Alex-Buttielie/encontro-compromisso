@@ -2812,6 +2812,280 @@ select:focus, input:focus, textarea:focus { border-color: var(--primary); }
   .fin-overview-grid { grid-template-columns: 1fr; }
   .fin-events-grid { grid-template-columns: 1fr; }
   .fin-event-stats { grid-template-columns: repeat(2, 1fr); }
+
+  /* Compact tab bar */
+  #fin-tabs.tab-bar {
+    gap: 0;
+    padding-bottom: 2px;
+  }
+  #fin-tabs .tab-btn {
+    padding: 8px 10px;
+    font-size: 12px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* Finance summary — 3+2 grid on mobile */
+  .finance-summary {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .finance-card {
+    padding: 10px 8px;
+  }
+  .finance-card .amount {
+    font-size: 16px;
+    margin: 4px 0;
+  }
+  .finance-card .label {
+    font-size: 10px;
+  }
+
+  /* Charts — reduced height */
+  .fin-charts-grid .card {
+    padding: 12px 10px;
+  }
+  .fin-charts-grid .card-title {
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+  .fin-charts-grid canvas {
+    max-height: 180px !important;
+  }
+
+  /* Top lists — compact */
+  .fin-top-item {
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 8px 10px;
+  }
+  .fin-top-desc {
+    font-size: 12px;
+    flex: 1 1 100%;
+  }
+  .fin-top-cat {
+    font-size: 10px;
+  }
+  .fin-top-val {
+    font-size: 13px;
+  }
+
+  /* Filters — stack vertically */
+  .filters {
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+  .filters .filter-group {
+    width: 100%;
+  }
+  .filters .filter-group select {
+    width: 100%;
+  }
+  .filters .btn {
+    width: 100%;
+  }
+
+  /* Finance item cards — more compact */
+  .finance-item-card {
+    padding: 10px 12px;
+    margin-bottom: 6px;
+  }
+  .finance-item-amount {
+    font-size: 15px;
+  }
+  .finance-item-desc {
+    font-size: 13px;
+  }
+  .finance-item-meta {
+    font-size: 11px;
+    gap: 2px;
+  }
+  .finance-item-meta span {
+    display: inline;
+  }
+
+  /* Event cards — compact */
+  .fin-event-card {
+    padding: 14px 12px;
+  }
+  .fin-event-header h3 {
+    font-size: 14px !important;
+  }
+  .fin-event-header span {
+    font-size: 11px !important;
+  }
+  .fin-event-stat .value {
+    font-size: 13px;
+  }
+  .fin-event-stat .label {
+    font-size: 9px;
+  }
+
+  /* Categorias & Orçamento — hide tables, show cards */
+  .fin-cat-table-card .data-table,
+  .fin-budget-table-card .data-table,
+  .fin-bva-table-card .data-table {
+    display: none;
+  }
+  .fin-cat-cards,
+  .fin-budget-cards,
+  .fin-bva-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* Modal form-row — stack on mobile */
+  .modal .form-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .modal .form-row .form-group {
+    width: 100%;
+  }
+  .modal {
+    padding: 16px 14px;
+    max-width: 95vw !important;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+}
+
+/* Finance mobile cards (categorias, orcamento, bva) */
+.fin-cat-cards,
+.fin-budget-cards,
+.fin-bva-cards {
+  display: none;
+}
+
+.fin-cat-card {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fin-cat-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.fin-cat-card-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.fin-cat-card-meta {
+  display: flex;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--text-light);
+  align-items: center;
+}
+
+.fin-cat-card-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.fin-budget-card {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card-bg);
+}
+
+.fin-budget-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.fin-budget-card-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.fin-budget-card-amount {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.fin-budget-card-notes {
+  font-size: 12px;
+  color: var(--text-light);
+  margin-bottom: 6px;
+}
+
+.fin-budget-card-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.fin-bva-card {
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card-bg);
+}
+
+.fin-bva-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.fin-bva-card-name {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.fin-bva-card-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  font-size: 12px;
+}
+
+.fin-bva-card-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.fin-bva-card-stat .label {
+  font-size: 10px;
+  color: var(--text-light);
+}
+
+.fin-bva-card-stat .value {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+@media (max-width: 480px) {
+  .finance-summary {
+    grid-template-columns: 1fr;
+  }
+  .fin-event-stats {
+    grid-template-columns: 1fr;
+  }
+  .fin-bva-card-stats {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* DASHBOARD MOBILE */

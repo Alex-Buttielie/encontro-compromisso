@@ -1,5 +1,24 @@
 [
   {
+    "version": "1.25.0",
+    "date": "2026-07-30",
+    "title": "Financeiro Mobile",
+    "changes": [
+      "Tab bar compacta com scroll horizontal touch-friendly no mobile",
+      "Cards de sumário financeiro em grid 2 colunas no mobile (1 col em ≤480px)",
+      "Charts com altura reduzida (180px) e padding compacto no mobile",
+      "Listas Top 10 com wrapping e fontes reduzidas no mobile",
+      "Filtros empilhados verticalmente no mobile (selects e botão full-width)",
+      "Cards de lançamentos mais compactos no mobile",
+      "Cards de eventos compactos com stats em 2 colunas no mobile",
+      "Tabela de Categorias → cards mobile com cor, tipo, orçamento e ações",
+      "Tabela Orçamento vs Realizado → cards mobile com stats em grid 2x2",
+      "Tabela de Itens de Orçamento → cards mobile com valor e notas",
+      "Modais com form-row empilhado verticalmente no mobile",
+      "Re-renderização automática ao rotacionar/redimensionar para financeiro"
+    ]
+  },
+  {
     "version": "1.24.0",
     "date": "2026-07-30",
     "title": "Cardápio do Encontro + Lista de Compras da Cozinha",
