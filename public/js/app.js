@@ -768,49 +768,128 @@ async function deleteTask(id) {
   toast('Tarefa excluída', 'error');
 }
 
+const TASK_CATEGORIES = [
+  'Espaço Físico - Canteiro de Obras',
+  'Traslado',
+  'Impressos e Materiais Gráficos',
+  'Cozinha e Serviços Gerais',
+  'Materiais para Capela',
+  'Mestres de Obras',
+];
+
 function openTaskModal(id) {
   const task = id ? tasksCache.find(t => t.id === id) : null;
+  const existingCats = [...new Set(tasksCache.map(t => t.category).filter(Boolean))].sort();
+  const allCats = [...new Set([...TASK_CATEGORIES, ...existingCats])];
+  const teamNames = teamsCache.map(t => t.name).sort();
+
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay active';
-  overlay.innerHTML = `<div class="modal">
-    <h3>${task ? 'Editar Tarefa' : 'Nova Tarefa'}</h3>
-    <div class="form-group"><label>Categoria</label><input id="t-category" value="${task?.category || ''}"></div>
-    <div class="form-row">
-      <div class="form-group"><label>Número</label><input id="t-number" value="${task?.item_number || ''}"></div>
-      <div class="form-group"><label>Fase</label><select id="t-phase">
-        <option value="pre" ${(!task || task?.phase==='pre')?'selected':''}>Pré-Encontro (Preparação)</option>
-        <option value="during" ${task?.phase==='during'?'selected':''}>Durante o Encontro (Execução)</option>
-      </select></div>
+  overlay.innerHTML = `<div class="modal task-modal">
+    <div class="task-modal-header">
+      <h3>${task ? '✏️ Editar Tarefa' : '➕ Nova Tarefa'}</h3>
+      <button class="btn-icon" onclick="this.closest('.modal-overlay').remove()" title="Fechar">✕</button>
     </div>
-    <div class="form-row">
-      <div class="form-group"><label>Prioridade</label><select id="t-priority">
-        <option value="baixa" ${task?.priority==='baixa'?'selected':''}>Baixa</option>
-        <option value="media" ${task?.priority==='media'||!task?'selected':''}>Média</option>
-        <option value="alta" ${task?.priority==='alta'?'selected':''}>Alta</option>
-      </select></div>
-      <div class="form-group"><label>Prazo</label><input id="t-deadline" value="${task?.deadline || ''}"></div>
+
+    <div class="task-form-section">
+      <div class="task-form-label">📁 Categoria</div>
+      <input id="t-category" class="task-form-input" list="dl-categories" placeholder="Selecione ou digite..." value="${(task?.category || '').replace(/"/g, '&quot;')}">
+      <datalist id="dl-categories">
+        ${allCats.map(c => `<option value="${c}">`).join('')}
+      </datalist>
     </div>
-    <div class="form-group"><label>Título</label><input id="t-title" value="${task?.title || ''}"></div>
-    <div class="form-group"><label>Descrição</label><textarea id="t-desc" rows="3">${task?.description || ''}</textarea></div>
-    <div class="form-row">
-      <div class="form-group"><label>Equipe Responsável</label><input id="t-team" value="${task?.responsible_team || ''}"></div>
-      <div class="form-group"><label>Status</label><select id="t-status">
-        <option value="pendente" ${task?.status==='pendente'||!task?'selected':''}>Pendente</option>
-        <option value="em_andamento" ${task?.status==='em_andamento'?'selected':''}>Em Andamento</option>
-        <option value="concluido" ${task?.status==='concluido'?'selected':''}>Concluído</option>
-      </select></div>
+
+    <div class="task-form-grid">
+      <div class="task-form-section">
+        <div class="task-form-label">🔢 Número</div>
+        <input id="t-number" class="task-form-input" placeholder="Ex: 1.1" value="${task?.item_number || ''}">
+      </div>
+      <div class="task-form-section">
+        <div class="task-form-label">🔄 Fase</div>
+        <div class="task-pill-group" id="t-phase-group">
+          <button type="button" class="task-pill ${(!task || task?.phase==='pre')?'active':''}" data-value="pre" onclick="selectPill(this,'t-phase')">📋 Pré-Encontro</button>
+          <button type="button" class="task-pill ${task?.phase==='during'?'active':''}" data-value="during" onclick="selectPill(this,'t-phase')">🏃 Durante o Encontro</button>
+        </div>
+        <input type="hidden" id="t-phase" value="${(!task || task?.phase==='pre')?'pre':(task?.phase||'pre')}">
+      </div>
     </div>
-    <div class="form-group"><label>Observações</label><textarea id="t-notes" rows="2">${task?.notes || ''}</textarea></div>
+
+    <div class="task-form-grid">
+      <div class="task-form-section">
+        <div class="task-form-label">⚡ Prioridade</div>
+        <div class="task-pill-group" id="t-priority-group">
+          <button type="button" class="task-pill task-pill-low ${task?.priority==='baixa'?'active':''}" data-value="baixa" onclick="selectPill(this,'t-priority')">⚪ Baixa</button>
+          <button type="button" class="task-pill task-pill-med ${task?.priority==='media'||!task?'active':''}" data-value="media" onclick="selectPill(this,'t-priority')">🟡 Média</button>
+          <button type="button" class="task-pill task-pill-high ${task?.priority==='alta'?'active':''}" data-value="alta" onclick="selectPill(this,'t-priority')">🔴 Alta</button>
+        </div>
+        <input type="hidden" id="t-priority" value="${task?.priority||'media'}">
+      </div>
+      <div class="task-form-section">
+        <div class="task-form-label">📅 Prazo</div>
+        <input id="t-deadline" class="task-form-input" type="date" value="${task?.deadline || ''}">
+      </div>
+    </div>
+
+    <div class="task-form-section">
+      <div class="task-form-label">📝 Título <span class="task-form-required">*</span></div>
+      <input id="t-title" class="task-form-input" placeholder="Ex: Comprar material de escritório" value="${(task?.title || '').replace(/"/g, '&quot;')}">
+    </div>
+
+    <div class="task-form-section">
+      <div class="task-form-label">📄 Descrição</div>
+      <textarea id="t-desc" class="task-form-input" rows="2" placeholder="Detalhes da tarefa...">${task?.description || ''}</textarea>
+    </div>
+
+    <div class="task-form-grid">
+      <div class="task-form-section">
+        <div class="task-form-label">👥 Equipe Responsável</div>
+        <input id="t-team" class="task-form-input" list="dl-teams" placeholder="Selecione ou digite..." value="${(task?.responsible_team || '').replace(/"/g, '&quot;')}">
+        <datalist id="dl-teams">
+          <option value="MO's">
+          ${teamNames.map(t => `<option value="${t}">`).join('')}
+        </datalist>
+      </div>
+      <div class="task-form-section">
+        <div class="task-form-label">📊 Status</div>
+        <div class="task-pill-group" id="t-status-group">
+          <button type="button" class="task-pill ${task?.status==='pendente'||!task?'active':''}" data-value="pendente" onclick="selectPill(this,'t-status')">⭕ Pendente</button>
+          <button type="button" class="task-pill ${task?.status==='em_andamento'?'active':''}" data-value="em_andamento" onclick="selectPill(this,'t-status')">⏳ Andamento</button>
+          <button type="button" class="task-pill ${task?.status==='concluido'?'active':''}" data-value="concluido" onclick="selectPill(this,'t-status')">✅ Concluído</button>
+        </div>
+        <input type="hidden" id="t-status" value="${task?.status||'pendente'}">
+      </div>
+    </div>
+
+    <div class="task-form-section">
+      <div class="task-form-label">🗒️ Observações</div>
+      <textarea id="t-notes" class="task-form-input" rows="2" placeholder="Notas adicionais...">${task?.notes || ''}</textarea>
+    </div>
+
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveTask(${id || 'null'}, this)">${task ? 'Salvar' : 'Criar'}</button>
+      <button class="btn btn-primary" onclick="saveTask(${id || 'null'}, this)">${task ? '💾 Salvar' : '✅ Criar Tarefa'}</button>
     </div>
   </div>`;
   document.body.appendChild(overlay);
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  const titleInput = document.getElementById('t-title');
+  if (titleInput) titleInput.focus();
+}
+
+function selectPill(btn, hiddenId) {
+  const group = btn.parentElement;
+  group.querySelectorAll('.task-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(hiddenId).value = btn.dataset.value;
 }
 
 async function saveTask(id, btn) {
+  const titleEl = document.getElementById('t-title');
+  if (!titleEl.value.trim()) {
+    toast('Informe um título para a tarefa', 'error');
+    titleEl.focus();
+    return;
+  }
   const teamValue = document.getElementById('t-team').value;
   const data = {
     category: document.getElementById('t-category').value,

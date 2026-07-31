@@ -1,5 +1,22 @@
 [
   {
+    "version": "1.35.0",
+    "date": "2026-07-31",
+    "title": "Cadastro de Tarefas Mais Intuitivo e Interativo",
+    "changes": [
+      "Botões visuais (pills) para Fase, Prioridade e Status — clique para selecionar em vez de dropdown",
+      "Prioridade com cores semânticas: baixa (cinza), média (amarelo), alta (vermelho)",
+      "Categoria com autocomplete (datalist) — sugestões padrão + categorias já existentes",
+      "Equipe com autocomplete — sugestões de equipes existentes + MO's",
+      "Campo Prazo agora é type=date (date picker nativo) em vez de texto livre",
+      "Validação de título obrigatório com toast e foco no campo",
+      "Foco automático no campo Título ao abrir o modal",
+      "Labels com ícones e formatação uppercase para melhor escaneabilidade",
+      "Layout em grid responsivo (2 colunas no desktop, 1 no mobile)",
+      "Header do modal com botão de fechar (✕) além do overlay click"
+    ]
+  },
+  {
     "version": "1.34.0",
     "date": "2026-07-31",
     "title": "Correção Crítica: Reload Constante das Telas",

@@ -2368,6 +2368,91 @@ select:focus, input:focus, textarea:focus { border-color: var(--primary); }
   margin-top: 20px;
 }
 
+/* TASK MODAL */
+.task-modal { max-width: 580px; max-height: 90vh; overflow-y: auto; }
+
+.task-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.task-modal-header h3 { margin: 0; }
+
+.task-form-section { margin-bottom: 14px; }
+
+.task-form-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-light);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.task-form-required { color: var(--danger); }
+
+.task-form-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  background: var(--card-bg);
+  color: var(--dark);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.task-form-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(192,57,43,0.1);
+}
+
+.task-form-input::placeholder { color: var(--text-light); opacity: 0.7; }
+
+.task-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.task-pill-group {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.task-pill {
+  padding: 8px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  background: var(--card-bg);
+  color: var(--text-light);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.task-pill:hover {
+  border-color: var(--primary);
+  color: var(--dark);
+}
+
+.task-pill.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.task-pill-low.active { background: var(--text-light); border-color: var(--text-light); color: #fff; }
+.task-pill-med.active { background: var(--warning); border-color: var(--warning); color: #fff; }
+.task-pill-high.active { background: var(--danger); border-color: var(--danger); color: #fff; }
+
 /* DETAILS MODAL */
 .modal-details { max-width: 560px; max-height: 85vh; overflow-y: auto; }
 
@@ -3549,6 +3634,11 @@ select:focus, input:focus, textarea:focus { border-color: var(--primary); }
   .modal .form-row .form-group {
     width: 100%;
   }
+  .task-form-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .task-pill { font-size: 12px; padding: 7px 12px; }
   .modal {
     padding: 16px 14px;
     max-width: 95vw !important;
