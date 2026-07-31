@@ -2285,6 +2285,7 @@ select:focus, input:focus, textarea:focus { border-color: var(--primary); }
   justify-content: center;
   min-height: 200px;
   width: 100%;
+  animation: fadeIn 0.15s ease;
 }
 .loading-spinner {
   width: 32px;
@@ -2296,6 +2297,10 @@ select:focus, input:focus, textarea:focus { border-color: var(--primary); }
 }
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* MODAL */

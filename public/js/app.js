@@ -161,9 +161,7 @@ document.getElementById('sidebar-close-btn').addEventListener('click', closeSide
 function renderPage() {
   if (dashboardInterval) { clearInterval(dashboardInterval); dashboardInterval = null; }
   const main = document.getElementById('main-content');
-  if (!main.innerHTML.trim() || main.querySelector('.loading-overlay')) {
-    main.innerHTML = LOADING_HTML;
-  }
+  main.innerHTML = LOADING_HTML;
   lastRenderedPage = currentPage;
   const renderFn = PAGE_RENDERERS[currentPage];
   if (renderFn) {
