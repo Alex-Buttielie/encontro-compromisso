@@ -1,5 +1,15 @@
 [
   {
+    "version": "1.48.0",
+    "date": "2026-07-31",
+    "title": "Atualização do CHANGELOG e Limpeza",
+    "changes": [
+      "Adicionada entrada v1.47.0 ao CHANGELOG",
+      "Remoção de scripts temporários de diagnóstico da VPS",
+      "Atualização da seção de Deploy no README"
+    ]
+  },
+  {
     "version": "1.47.0",
     "date": "2026-07-31",
     "title": "Correção de Membros Órfãos em Produção (VPS)",
@@ -9,6 +19,17 @@
       "Causa raiz: db.insert() atribuía novos IDs sequenciais às teams (39-57 na VPS), mas team_members mantinham team_ids originais (1-20)",
       "Corrigido em PROD, DEV e HOMOLOG na VPS Hostgator",
       "Scripts temporários de diagnóstico removidos"
+    ]
+  },
+  {
+    "version": "1.46.0",
+    "date": "2026-07-31",
+    "title": "Atualização do CHANGELOG e README",
+    "changes": [
+      "Adicionadas 10 entradas faltantes no CHANGELOG (v1.39.0 a v1.45.0)",
+      "README atualizado com novas funcionalidades (Orçamento, Cardápio, Tutorial, Relatório de Tarefas Atribuídas)",
+      "README: adicionada seção de Migrations (V1-V11)",
+      "README: adicionada seção de Deploy com instruções para VPS Hostgator"
     ]
   },
   {
