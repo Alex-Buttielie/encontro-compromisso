@@ -242,21 +242,21 @@ function generateFullReport() {
   // Tasks by category (Pre-Encontro)
   const categories = [...new Set(preTasks.map(t => t.category))].sort();
   for (const cat of categories) {
-    if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
+    const catItems = preTasks.filter(t => t.category === cat).sort((a, b) => parseFloat(a.item_number) - parseFloat(b.item_number));
+    y = ensureSpace(doc, 30 + Math.min(catItems.length, 3) * 32 + 10, y);
     y = sectionTitle(doc, cat, y, COLORS.primary);
-    const items = preTasks.filter(t => t.category === cat).sort((a, b) => parseFloat(a.item_number) - parseFloat(b.item_number));
-    const catDone = items.filter(t => t.status === 'concluido').length;
-    const catPct = items.length > 0 ? Math.round((catDone / items.length) * 100) : 0;
-    doc.fillColor(COLORS.gray).fontSize(9).font('Helvetica').text(`${catDone}/${items.length} (${catPct}%)`, 500, y - 18, { width: 60, align: 'right' });
+    const catDone = catItems.filter(t => t.status === 'concluido').length;
+    const catPct = catItems.length > 0 ? Math.round((catDone / catItems.length) * 100) : 0;
+    doc.fillColor(COLORS.gray).fontSize(9).font('Helvetica').text(`${catDone}/${catItems.length} (${catPct}%)`, 500, y - 18, { width: 60, align: 'right' });
     y += 4;
     progressBar(doc, catPct, 50, y, CONTENT_WIDTH);
     y += 18;
 
-    for (const t of items) {
-      if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+    for (const t of catItems) {
       const titleH = calcTextHeight(doc, `[${t.item_number}] ${t.title}`, 370, 10);
       const metaH = calcTextHeight(doc, `Equipe: ${t.responsible_team || 'N/A'}  |  Prazo: ${t.deadline || 'N/A'}  |  Prioridade: ${priorityLabel(t.priority)}`, 370, 8);
       const rowH = Math.max(32, titleH + metaH + 8);
+      y = ensureSpace(doc, rowH, y);
       zebraRow(doc, y, rowH);
       const statusColor = t.status === 'concluido' ? COLORS.green : t.status === 'em_andamento' ? COLORS.orange : COLORS.gray;
       doc.fillColor(statusColor).circle(55, y + 6, 4).fill();
@@ -277,13 +277,13 @@ function generateFullReport() {
 
   const days = ['Sexta-feira', 'Sabado', 'Domingo'];
   for (const day of days) {
-    if (y > PAGE_BOTTOM - 60) { doc.addPage(); y = 50; }
+    const dayItems = db.getAll('schedule').filter(s => s.day === day).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+    y = ensureSpace(doc, 30 + Math.min(dayItems.length, 3) * 28 + 10, y);
     y = sectionTitle(doc, day, y, COLORS.secondary);
-    const items = db.getAll('schedule').filter(s => s.day === day).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
-    for (const s of items) {
-      if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+    for (const s of dayItems) {
       const actH = calcTextHeight(doc, s.activity || '', 270, 9);
       const rowH = Math.max(26, actH + 12);
+      y = ensureSpace(doc, rowH, y);
       zebraRow(doc, y, rowH);
       doc.fillColor(COLORS.primary).fontSize(10).font('Helvetica-Bold').text(s.time || '-', 55, y + 4, { width: 55 });
       doc.fillColor(COLORS.dark).font('Helvetica').fontSize(9).text(s.activity || '', 115, y + 4, { width: 270 });
@@ -303,19 +303,19 @@ function generateFullReport() {
 
   const teams = db.getAll('teams');
   for (const team of teams) {
-    if (y > PAGE_BOTTOM - 60) { doc.addPage(); y = 50; }
+    const teamMembers = db.getAll('team_members').filter(m => Number(m.team_id) === Number(team.id));
+    y = ensureSpace(doc, 30 + Math.min(teamMembers.length, 3) * 13 + 20, y);
     y = sectionTitle(doc, team.name, y, COLORS.primary);
     if (team.description) {
       doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica').text(team.description, 50, y, { width: CONTENT_WIDTH });
       y += 18;
     }
-    const members = db.getAll('team_members').filter(m => Number(m.team_id) === Number(team.id));
-    if (members.length > 0) {
-      doc.fontSize(9).fillColor(COLORS.gray).font('Helvetica-Bold').text(`Membros (${members.length}):`, 50, y);
+    if (teamMembers.length > 0) {
+      doc.fontSize(9).fillColor(COLORS.gray).font('Helvetica-Bold').text(`Membros (${teamMembers.length}):`, 50, y);
       y += 14;
       const colW = 250;
       let memberStartY = y;
-      members.forEach((m, i) => {
+      teamMembers.forEach((m, i) => {
         const col = i % 2;
         const row = Math.floor(i / 2);
         const mx = 55 + col * colW;
@@ -323,7 +323,7 @@ function generateFullReport() {
         if (my > PAGE_BOTTOM) { doc.addPage(); memberStartY = 50; }
         doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(`- ${m.name}${m.role ? ' (' + m.role + ')' : ''}${m.phone ? '  ' + m.phone : ''}`, mx, memberStartY + row * 13, { width: colW - 5 });
       });
-      y = memberStartY + Math.ceil(members.length / 2) * 13 + 10;
+      y = memberStartY + Math.ceil(teamMembers.length / 2) * 13 + 10;
     }
     y += 10;
   }
@@ -349,15 +349,15 @@ function generateFullReport() {
 
   const escTypes = [...new Set(allEsc.map(e => e.type || 'evento'))].sort();
   for (const type of escTypes) {
-    if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
     const typeItems = allEsc.filter(e => (e.type || 'evento') === type);
+    y = ensureSpace(doc, 30 + Math.min(typeItems.length, 3) * 28 + 10, y);
     const typeLabels = { formacao: 'Escolinhas de Formacao', equipes_extras: 'Equipes Extras', cozinha: 'Cozinha', implantacao: 'Implantacao', missa_entrega: 'Missa de Entrega', evento: 'Eventos Gerais' };
     y = sectionTitle(doc, `${typeLabels[type] || type} (${typeItems.length})`, y, COLORS.primary);
     for (const e of typeItems) {
-      if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
       const nameH = calcTextHeight(doc, e.name || '-', 280, 9);
       const descH = e.description ? calcTextHeight(doc, e.description, 420, 8) : 0;
       const rowH = Math.max(28, nameH + descH + 8);
+      y = ensureSpace(doc, rowH, y);
       zebraRow(doc, y, rowH);
       const dt = e.date ? new Date(e.date + 'T00:00:00').toLocaleDateString('pt-BR') : 'A definir';
       doc.fillColor(COLORS.primary).fontSize(10).font('Helvetica-Bold').text(dt, 55, y + 2, { width: 75 });
@@ -381,17 +381,17 @@ function generateFullReport() {
     y = 155;
     const duringCats = [...new Set(duringTasks.map(t => t.category))].sort();
     for (const cat of duringCats) {
-      if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
-      y = sectionTitle(doc, cat, y, COLORS.primary);
       const items = duringTasks.filter(t => t.category === cat).sort((a, b) => parseFloat(a.item_number) - parseFloat(b.item_number));
+      y = ensureSpace(doc, 30 + Math.min(items.length, 3) * 32 + 10, y);
+      y = sectionTitle(doc, cat, y, COLORS.primary);
       const catDone = items.filter(t => t.status === 'concluido').length;
       doc.fillColor(COLORS.gray).fontSize(9).font('Helvetica').text(`${catDone}/${items.length}`, 500, y - 18, { width: 60, align: 'right' });
       y += 4;
       for (const t of items) {
-        if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
         const titleH = calcTextHeight(doc, `[${t.item_number}] ${t.title}`, 390, 10);
         const descH = t.description ? calcTextHeight(doc, t.description, 390, 9) : 0;
         const rowH = Math.max(32, titleH + descH + 8);
+        y = ensureSpace(doc, rowH, y);
         zebraRow(doc, y, rowH);
         const statusColor = t.status === 'concluido' ? COLORS.green : t.status === 'em_andamento' ? COLORS.orange : COLORS.gray;
         doc.fillColor(statusColor).circle(55, y + 6, 4).fill();
@@ -443,13 +443,13 @@ function generateCategoryReport(category) {
   y += 30;
 
   for (const t of items) {
-    if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
     const titleH = calcTextHeight(doc, `[${t.item_number}] ${t.title}`, 390, 10);
     const descH = t.description ? calcTextHeight(doc, t.description, 390, 9) : 0;
     const metaText = `Equipe: ${t.responsible_team || 'N/A'}  |  Prazo: ${t.deadline || 'N/A'}  |  Prioridade: ${priorityLabel(t.priority)}`;
     const metaH = calcTextHeight(doc, metaText, 390, 8);
     const notesH = t.notes ? calcTextHeight(doc, `Obs: ${t.notes}`, 420, 8) : 0;
     const rowH = Math.max(34, titleH + descH + metaH + notesH + 12);
+    y = ensureSpace(doc, rowH, y);
     zebraRow(doc, y, rowH);
     const statusColor = t.status === 'concluido' ? COLORS.green : t.status === 'em_andamento' ? COLORS.orange : COLORS.gray;
     doc.fillColor(statusColor).circle(55, y + 6, 4).fill();
@@ -470,7 +470,7 @@ function generateCategoryReport(category) {
 
   // === DURANTE O ENCONTRO ===
   if (duringItems.length > 0) {
-    if (y > PAGE_BOTTOM - 60) { doc.addPage(); y = 50; }
+    y = ensureSpace(doc, 30 + Math.min(duringItems.length, 3) * 34 + 10, y);
     y += 10;
     y = sectionTitle(doc, 'Durante o Encontro', y, COLORS.primary);
     const dDone = duringItems.filter(t => t.status === 'concluido').length;
@@ -478,13 +478,13 @@ function generateCategoryReport(category) {
     doc.fillColor(COLORS.gray).fontSize(9).font('Helvetica').text(`${dDone}/${duringItems.length} (${dPct}%)`, 500, y - 18, { width: 60, align: 'right' });
     y += 4;
     for (const t of duringItems) {
-      if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
       const titleH = calcTextHeight(doc, `[${t.item_number}] ${t.title}`, 390, 10);
       const descH = t.description ? calcTextHeight(doc, t.description, 390, 9) : 0;
       const metaText = `Equipe: ${t.responsible_team || 'N/A'}  |  Prioridade: ${priorityLabel(t.priority)}`;
       const metaH = calcTextHeight(doc, metaText, 390, 8);
       const notesH = t.notes ? calcTextHeight(doc, `Obs: ${t.notes}`, 420, 8) : 0;
       const rowH = Math.max(34, titleH + descH + metaH + notesH + 12);
+      y = ensureSpace(doc, rowH, y);
       zebraRow(doc, y, rowH);
       const statusColor = t.status === 'concluido' ? COLORS.green : t.status === 'em_andamento' ? COLORS.orange : COLORS.gray;
       doc.fillColor(statusColor).circle(55, y + 6, 4).fill();
@@ -544,7 +544,8 @@ function generateTeamReport() {
   y += 70;
 
   for (const team of teams) {
-    if (y > PAGE_BOTTOM - 80) { doc.addPage(); y = 50; }
+    const teamMembers = db.getAll('team_members').filter(m => Number(m.team_id) === Number(team.id));
+    y = ensureSpace(doc, 80 + Math.min(teamMembers.length, 3) * 13, y);
     y = sectionTitle(doc, team.name, y, COLORS.primary);
     if (team.description) {
       doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(team.description, 50, y, { width: CONTENT_WIDTH });
@@ -559,13 +560,12 @@ function generateTeamReport() {
     progressBar(doc, pct, 50, y, CONTENT_WIDTH);
     y += 18;
 
-    const members = db.getAll('team_members').filter(m => Number(m.team_id) === Number(team.id));
-    if (members.length > 0) {
-      doc.fontSize(9).fillColor(COLORS.gray).font('Helvetica-Bold').text(`Membros (${members.length}):`, 50, y);
+    if (teamMembers.length > 0) {
+      doc.fontSize(9).fillColor(COLORS.gray).font('Helvetica-Bold').text(`Membros (${teamMembers.length}):`, 50, y);
       y += 14;
       const colW = 250;
       let memberStartY = y;
-      members.forEach((m, i) => {
+      teamMembers.forEach((m, i) => {
         const col = i % 2;
         const row = Math.floor(i / 2);
         const mx = 55 + col * colW;
@@ -573,7 +573,7 @@ function generateTeamReport() {
         if (my > PAGE_BOTTOM) { doc.addPage(); memberStartY = 50; }
         doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(`- ${m.name}${m.role ? ' (' + m.role + ')' : ''}${m.phone ? '  ' + m.phone : ''}`, mx, memberStartY + row * 13, { width: colW - 5 });
       });
-      y = memberStartY + Math.ceil(members.length / 2) * 13 + 10;
+      y = memberStartY + Math.ceil(teamMembers.length / 2) * 13 + 10;
     } else {
       doc.fillColor(COLORS.gray).fontSize(9).font('Helvetica-Oblique').text('Nenhum membro cadastrado', 55, y);
       y += 16;
@@ -608,7 +608,7 @@ function generateTeamScheduleReport() {
 
     if (teamSchedule.length === 0 && teamTasks.length === 0) continue;
 
-    if (y > PAGE_BOTTOM - 80) { doc.addPage(); y = 50; }
+    y = ensureSpace(doc, 80, y);
     y = sectionTitle(doc, team.name, y, COLORS.primary);
     if (team.description) {
       doc.fillColor(COLORS.gray).fontSize(9).font('Helvetica').text(team.description, 50, y, { width: CONTENT_WIDTH });
@@ -631,14 +631,15 @@ function generateTeamScheduleReport() {
 
       let currentDay = '';
       for (const s of teamSchedule) {
-        if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
         if (s.day !== currentDay) {
           currentDay = s.day;
+          y = ensureSpace(doc, 14, y);
           doc.fillColor(COLORS.green).fontSize(10).font('Helvetica-Bold').text(`  ${currentDay}`, 50, y);
           y += 14;
         }
         const actH = calcTextHeight(doc, `  ${s.activity}`, 400, 10);
         const rowH = Math.max(24, actH + 10);
+        y = ensureSpace(doc, rowH, y);
         zebraRow(doc, y, rowH);
         doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica-Bold').text(`    ${s.time || '-'}`, 50, y + 4, { width: 60, continued: true });
         doc.font('Helvetica').fillColor(COLORS.dark).text(`  ${s.activity}`, { width: 400 });
@@ -658,16 +659,16 @@ function generateTeamScheduleReport() {
     // Pre-Encontro tasks
     if (teamPreTasks.length > 0) {
       y += 8;
-      if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
+      y = ensureSpace(doc, 40 + Math.min(teamPreTasks.length, 3) * 22, y);
       doc.fillColor(COLORS.secondary).fontSize(11).font('Helvetica-Bold').text('Tarefas de Preparacao (Pre-Encontro)', 50, y);
       y += 18;
       const done = teamPreTasks.filter(t => t.status === 'concluido').length;
       doc.fillColor(COLORS.gray).fontSize(9).font('Helvetica').text(`${done}/${teamPreTasks.length} concluidas`, 50, y);
       y += 14;
       for (const t of teamPreTasks) {
-        if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
         const titleH = calcTextHeight(doc, `[${t.item_number}] ${t.title}`, 400, 9);
         const rowH = Math.max(18, titleH + 6);
+        y = ensureSpace(doc, rowH, y);
         zebraRow(doc, y, rowH);
         const stColor = t.status === 'concluido' ? COLORS.green : t.status === 'em_andamento' ? COLORS.orange : COLORS.gray;
         doc.fillColor(stColor).circle(55, y + 5, 3).fill();
@@ -680,16 +681,16 @@ function generateTeamScheduleReport() {
     // Durante o Encontro tasks
     if (teamDuringTasks.length > 0) {
       y += 8;
-      if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
+      y = ensureSpace(doc, 40 + Math.min(teamDuringTasks.length, 3) * 22, y);
       doc.fillColor(COLORS.primary).fontSize(11).font('Helvetica-Bold').text('Tarefas Durante o Encontro', 50, y);
       y += 18;
       const done = teamDuringTasks.filter(t => t.status === 'concluido').length;
       doc.fillColor(COLORS.gray).fontSize(9).font('Helvetica').text(`${done}/${teamDuringTasks.length} concluidas`, 50, y);
       y += 14;
       for (const t of teamDuringTasks) {
-        if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
         const titleH = calcTextHeight(doc, `[${t.item_number}] ${t.title}`, 400, 9);
         const rowH = Math.max(18, titleH + 6);
+        y = ensureSpace(doc, rowH, y);
         zebraRow(doc, y, rowH);
         const stColor = t.status === 'concluido' ? COLORS.green : t.status === 'em_andamento' ? COLORS.orange : COLORS.gray;
         doc.fillColor(stColor).circle(55, y + 5, 3).fill();
@@ -721,17 +722,17 @@ function generateScheduleReport() {
   let y = 155;
   const days = ['Sexta-feira', 'Sabado', 'Domingo'];
   for (const day of days) {
-    if (y > PAGE_BOTTOM - 60) { doc.addPage(); y = 50; }
+    const dayItems = db.getAll('schedule').filter(s => s.day === day).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+    y = ensureSpace(doc, 30 + Math.min(dayItems.length, 3) * 28 + 10, y);
     y = sectionTitle(doc, day, y, COLORS.primary);
-    const items = db.getAll('schedule').filter(s => s.day === day).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
-    if (items.length === 0) {
+    if (dayItems.length === 0) {
       doc.fillColor(COLORS.gray).fontSize(10).font('Helvetica-Oblique').text('Nenhuma atividade cadastrada.', 55, y);
       y += 18;
     }
-    for (const s of items) {
-      if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+    for (const s of dayItems) {
       const actH = calcTextHeight(doc, s.activity || '', 270, 9);
       const rowH = Math.max(26, actH + 12);
+      y = ensureSpace(doc, rowH, y);
       zebraRow(doc, y, rowH);
       doc.fillColor(COLORS.primary).fontSize(10).font('Helvetica-Bold').text(s.time || '-', 55, y + 4, { width: 55 });
       doc.fillColor(COLORS.dark).font('Helvetica').fontSize(9).text(s.activity || '', 115, y + 4, { width: 270 });
@@ -782,7 +783,7 @@ function generateParticipantsReport() {
 
   for (let i = 0; i < participants.length; i++) {
     const p = participants[i];
-    if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+    y = ensureSpace(doc, 18, y);
     zebraRow(doc, y, 18);
     doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(String(p.id), 54, y + 4, { width: 20 });
     doc.text(p.name || '-', 78, y + 4, { width: 120 });
@@ -798,14 +799,14 @@ function generateParticipantsReport() {
 
   // Restrictions summary
   y += 16;
-  if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
+  y = ensureSpace(doc, 30 + Math.min(restricted.length, 3) * 40 + 10, y);
   y = sectionTitle(doc, 'Resumo de Restricoes e Necessidades Especiais', y, COLORS.red);
   if (restricted.length === 0) {
     doc.fillColor(COLORS.gray).fontSize(11).font('Helvetica').text('Nenhuma restricao cadastrada.', 55, y);
     y += 14;
   } else {
     for (const p of restricted) {
-      if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+      y = ensureSpace(doc, 40, y);
       zebraRow(doc, y, 40);
       doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica-Bold').text(p.name, 55, y + 2);
       y += 14;
@@ -864,7 +865,7 @@ function generateFinanceReport() {
     { label: 'Saldo', x: 500, w: 50, align: 'right' },
   ], y);
   for (const [cat, vals] of Object.entries(cats)) {
-    if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+    y = ensureSpace(doc, 16, y);
     zebraRow(doc, y, 16);
     doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(cat, 54, y + 3, { width: 200 });
     doc.fillColor(COLORS.green).text(fmtMoney(vals.receita || 0), 280, y + 3, { width: 100, align: 'right' });
@@ -876,7 +877,7 @@ function generateFinanceReport() {
 
   // Monthly breakdown
   y += 12;
-  if (y > PAGE_BOTTOM - 60) { doc.addPage(); y = 50; }
+  y = ensureSpace(doc, 60, y);
   y = sectionTitle(doc, 'Resumo Mensal', y, COLORS.secondary);
   const months = {};
   for (const i of items) {
@@ -894,7 +895,7 @@ function generateFinanceReport() {
       { label: 'Saldo', x: 500, w: 50, align: 'right' },
     ], y);
     for (const m of sortedMonths) {
-      if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+      y = ensureSpace(doc, 16, y);
       zebraRow(doc, y, 16);
       const [yr, mo] = m.split('-');
       const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
@@ -910,15 +911,15 @@ function generateFinanceReport() {
 
   // Detailed list
   y += 12;
-  if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
+  y = ensureSpace(doc, 40, y);
   y = sectionTitle(doc, 'Lancamentos Detalhados', y, COLORS.primary);
   for (const i of items) {
-    if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
     const descText = ` ${fmtMoney(i.amount)} - ${i.description || ''}`;
     const descH = calcTextHeight(doc, descText, 350, 10);
     const metaText = `${i.category || ''}  |  ${i.date ? fmtDate(i.date) : ''}  |  ${i.paid ? 'Pago' : 'Pendente'}  |  Resp: ${i.responsible || '-'}`;
     const metaH = calcTextHeight(doc, metaText, 440, 8);
     const rowH = Math.max(30, descH + metaH + 6);
+    y = ensureSpace(doc, rowH, y);
     zebraRow(doc, y, rowH);
     doc.fillColor(i.type === 'receita' ? COLORS.green : COLORS.red).circle(55, y + 6, 3).fill();
     doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica-Bold').text(i.type === 'receita' ? '+' : '-', 66, y + 1, { continued: true });
@@ -931,7 +932,7 @@ function generateFinanceReport() {
   const finEvents = db.getAll('finance_events');
   if (finEvents.length > 0) {
     y += 12;
-    if (y > PAGE_BOTTOM - 60) { doc.addPage(); y = 50; }
+    y = ensureSpace(doc, 60, y);
     y = sectionTitle(doc, 'Eventos Financeiros', y, COLORS.secondary);
     y = tableHeader(doc, [
       { label: 'Evento', x: 54, w: 200 },
@@ -941,7 +942,7 @@ function generateFinanceReport() {
       { label: 'Status', x: 525, w: 35, align: 'right' },
     ], y);
     for (const ev of finEvents.sort((a, b) => (a.date || '').localeCompare(b.date || ''))) {
-      if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+      y = ensureSpace(doc, 18, y);
       zebraRow(doc, y, 18);
       doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(ev.name || '-', 56, y + 4, { width: 200 });
       doc.fillColor(COLORS.gray).text(ev.date ? fmtDate(ev.date) : '-', 260, y + 4, { width: 70 });
@@ -957,7 +958,7 @@ function generateFinanceReport() {
   const finBudget = db.getAll('finance_budget');
   if (finBudget.length > 0) {
     y += 12;
-    if (y > PAGE_BOTTOM - 60) { doc.addPage(); y = 50; }
+    y = ensureSpace(doc, 60, y);
     y = sectionTitle(doc, 'Orcamento por Categoria', y, COLORS.primary);
     y = tableHeader(doc, [
       { label: 'Categoria', x: 54, w: 180 },
@@ -967,7 +968,7 @@ function generateFinanceReport() {
       { label: '%', x: 535, w: 25, align: 'right' },
     ], y);
     for (const b of finBudget.sort((a, b) => (a.category || '').localeCompare(b.category || ''))) {
-      if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+      y = ensureSpace(doc, 16, y);
       zebraRow(doc, y, 16);
       const spent = b.spent || 0;
       const budgetAmt = b.amount || b.budgeted || 0;
@@ -1010,9 +1011,9 @@ function generateAlicercesReport() {
   y = sectionTitle(doc, `ALICERCES (${alicerceItems.length})`, y, COLORS.primary);
 
   for (const a of alicerceItems) {
-    if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
     const contentH = a.content ? calcTextHeight(doc, a.content, 480, 10) : 0;
     const rowH = Math.max(44, 16 + contentH + 14 + 22);
+    y = ensureSpace(doc, rowH, y);
     zebraRow(doc, y, rowH);
     doc.fillColor(COLORS.primary).fontSize(12).font('Helvetica-Bold').text(a.title, 55, y + 2);
     let cy = y + 16;
@@ -1027,13 +1028,13 @@ function generateAlicercesReport() {
   }
 
   y += 10;
-  if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
+  y = ensureSpace(doc, 40, y);
   y = sectionTitle(doc, `ALVENARIAS (${alvenariaItems.length})`, y, COLORS.secondary);
 
   for (const a of alvenariaItems) {
-    if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
     const contentH = a.content ? calcTextHeight(doc, a.content, 480, 10) : 0;
     const rowH = Math.max(44, 16 + contentH + 14 + 22);
+    y = ensureSpace(doc, rowH, y);
     zebraRow(doc, y, rowH);
     doc.fillColor(COLORS.secondary).fontSize(12).font('Helvetica-Bold').text(a.title, 55, y + 2);
     let cy = y + 16;
@@ -1081,7 +1082,7 @@ function generateLembrancinhasReport() {
   ], y);
 
   for (const l of items) {
-    if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+    y = ensureSpace(doc, 20, y);
     zebraRow(doc, y, 20);
     doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(l.team || '-', 54, y + 4, { width: 120 });
     doc.text(l.item_name || '-', 180, y + 4, { width: 150 });
@@ -1124,13 +1125,12 @@ function generateFornecedoresReport() {
   const cats = [...new Set(fornecedores.map(f => f.category).filter(Boolean))].sort();
 
   for (const cat of cats) {
-    if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
+    const catItems = fornecedores.filter(f => f.category === cat);
+    y = ensureSpace(doc, 20 + Math.min(catItems.length, 2) * 54, y);
     doc.fillColor(COLORS.secondary).fontSize(11).font('Helvetica-Bold').text(cat, 55, y);
     doc.moveTo(55, y + 14).lineTo(560, y + 14).strokeColor(COLORS.green).lineWidth(1).stroke();
     y += 20;
-    const catItems = fornecedores.filter(f => f.category === cat);
     for (const f of catItems) {
-      if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
       const contacts = [];
       if (f.contact_person) contacts.push(`Contato: ${f.contact_person}`);
       if (f.phone) contacts.push(`Tel: ${f.phone}`);
@@ -1142,6 +1142,7 @@ function generateFornecedoresReport() {
       const costH = (f.estimated_cost || f.actual_cost) ? calcTextHeight(doc, `Estimado: ${fmtMoney(f.estimated_cost)} | Real: ${fmtMoney(f.actual_cost)}`, 300, 9) : 0;
       const notesH = f.notes ? calcTextHeight(doc, `Obs: ${f.notes}`, 400, 8) : 0;
       const rowH = Math.max(54, 14 + servH + contactsH + costH + notesH + 16);
+      y = ensureSpace(doc, rowH, y);
       zebraRow(doc, y, rowH);
       doc.fillColor(COLORS.dark).fontSize(11).font('Helvetica-Bold').text(f.name || 'Sem nome', 55, y + 2);
       let cy = y + 14;
@@ -1163,12 +1164,11 @@ function generateFornecedoresReport() {
 
   // Section 2: Pais de MPs
   if (paisMP.length > 0) {
-    if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
+    y = ensureSpace(doc, 40, y);
     y += 6;
     y = sectionTitle(doc, 'Pais de Materias-Primas', y, COLORS.primary);
 
     for (const f of paisMP) {
-      if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
       const details = [];
       if (f.mp_name) details.push(`Filho(a): ${f.mp_name}`);
       if (f.relationship) details.push(`Parentesco: ${f.relationship}`);
@@ -1179,6 +1179,7 @@ function generateFornecedoresReport() {
       const detailsH = details.length ? calcTextHeight(doc, detailsStr, 400, 9) : 0;
       const notesH = f.notes ? calcTextHeight(doc, `Obs: ${f.notes}`, 400, 8) : 0;
       const rowH = Math.max(44, 14 + detailsH + notesH + 16);
+      y = ensureSpace(doc, rowH, y);
       zebraRow(doc, y, rowH);
       doc.fillColor(COLORS.dark).fontSize(11).font('Helvetica-Bold').text(f.name || 'Sem nome', 55, y + 2);
       let cy = y + 14;
@@ -1221,10 +1222,10 @@ function generateAvisosReport() {
     doc.fillColor(COLORS.gray).fontSize(13).font('Helvetica').text('Nenhum aviso publicado.', 55, y);
   } else {
     for (const a of items) {
-      if (y > PAGE_BOTTOM - 60) { doc.addPage(); y = 50; }
       const pColors = { alta: COLORS.red, media: COLORS.orange, baixa: COLORS.secondary };
       const contentLines = Math.ceil(doc.widthOfString(a.content || '', { width: 480 }) / 480);
       const rowH = 18 + contentLines * 13 + 10 + 20 + 14;
+      y = ensureSpace(doc, Math.min(rowH, 200), y);
       zebraRow(doc, y, rowH);
       doc.fillColor(pColors[a.priority] || COLORS.gray).rect(50, y, 4, rowH - 10).fill();
       doc.fillColor(COLORS.dark).fontSize(13).font('Helvetica-Bold').text(`${a.pinned ? '- ' : ''}${a.title}`, 60, y + 2);
@@ -1282,7 +1283,7 @@ function generateKitReport() {
   ], y);
 
   for (const k of kitItems) {
-    if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+    y = ensureSpace(doc, 20, y);
     zebraRow(doc, y, 20);
     doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(k.item, 54, y + 4, { width: 220 });
     doc.fillColor(COLORS.gray).text(k.momento, 280, y + 4, { width: 150 });
@@ -1293,7 +1294,7 @@ function generateKitReport() {
 
   // Per-participant checklist
   y += 16;
-  if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
+  y = ensureSpace(doc, 40, y);
   y = sectionTitle(doc, 'Controle por Materia-prima', y, COLORS.secondary);
   if (participants.length === 0) {
     doc.fillColor(COLORS.gray).fontSize(11).font('Helvetica').text('Nenhuma materia-prima inscrita ainda.', 55, y);
@@ -1306,7 +1307,7 @@ function generateKitReport() {
       { label: 'Assinatura RH', x: 500, w: 60 },
     ], y);
     for (const p of participants) {
-      if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+      y = ensureSpace(doc, 18, y);
       zebraRow(doc, y, 18);
       doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(String(p.id), 54, y + 4, { width: 20 });
       doc.text(p.name || '-', 78, y + 4, { width: 200 });
@@ -1381,17 +1382,17 @@ function generateCoordinatorGuideReport() {
   y = sectionTitle(doc, 'Equipes de Trabalho', y, COLORS.primary);
 
   for (const team of teams) {
-    if (y > PAGE_BOTTOM - 60) { doc.addPage(); y = 50; }
+    const tm = members.filter(m => Number(m.team_id) === Number(team.id));
+    y = ensureSpace(doc, 60 + Math.min(tm.length, 3) * 13, y);
     doc.fillColor(COLORS.secondary).fontSize(11).font('Helvetica-Bold').text(team.name, 55, y);
     y += 16;
     if (team.description) {
       doc.fillColor(COLORS.gray).fontSize(9).font('Helvetica').text(team.description, 55, y, { width: CONTENT_WIDTH });
       y += 14;
     }
-    const tm = members.filter(m => Number(m.team_id) === Number(team.id));
     if (tm.length > 0) {
       for (const m of tm) {
-        if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+        y = ensureSpace(doc, 13, y);
         doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(`  - ${m.name}${m.role ? ' - ' + m.role : ''}${m.phone ? '  | ' + m.phone : ''}`, 55, y, { width: CONTENT_WIDTH });
         y += 13;
       }
@@ -1410,13 +1411,13 @@ function generateCoordinatorGuideReport() {
   const days = ['Sexta-feira', 'Sabado', 'Domingo'];
   const schedule = db.getAll('schedule');
   for (const day of days) {
-    if (y > PAGE_BOTTOM - 60) { doc.addPage(); y = 50; }
+    const dayItems = schedule.filter(s => s.day === day).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+    y = ensureSpace(doc, 30 + Math.min(dayItems.length, 3) * 28 + 10, y);
     y = sectionTitle(doc, day, y, COLORS.primary);
-    const items = schedule.filter(s => s.day === day).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
-    for (const s of items) {
-      if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+    for (const s of dayItems) {
       const actH = calcTextHeight(doc, s.activity || '', 270, 9);
       const rowH = Math.max(26, actH + 12);
+      y = ensureSpace(doc, rowH, y);
       zebraRow(doc, y, rowH);
       doc.fillColor(COLORS.primary).fontSize(10).font('Helvetica-Bold').text(s.time || '-', 55, y + 4, { width: 55 });
       doc.fillColor(COLORS.dark).font('Helvetica').fontSize(9).text(s.activity || '', 115, y + 4, { width: 270 });
@@ -1450,9 +1451,9 @@ function generateCoordinatorGuideReport() {
       { label: 'Publico', x: 500, w: 60 },
     ], y);
     for (const e of calEsc) {
-      if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
       const nameH = calcTextHeight(doc, e.name || '-', 200, 9);
       const rowH = Math.max(22, nameH + 8);
+      y = ensureSpace(doc, rowH, y);
       zebraRow(doc, y, rowH);
       const dt = e.date ? new Date(e.date + 'T00:00:00').toLocaleDateString('pt-BR') : 'A definir';
       doc.fillColor(COLORS.primary).fontSize(9).font('Helvetica-Bold').text(dt, 56, y + 4, { width: 75 });
@@ -1476,36 +1477,34 @@ function generateCoordinatorGuideReport() {
   y = sectionTitle(doc, `ALICERCES (${alicerceItems.length})`, y, COLORS.primary);
 
   for (const a of alicerceItems) {
-    if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
     const contentH = a.content ? calcTextHeight(doc, a.content, 480, 9) : 0;
     const rowH = Math.max(44, 16 + 14 + contentH + 8);
+    y = ensureSpace(doc, rowH, y);
     zebraRow(doc, y, rowH);
     doc.fillColor(COLORS.primary).fontSize(11).font('Helvetica-Bold').text(a.title, 55, y + 2);
     let cy = y + 16;
     doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(`Construtor: ${a.builder || 'NAO ATRIBUIDO'}  |  Dia: ${a.day || '-'}  |  Horario: ${a.time || '-'}`, 55, cy, { width: CONTENT_WIDTH });
     cy += 14;
     if (a.content) {
-      if (cy + contentH > PAGE_BOTTOM) { doc.addPage(); y = 50; }
       doc.fillColor(COLORS.gray).fontSize(9).font('Helvetica').text(a.content, 65, cy, { width: 480 });
     }
     y += rowH;
   }
 
   y += 10;
-  if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
+  y = ensureSpace(doc, 40, y);
   y = sectionTitle(doc, `ALVENARIAS (${alvenariaItems.length})`, y, COLORS.secondary);
 
   for (const a of alvenariaItems) {
-    if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
     const contentH = a.content ? calcTextHeight(doc, a.content, 480, 9) : 0;
     const rowH = Math.max(44, 16 + 14 + contentH + 8);
+    y = ensureSpace(doc, rowH, y);
     zebraRow(doc, y, rowH);
     doc.fillColor(COLORS.secondary).fontSize(11).font('Helvetica-Bold').text(a.title, 55, y + 2);
     let cy = y + 16;
     doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(`Construtor: ${a.builder || 'NAO ATRIBUIDO'}  |  Dia: ${a.day || '-'}  |  Horario: ${a.time || '-'}`, 55, cy, { width: CONTENT_WIDTH });
     cy += 14;
     if (a.content) {
-      if (cy + contentH > PAGE_BOTTOM) { doc.addPage(); y = 50; }
       doc.fillColor(COLORS.gray).fontSize(9).font('Helvetica').text(a.content, 65, cy, { width: 480 });
     }
     y += rowH;
@@ -1540,7 +1539,7 @@ function generateCoordinatorGuideReport() {
   ], y);
 
   for (const p of participants) {
-    if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+    y = ensureSpace(doc, 15, y);
     zebraRow(doc, y, 15);
     doc.fillColor(COLORS.dark).fontSize(8).font('Helvetica').text(String(p.id), 54, y + 3, { width: 16 });
     doc.text(p.name || '-', 72, y + 3, { width: 110 });
@@ -1556,7 +1555,7 @@ function generateCoordinatorGuideReport() {
 
   // Restrictions highlighted
   y += 16;
-  if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
+  y = ensureSpace(doc, 30 + Math.min(restricted.length, 3) * 40 + 10, y);
   y = sectionTitle(doc, 'ATENCAO - Restricoes e Necessidades Especiais', y, COLORS.red);
   const restricted = restrictedMP;
   if (restricted.length === 0) {
@@ -1564,12 +1563,12 @@ function generateCoordinatorGuideReport() {
     y += 14;
   } else {
     for (const p of restricted) {
-      if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
       let restrictionH = 0;
       if (p.food_restriction) restrictionH += calcTextHeight(doc, `  ! Restricao alimentar: ${p.food_restriction}`, 480, 9);
       if (p.medication) restrictionH += calcTextHeight(doc, `  Medicacao: ${p.medication}`, 480, 9);
       if (p.special_needs) restrictionH += calcTextHeight(doc, `  Necessidades especiais: ${p.special_needs}`, 480, 9);
       const rowH = Math.max(40, 14 + restrictionH + 8);
+      y = ensureSpace(doc, rowH, y);
       zebraRow(doc, y, rowH);
       doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica-Bold').text(p.name, 55, y + 2);
       let cy = y + 14;
@@ -1600,7 +1599,7 @@ function generateCoordinatorGuideReport() {
       { label: 'Status', x: 490, w: 70 },
     ], y);
     for (const pad of padrinhos) {
-      if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+      y = ensureSpace(doc, 16, y);
       zebraRow(doc, y, 16);
       const mp = participants.find(p => p.id === pad.participant_id);
       doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(mp ? mp.name : '-', 54, y + 3, { width: 120 });
@@ -1631,10 +1630,10 @@ function generateCoordinatorGuideReport() {
     doc.fillColor(COLORS.gray).fontSize(11).font('Helvetica').text('Nenhum aviso publicado.', 55, y);
   } else {
     for (const a of avisos) {
-      if (y > PAGE_BOTTOM - 60) { doc.addPage(); y = 50; }
       const pColors = { alta: COLORS.red, media: COLORS.orange, baixa: COLORS.secondary };
       const contentLines = Math.ceil(doc.widthOfString(a.content || '', { width: 480 }) / 480);
       const rowH = 18 + contentLines * 13 + 8 + 18 + 12;
+      y = ensureSpace(doc, Math.min(rowH, 200), y);
       zebraRow(doc, y, rowH);
       doc.fillColor(pColors[a.priority] || COLORS.gray).rect(50, y, 4, rowH - 10).fill();
       doc.fillColor(COLORS.dark).fontSize(13).font('Helvetica-Bold').text(`${a.pinned ? '- ' : ''}${a.title}`, 60, y + 2);
@@ -1667,10 +1666,10 @@ function generateCoordinatorGuideReport() {
   if (inProgress.length > 0) {
     y = sectionTitle(doc, 'Em Andamento', y, COLORS.orange);
     for (const t of inProgress) {
-      if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
       const titleH = calcTextHeight(doc, `[${t.item_number}] ${t.title}`, 380, 9);
       const metaH = calcTextHeight(doc, `Equipe: ${t.responsible_team || '-'}  |  Prazo: ${t.deadline || '-'}`, 380, 8);
       const rowH = Math.max(24, titleH + metaH + 4);
+      y = ensureSpace(doc, rowH, y);
       zebraRow(doc, y, rowH);
       doc.fillColor(COLORS.orange).circle(55, y + 5, 3).fill();
       doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica-Bold').text(`[${t.item_number}]`, 65, y + 1, { continued: true, width: 30 });
@@ -1682,13 +1681,13 @@ function generateCoordinatorGuideReport() {
   }
 
   if (notStarted.length > 0) {
-    if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
+    y = ensureSpace(doc, 30 + Math.min(notStarted.length, 3) * 24 + 10, y);
     y = sectionTitle(doc, 'Nao Iniciadas', y, COLORS.gray);
     for (const t of notStarted) {
-      if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
       const titleH = calcTextHeight(doc, `[${t.item_number}] ${t.title}`, 400, 9);
       const metaH = calcTextHeight(doc, `Equipe: ${t.responsible_team || '-'}  |  Prazo: ${t.deadline || '-'}`, 400, 8);
       const rowH = Math.max(22, titleH + metaH + 4);
+      y = ensureSpace(doc, rowH, y);
       zebraRow(doc, y, rowH);
       doc.strokeColor(COLORS.gray).lineWidth(0.5).circle(55, y + 5, 3).stroke();
       doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(`[${t.item_number}] ${t.title}`, 65, y + 1, { width: 400 });
@@ -1711,11 +1710,10 @@ function generateCoordinatorGuideReport() {
   const cats = [...new Set(fornecedores.map(f => f.category).filter(Boolean))].sort();
 
   for (const cat of cats) {
-    if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
-    y = sectionTitle(doc, cat, y, COLORS.primary);
     const catItems = fornecedores.filter(f => f.category === cat);
+    y = ensureSpace(doc, 30 + Math.min(catItems.length, 2) * 40, y);
+    y = sectionTitle(doc, cat, y, COLORS.primary);
     for (const f of catItems) {
-      if (y > PAGE_BOTTOM - 40) { doc.addPage(); y = 50; }
       const contacts = [];
       if (f.contact_person) contacts.push(f.contact_person);
       if (f.phone) contacts.push(f.phone);
@@ -1724,6 +1722,7 @@ function generateCoordinatorGuideReport() {
       const contactsH = contacts.length ? calcTextHeight(doc, contactsStr, 450, 9) : 0;
       const servH = f.service ? calcTextHeight(doc, `  Servico: ${f.service}`, 450, 8) : 0;
       const rowH = Math.max(40, 14 + contactsH + servH + 8);
+      y = ensureSpace(doc, rowH, y);
       zebraRow(doc, y, rowH);
       const stColors = { contratado: COLORS.green, pendente: COLORS.orange, contatado: COLORS.secondary, cancelado: COLORS.red };
       doc.fillColor(stColors[f.status] || COLORS.gray).circle(55, y + 5, 3).fill();
@@ -1745,37 +1744,37 @@ function generateCoordinatorGuideReport() {
   y += 26;
 
   for (let i = 0; i < 20; i++) {
-    if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+    y = ensureSpace(doc, 26, y);
     doc.strokeColor(COLORS.divider).lineWidth(0.5).moveTo(50, y).lineTo(560, y).stroke();
     y += 26;
   }
 
   // Sexta notes
   y += 10;
-  if (y > PAGE_BOTTOM - 60) { doc.addPage(); y = 50; }
+  y = ensureSpace(doc, 60, y);
   y = sectionTitle(doc, 'Sexta-feira', y, COLORS.primary);
   for (let i = 0; i < 6; i++) {
-    if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+    y = ensureSpace(doc, 22, y);
     doc.strokeColor(COLORS.divider).lineWidth(0.5).moveTo(50, y).lineTo(560, y).stroke();
     y += 22;
   }
 
   // Sabado notes
   y += 10;
-  if (y > PAGE_BOTTOM - 60) { doc.addPage(); y = 50; }
+  y = ensureSpace(doc, 60, y);
   y = sectionTitle(doc, 'Sabado', y, COLORS.primary);
   for (let i = 0; i < 6; i++) {
-    if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+    y = ensureSpace(doc, 22, y);
     doc.strokeColor(COLORS.divider).lineWidth(0.5).moveTo(50, y).lineTo(560, y).stroke();
     y += 22;
   }
 
   // Domingo notes
   y += 10;
-  if (y > PAGE_BOTTOM - 60) { doc.addPage(); y = 50; }
+  y = ensureSpace(doc, 60, y);
   y = sectionTitle(doc, 'Domingo', y, COLORS.primary);
   for (let i = 0; i < 6; i++) {
-    if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
+    y = ensureSpace(doc, 22, y);
     doc.strokeColor(COLORS.divider).lineWidth(0.5).moveTo(50, y).lineTo(560, y).stroke();
     y += 22;
   }
@@ -2558,8 +2557,8 @@ function generateEscolinhasReport() {
 
   const types = [...new Set(allEsc.map(e => e.type || 'evento'))].sort();
   for (const type of types) {
-    if (y > PAGE_BOTTOM - 60) { doc.addPage(); y = 50; }
     const typeItems = allEsc.filter(e => (e.type || 'evento') === type);
+    y = ensureSpace(doc, 60 + Math.min(typeItems.length, 3) * 28, y);
     const tDone = typeItems.filter(e => e.status === 'concluida' || e.status === 'concluido').length;
     const tPct = typeItems.length > 0 ? Math.round((tDone / typeItems.length) * 100) : 0;
     y = sectionTitle(doc, `${typeLabels[type] || type} (${typeItems.length})`, y, COLORS.primary);
@@ -2578,10 +2577,10 @@ function generateEscolinhasReport() {
     ], y);
 
     for (const e of typeItems) {
-      if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }
       const nameH = calcTextHeight(doc, e.name || '-', 155, 9);
       const descH = e.description ? calcTextHeight(doc, e.description, 375, 8) : 0;
       const rowH = Math.max(26, nameH + descH + 8);
+      y = ensureSpace(doc, rowH, y);
       zebraRow(doc, y, rowH);
       const dt = e.date ? new Date(e.date + 'T00:00:00').toLocaleDateString('pt-BR') : 'A definir';
       doc.fillColor(COLORS.primary).fontSize(9).font('Helvetica-Bold').text(dt, 56, y + 4, { width: 70 });

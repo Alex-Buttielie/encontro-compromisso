@@ -1,5 +1,19 @@
 [
   {
+    "version": "1.38.0",
+    "date": "2026-07-31",
+    "title": "Agrupamento Harmonico Aplicado a Todos os Relatorios PDF",
+    "changes": [
+      "Funcao ensureSpace() aplicada consistentemente a todos os 14 relatorios PDF",
+      "Relatorios atualizados: Geral, por Categoria, por Equipes, Programa por Equipe, Cronograma, Materias-primas, Financeiro, Alicerces, Lembrancinhas, Fornecedores, Avisos, Kit, Guia do Coordenador e Escolinhas",
+      "Substituidas todas as verificacoes manuais de page break (if y > PAGE_BOTTOM) por chamadas ensureSpace() com altura real do bloco",
+      "Secoes de categoria agora verificam se cabem header + alguns itens antes de comecar a renderizar",
+      "Linhas individuais dentro de blocos grandes continuam quebrando normalmente",
+      "Removidas consultas duplicadas de team_members em generateFullReport e generateTeamReport",
+      "Nenhum conteudo mais sera renderizado fora da pagina apos quebras"
+    ]
+  },
+  {
     "version": "1.37.0",
     "date": "2026-07-31",
     "title": "Correcao Definitiva de Membros em Relatorios PDF",
