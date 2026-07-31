@@ -955,6 +955,7 @@ async function renderEquipes() {
           ` : ''}
 
           <div class="team-card-actions">
+            <button class="btn btn-primary btn-sm" onclick="viewTeamDetails(${t.id})">👁️ Detalhes</button>
             <button class="btn btn-secondary btn-sm" onclick="openTeamModal(${t.id})">✏️ Editar</button>
             <button class="btn btn-secondary btn-sm" onclick="deleteTeam(${t.id}, '${t.name.replace(/'/g,"\\'")}')">🗑️ Excluir</button>
           </div>
@@ -1033,6 +1034,141 @@ function toggleEquipeExpand(id) {
   if (equipesExpanded.has(id)) equipesExpanded.delete(id);
   else equipesExpanded.add(id);
   renderEquipes();
+}
+
+async function viewTeamDetails(teamId) {
+  const team = teamsCache.find(t => t.id === teamId);
+  if (!team) return;
+
+  const allTasks = await api('/tasks');
+  const allSchedule = await api('/schedule');
+  const allLembrancinhas = await api('/lembrancinhas');
+  const allAlicerces = await api('/alicerces');
+
+  const teamTasks = allTasks.filter(task => task.responsible_team === team.name);
+  const teamSchedule = allSchedule.filter(s => (s.responsible_team || '').includes(team.name));
+  const teamLembrancinhas = allLembrancinhas.filter(l => l.team === team.name);
+  const teamAlicerces = allAlicerces.filter(a => a.constructor_name && a.constructor_name.includes(team.name));
+
+  const tasksDone = teamTasks.filter(t => t.status === 'concluido').length;
+  const tasksInProgress = teamTasks.filter(t => t.status === 'em_andamento').length;
+  const tasksPending = teamTasks.filter(t => t.status === 'pendente').length;
+  const tasksPct = teamTasks.length > 0 ? Math.round((tasksDone / teamTasks.length) * 100) : 0;
+  const schedDone = teamSchedule.filter(s => s.status === 'concluido').length;
+  const schedPct = teamSchedule.length > 0 ? Math.round((schedDone / teamSchedule.length) * 100) : 0;
+
+  const statusLabels = { pendente: 'Pendente', em_andamento: 'Em Andamento', concluido: 'Concluído' };
+  const statusColors = { pendente: 'var(--text-light)', em_andamento: 'var(--warning)', concluido: 'var(--success)' };
+  const priorityLabels = { alta: 'Alta', media: 'Média', baixa: 'Baixa' };
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay active';
+  overlay.innerHTML = `<div class="modal team-details-modal">
+    <div class="modal-header">
+      <h3>${team.name}</h3>
+      <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button>
+    </div>
+    <div class="modal-body">
+      ${team.description ? `<p class="team-details-desc">${team.description}</p>` : ''}
+      ${team.responsible ? `<p class="team-details-resp">👤 Responsável: <strong>${team.responsible}</strong></p>` : ''}
+
+      <div class="team-details-stats">
+        <div class="td-stat"><span class="td-stat-icon">👥</span><span class="td-stat-val">${team.members?.length || 0}</span><span class="td-stat-label">Membros</span></div>
+        <div class="td-stat"><span class="td-stat-icon">📋</span><span class="td-stat-val">${teamTasks.length}</span><span class="td-stat-label">Tarefas</span></div>
+        <div class="td-stat"><span class="td-stat-icon">🗓️</span><span class="td-stat-val">${teamSchedule.length}</span><span class="td-stat-label">Cronograma</span></div>
+        <div class="td-stat"><span class="td-stat-icon">✅</span><span class="td-stat-val">${tasksPct}%</span><span class="td-stat-label">Concluído</span></div>
+      </div>
+
+      ${teamTasks.length > 0 ? `
+        <div class="team-details-progress">
+          <div class="progress-label"><span>Progresso das Tarefas</span><span>${tasksDone}/${teamTasks.length} (${tasksPct}%)</span></div>
+          <div class="team-progress-bar"><div class="team-progress-fill" style="width:${tasksPct}%"></div></div>
+          <div class="team-details-status-breakdown">
+            <span style="color:var(--success)">✅ ${tasksDone} concluídas</span>
+            <span style="color:var(--warning)">🔄 ${tasksInProgress} em andamento</span>
+            <span style="color:var(--text-light)">⏳ ${tasksPending} pendentes</span>
+          </div>
+        </div>
+      ` : ''}
+
+      ${team.members?.length ? `
+        <div class="team-details-section">
+          <h4>👥 Membros (${team.members.length})</h4>
+          <div class="team-details-members">
+            ${team.members.map((m, i) => `<div class="td-member">
+              <span class="td-member-avatar">${(m.name || '?').charAt(0).toUpperCase()}</span>
+              <div class="td-member-info">
+                <span class="td-member-name">${m.name}</span>
+                ${m.role ? `<span class="td-member-role">${m.role}</span>` : ''}
+                ${m.phone ? `<span class="td-member-phone">📞 ${m.phone}</span>` : ''}
+              </div>
+            </div>`).join('')}
+          </div>
+        </div>
+      ` : '<div class="team-details-section"><h4>👥 Membros</h4><p class="empty-state">Nenhum membro cadastrado.</p></div>'}
+
+      ${teamSchedule.length > 0 ? `
+        <div class="team-details-section">
+          <h4>📅 Cronograma no Encontro (${schedDone}/${teamSchedule.length} concluídas)</h4>
+          <div class="team-details-schedule">
+            ${teamSchedule.map(s => `<div class="td-sched-row">
+              <span class="td-sched-day">${s.day.replace('-feira','')}</span>
+              <span class="td-sched-time">${s.time}</span>
+              <span class="td-sched-activity">${s.activity}</span>
+              <span class="td-sched-status" style="background:${s.status==='concluido'?'var(--success)':'var(--border)'};color:${s.status==='concluido'?'#fff':'var(--text-light)'}">${s.status==='concluido'?'✓':'○'}</span>
+            </div>`).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      ${teamTasks.length > 0 ? `
+        <div class="team-details-section">
+          <h4>📋 Tarefas de Preparação</h4>
+          <div class="team-details-tasks">
+            ${teamTasks.map(task => `<div class="td-task-row" onclick="navigateTo('checklist')" style="cursor:pointer">
+              <span class="td-task-dot" style="background:${statusColors[task.status] || 'var(--border)'}"></span>
+              <span class="td-task-num">#${task.item_number || '—'}</span>
+              <span class="td-task-title">${task.title}</span>
+              <span class="td-task-priority" style="color:${task.priority==='alta'?'var(--danger)':task.priority==='media'?'var(--warning)':'var(--text-light)'}">${priorityLabels[task.priority] || '—'}</span>
+              <span class="td-task-status" style="color:${statusColors[task.status] || 'var(--text-light)'}">${statusLabels[task.status] || task.status}</span>
+              <span class="td-task-deadline">${task.deadline || '—'}</span>
+            </div>`).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      ${teamLembrancinhas.length > 0 ? `
+        <div class="team-details-section">
+          <h4>🎁 Lembrancinhas</h4>
+          <div class="team-details-mini">
+            ${teamLembrancinhas.map(l => `<div class="td-mini-row">
+              <span class="td-mini-name">${l.item_name || '—'}</span>
+              <span class="td-mini-qty">${l.quantity_done || 0}/${l.quantity_needed || 0}</span>
+              <span class="td-mini-badge" style="background:${l.status==='pronto'?'var(--success)':l.status==='em_andamento'?'var(--warning)':'var(--border)'};color:${l.status==='pronto'?'#fff':'var(--text-light)'}">${(l.status||'—').replace(/_/g,' ')}</span>
+            </div>`).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      ${teamAlicerces.length > 0 ? `
+        <div class="team-details-section">
+          <h4>🏛️ Alicerces/Alvenarias</h4>
+          <div class="team-details-mini">
+            ${teamAlicerces.map(a => `<div class="td-mini-row">
+              <span class="td-mini-name">${a.title}</span>
+              <span class="td-mini-badge" style="background:${a.status==='concluido'?'var(--success)':a.status==='atribuido'?'var(--warning)':'var(--border)'};color:${a.status==='concluido'?'#fff':'var(--text-light)'}">${(a.status||'—').replace(/_/g,' ')}</span>
+            </div>`).join('')}
+          </div>
+        </div>
+      ` : ''}
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Fechar</button>
+      <button class="btn btn-primary" onclick="this.closest('.modal-overlay').remove(); openTeamModal(${team.id})">✏️ Editar Equipe</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
 }
 
 function openTeamModal(id) {

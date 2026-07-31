@@ -1130,6 +1130,367 @@ select:focus, input:focus, textarea:focus { border-color: var(--primary); }
   transition: width 0.5s;
 }
 
+/* TEAM DETAILS MODAL */
+.team-details-modal {
+  max-width: 720px;
+  width: 95vw;
+}
+
+.team-details-modal .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 16px;
+}
+
+.team-details-modal .modal-header h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--dark);
+}
+
+.team-details-modal .modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--text-light);
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.team-details-modal .modal-close:hover {
+  background: var(--light-alt);
+}
+
+.team-details-modal .modal-body {
+  max-height: 65vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.team-details-desc {
+  font-size: 14px;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.team-details-resp {
+  font-size: 13px;
+  color: var(--text-light);
+  margin-bottom: 14px;
+}
+
+.team-details-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.td-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px 8px;
+  background: var(--light-card);
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+
+.td-stat-icon { font-size: 20px; }
+.td-stat-val { font-size: 20px; font-weight: 700; color: var(--dark); }
+.td-stat-label { font-size: 10px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.3px; }
+
+.team-details-progress {
+  margin-bottom: 18px;
+}
+
+.team-details-status-breakdown {
+  display: flex;
+  gap: 14px;
+  margin-top: 8px;
+  font-size: 12px;
+  flex-wrap: wrap;
+}
+
+.team-details-section {
+  margin-bottom: 18px;
+}
+
+.team-details-section h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--dark);
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.team-details-members {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+}
+
+.td-member {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--light-card);
+  border-radius: var(--radius-sm);
+}
+
+.td-member-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--jumire-green), #3eb678);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.td-member-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.td-member-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.td-member-role {
+  font-size: 11px;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.td-member-phone {
+  font-size: 11px;
+  color: var(--text-light);
+}
+
+.team-details-schedule {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.td-sched-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--light-card);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+}
+
+.td-sched-day {
+  font-weight: 600;
+  color: var(--primary);
+  min-width: 70px;
+  font-size: 12px;
+}
+
+.td-sched-time {
+  font-size: 12px;
+  color: var(--text-light);
+  min-width: 55px;
+}
+
+.td-sched-activity {
+  flex: 1;
+  color: var(--dark);
+}
+
+.td-sched-status {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.team-details-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.td-task-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--light-card);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  transition: background 0.2s;
+}
+
+.td-task-row:hover {
+  background: var(--light-alt);
+}
+
+.td-task-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.td-task-num {
+  font-weight: 600;
+  color: var(--text-light);
+  min-width: 32px;
+}
+
+.td-task-title {
+  flex: 1;
+  color: var(--dark);
+  font-weight: 500;
+}
+
+.td-task-priority {
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.td-task-status {
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.td-task-deadline {
+  font-size: 11px;
+  color: var(--text-light);
+  white-space: nowrap;
+}
+
+.team-details-mini {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.td-mini-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--light-card);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+}
+
+.td-mini-name {
+  flex: 1;
+  color: var(--dark);
+  font-weight: 500;
+}
+
+.td-mini-qty {
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.td-mini-badge {
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.team-details-modal .modal-footer {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+}
+
+/* TEAM DETAILS MOBILE */
+@media (max-width: 768px) {
+  .team-details-modal {
+    max-width: 95vw;
+  }
+
+  .team-details-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .td-stat-val {
+    font-size: 18px;
+  }
+
+  .team-details-members {
+    grid-template-columns: 1fr;
+  }
+
+  .td-sched-row {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .td-sched-activity {
+    flex: 1 1 100%;
+  }
+
+  .td-task-row {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .td-task-title {
+    flex: 1 1 100%;
+    order: 2;
+  }
+
+  .td-task-num {
+    order: 1;
+  }
+
+  .td-task-dot {
+    order: 0;
+  }
+
+  .td-task-priority,
+  .td-task-status,
+  .td-task-deadline {
+    order: 3;
+    font-size: 10px;
+  }
+
+  .team-details-status-breakdown {
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+
 /* BUTTONS */
 .btn {
   padding: 10px 20px;

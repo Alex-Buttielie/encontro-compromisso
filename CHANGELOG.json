@@ -1,5 +1,21 @@
 [
   {
+    "version": "1.26.0",
+    "date": "2026-07-30",
+    "title": "Detalhes da Equipe",
+    "changes": [
+      "Botão Ver Detalhes em cada card de equipe abre modal completo",
+      "Modal de detalhes com 4 cards de estatísticas (membros, tarefas, cronograma, % concluído)",
+      "Barra de progresso das tarefas com breakdown por status (concluídas, em andamento, pendentes)",
+      "Lista de membros com avatares circulares (inicial do nome), role e telefone",
+      "Cronograma do encontro com dia, horário, atividade e indicador de conclusão",
+      "Lista de tarefas com número, título, prioridade, status e prazo (clicável → checklist)",
+      "Seções de Lembrancinhas e Alicerces com badges de status",
+      "Botão Editar Equipe no rodapé do modal",
+      "Modal responsivo: stats 2x2 no mobile, membros em coluna única, tasks com wrapping"
+    ]
+  },
+  {
     "version": "1.25.0",
     "date": "2026-07-30",
     "title": "Financeiro Mobile",
