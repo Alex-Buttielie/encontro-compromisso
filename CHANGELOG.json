@@ -1,5 +1,23 @@
 [
   {
+    "version": "1.55.0",
+    "date": "2026-07-31",
+    "title": "Fechamento de Caixa Mensal no Financeiro",
+    "changes": [
+      "Nova aba '📅 Fechamento' no módulo financeiro",
+      "Seleção de mês para visualizar lançamentos e totais do período",
+      "Resumo do mês: receitas pagas, despesas pagas, saldo, pendentes (a receber/a pagar)",
+      "Resumo por categoria com receitas, despesas e saldo por categoria",
+      "Lista de todos os lançamentos do mês com tabela rolável",
+      "Fechar mês com modal de confirmação (notas + responsável)",
+      "Reabrir mês fechado (remove o registro de fechamento)",
+      "Visualizar notas do fechamento",
+      "Histórico de meses fechados com totais e data de fechamento",
+      "Nova tabela finance_closings no banco JSON",
+      "Endpoints: GET/POST/PUT/DELETE /api/finance/closings e GET /api/finance/closings/:period"
+    ]
+  },
+  {
     "version": "1.54.0",
     "date": "2026-07-31",
     "title": "Envio de Checklist por WhatsApp (CallMeBot)",

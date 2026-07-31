@@ -2575,6 +2575,7 @@ async function renderFinanceiro() {
       <button class="tab-btn" onclick="switchFinanceTab('categorias')">📁 Categorias</button>
       <button class="tab-btn" onclick="switchFinanceTab('eventos')">📅 Eventos</button>
       <button class="tab-btn" onclick="switchFinanceTab('orcamento')">🎯 Orçamento</button>
+      <button class="tab-btn" onclick="switchFinanceTab('fechamento')">📅 Fechamento</button>
     </div>
     <div id="fin-tab-content"></div>
   `;
@@ -2585,7 +2586,7 @@ async function switchFinanceTab(tab) {
   financeTab = tab;
   document.querySelectorAll('#fin-tabs .tab-btn').forEach(b => b.classList.remove('active'));
   const btns = document.querySelectorAll('#fin-tabs .tab-btn');
-  const tabMap = { overview: 0, lancamentos: 1, categorias: 2, eventos: 3, orcamento: 4 };
+  const tabMap = { overview: 0, lancamentos: 1, categorias: 2, eventos: 3, orcamento: 4, fechamento: 5 };
   if (btns[tabMap[tab]]) btns[tabMap[tab]].classList.add('active');
   Object.values(financeCharts).forEach(c => { try { c.destroy(); } catch(e){} });
   financeCharts = {};
@@ -2596,6 +2597,7 @@ async function switchFinanceTab(tab) {
   else if (tab === 'categorias') await renderFinCategorias(content);
   else if (tab === 'eventos') await renderFinEventos(content);
   else if (tab === 'orcamento') await renderFinOrcamento(content);
+  else if (tab === 'fechamento') await renderFinFechamento(content);
 }
 
 // ===== VISÃO GERAL (charts) =====
@@ -3145,6 +3147,275 @@ async function deleteFinBudget(id) {
   await api(`/finance/budget/${id}`, { method: 'DELETE' });
   toast('Item excluído', 'error');
   renderFinOrcamento(document.getElementById('fin-tab-content'));
+}
+
+// ===== FECHAMENTO DE CAIXA =====
+let fechamentoSelectedMonth = '';
+
+async function renderFinFechamento(container) {
+  const closings = await api('/finance/closings');
+  const now = new Date();
+  const currentMonth = now.toISOString().slice(0, 7);
+  if (!fechamentoSelectedMonth) fechamentoSelectedMonth = currentMonth;
+
+  const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+
+  // Build month options from finance data
+  const allMonths = [...new Set(financeCache.map(f => (f.date || '').substring(0, 7)).filter(Boolean))].sort().reverse();
+  if (!allMonths.includes(currentMonth)) allMonths.unshift(currentMonth);
+  // Include closed months that may not have entries
+  for (const c of closings) {
+    if (!allMonths.includes(c.period)) allMonths.unshift(c.period);
+  }
+
+  const monthOptions = allMonths.map(m => {
+    const [y, mo] = m.split('-');
+    return `<option value="${m}" ${m === fechamentoSelectedMonth ? 'selected' : ''}>${monthNames[parseInt(mo) - 1]}/${y}</option>`;
+  }).join('');
+
+  container.innerHTML = `
+    <div class="filters" style="margin-bottom:16px">
+      <div class="filter-group">
+        <span class="filter-label">Mês:</span>
+        <select id="fechamento-month" onchange="changeFechamentoMonth(this.value)">${monthOptions}</select>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="loadFechamentoDetail()" title="Atualizar">🔄</button>
+    </div>
+    <div id="fechamento-detail"></div>
+    <div class="card" style="margin-top:16px">
+      <div class="card-title">📅 Meses Fechados (${closings.length})</div>
+      <div id="fechamento-history"></div>
+    </div>
+  `;
+
+  renderFechamentoHistory(closings);
+  await loadFechamentoDetail();
+}
+
+function changeFechamentoMonth(month) {
+  fechamentoSelectedMonth = month;
+  loadFechamentoDetail();
+}
+
+async function loadFechamentoDetail() {
+  const detail = document.getElementById('fechamento-detail');
+  if (!detail) return;
+  detail.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-light)">Carregando...</div>';
+
+  try {
+    const data = await api(`/finance/closings/${fechamentoSelectedMonth}`);
+    const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    const [y, mo] = data.period.split('-');
+    const monthLabel = `${monthNames[parseInt(mo) - 1]}/${y}`;
+
+    const statusBadge = data.closed
+      ? '<span class="badge-sm badge-success">✅ Fechado</span>'
+      : '<span class="badge-sm badge-warning">⭕ Aberto</span>';
+
+    const items = data.items || [];
+    const receitas = items.filter(f => f.type === 'receita');
+    const despesas = items.filter(f => f.type === 'despesa');
+
+    // Category breakdown
+    const catEntries = Object.entries(data.byCategory || {}).sort((a, b) => a[0].localeCompare(b[0]));
+
+    detail.innerHTML = `
+      <div class="card" style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <h3 style="margin:0">Fechamento de ${monthLabel}</h3>
+          ${statusBadge}
+        </div>
+        <div class="finance-summary">
+          <div class="finance-card income"><div class="label">Receitas Pagas</div><div class="amount">R$ ${data.totalReceitas.toFixed(2)}</div></div>
+          <div class="finance-card expense"><div class="label">Despesas Pagas</div><div class="amount">R$ ${data.totalDespesas.toFixed(2)}</div></div>
+          <div class="finance-card balance"><div class="label">Saldo do Mês</div><div class="amount">R$ ${data.saldo.toFixed(2)}</div></div>
+          <div class="finance-card pending"><div class="label">A Receber</div><div class="amount">R$ ${data.pendenteReceitas.toFixed(2)}</div></div>
+          <div class="finance-card pending"><div class="label">A Pagar</div><div class="amount">R$ ${data.pendenteDespesas.toFixed(2)}</div></div>
+        </div>
+        <div style="margin-top:12px;font-size:13px;color:var(--text-light)">
+          📊 ${data.itemCount} lançamentos no mês (${receitas.length} receitas, ${despesas.length} despesas)
+        </div>
+      </div>
+
+      ${catEntries.length > 0 ? `
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title">Resumo por Categoria</div>
+        <table class="data-table">
+          <thead><tr><th>Categoria</th><th>Receitas</th><th>Despesas</th><th>Saldo</th><th>Lançamentos</th></tr></thead>
+          <tbody>
+            ${catEntries.map(([cat, v]) => {
+              const catSaldo = (v.receita || 0) - (v.despesa || 0);
+              return `<tr>
+                <td style="font-weight:600">${cat}</td>
+                <td style="color:var(--success)">R$ ${(v.receita || 0).toFixed(2)}</td>
+                <td style="color:var(--danger)">R$ ${(v.despesa || 0).toFixed(2)}</td>
+                <td style="color:${catSaldo >= 0 ? 'var(--success)' : 'var(--danger)'};font-weight:600">R$ ${catSaldo.toFixed(2)}</td>
+                <td>${v.count || 0}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>` : ''}
+
+      ${items.length > 0 ? `
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title">Lançamentos do Mês</div>
+        <div style="max-height:400px;overflow-y:auto">
+        <table class="data-table">
+          <thead><tr><th>Data</th><th>Tipo</th><th>Categoria</th><th>Descrição</th><th>Valor</th><th>Status</th></tr></thead>
+          <tbody>
+            ${items.map(f => `<tr>
+              <td>${f.date ? new Date(f.date).toLocaleDateString('pt-BR') : '—'}</td>
+              <td><span class="badge-sm ${f.type === 'receita' ? 'badge-success' : 'badge-danger'}">${f.type === 'receita' ? 'Receita' : 'Despesa'}</span></td>
+              <td>${f.category || '—'}</td>
+              <td>${f.description || '—'}</td>
+              <td style="font-weight:600;color:${f.type === 'receita' ? 'var(--success)' : 'var(--danger)'}">R$ ${(f.amount || 0).toFixed(2)}</td>
+              <td>${f.paid ? '<span class="badge-sm badge-success">Pago</span>' : '<span class="badge-sm badge-warning">Pendente</span>'}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+        </div>
+      </div>` : '<div class="card empty-state"><p>Nenhum lançamento neste mês.</p></div>'}
+
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        ${data.closed ? `
+          <button class="btn btn-secondary" onclick="reopenFechamento(${data.closing_data.id}, '${data.period}')">🔓 Reabrir Mês</button>
+          <button class="btn btn-secondary" onclick="viewFechamentoNotes('${data.period}')">📝 Ver Notas</button>
+        ` : `
+          <button class="btn btn-primary" onclick="openFechamentoModal('${data.period}')">🔒 Fechar Mês</button>
+        `}
+      </div>
+    `;
+  } catch (err) {
+    detail.innerHTML = `<div class="card empty-state"><p>Erro ao carregar: ${err.message}</p></div>`;
+  }
+}
+
+function renderFechamentoHistory(closings) {
+  const hist = document.getElementById('fechamento-history');
+  if (!hist) return;
+  if (closings.length === 0) {
+    hist.innerHTML = '<p style="text-align:center;color:var(--text-light);padding:16px">Nenhum mês fechado ainda.</p>';
+    return;
+  }
+  const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+  hist.innerHTML = `
+    <table class="data-table">
+      <thead><tr><th>Mês</th><th>Receitas</th><th>Despesas</th><th>Saldo</th><th>Lançamentos</th><th>Fechado em</th><th></th></tr></thead>
+      <tbody>
+        ${closings.map(c => {
+          const [y, mo] = (c.period || '').split('-');
+          const closedDate = c.closed_at ? new Date(c.closed_at).toLocaleDateString('pt-BR') : '—';
+          const saldoColor = (c.saldo || 0) >= 0 ? 'var(--success)' : 'var(--danger)';
+          return `<tr>
+            <td style="font-weight:600">${monthNames[parseInt(mo) - 1] || '—'}/${y}</td>
+            <td style="color:var(--success)">R$ ${(c.total_receitas || 0).toFixed(2)}</td>
+            <td style="color:var(--danger)">R$ ${(c.total_despesas || 0).toFixed(2)}</td>
+            <td style="color:${saldoColor};font-weight:600">R$ ${(c.saldo || 0).toFixed(2)}</td>
+            <td>${c.item_count || 0}</td>
+            <td style="font-size:12px;color:var(--text-light)">${closedDate}</td>
+            <td>
+              <button class="btn-icon" onclick="fechamentoSelectMonth('${c.period}')" title="Ver detalhes">👁️</button>
+              <button class="btn-icon" onclick="reopenFechamento(${c.id}, '${c.period}')" title="Reabrir">🔓</button>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function fechamentoSelectMonth(period) {
+  fechamentoSelectedMonth = period;
+  const sel = document.getElementById('fechamento-month');
+  if (sel) sel.value = period;
+  loadFechamentoDetail();
+}
+
+function openFechamentoModal(period) {
+  const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+  const [y, mo] = period.split('-');
+  const monthLabel = `${monthNames[parseInt(mo) - 1]}/${y}`;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay active';
+  overlay.innerHTML = `<div class="modal" style="max-width:480px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 style="margin:0">🔒 Fechar Caixa - ${monthLabel}</h3>
+      <button class="modal-close" onclick="this.closest('.modal-overlay').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-light);padding:4px 8px;border-radius:6px">✕</button>
+    </div>
+    <div style="font-size:13px;color:var(--text-light);margin-bottom:16px;padding:12px;background:var(--light-card);border-radius:8px">
+      Ao fechar o mês, você registra um snapshot das receitas e despesas do período.
+      O mês poderá ser reaberto posteriormente se necessário.
+    </div>
+    <div class="form-group">
+      <label>Notas do fechamento (opcional)</label>
+      <textarea id="fc-notes" rows="3" placeholder="Ex: Conferido com o tesoureiro, todos os recibos verificados..."></textarea>
+    </div>
+    <div class="form-group">
+      <label>Responsável pelo fechamento</label>
+      <input id="fc-by" placeholder="Seu nome">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmFechamento('${period}', this)">🔒 Confirmar Fechamento</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+}
+
+async function confirmFechamento(period, btn) {
+  const notes = document.getElementById('fc-notes')?.value || '';
+  const closedBy = document.getElementById('fc-by')?.value || '';
+  btn.disabled = true;
+  btn.textContent = 'Fechando...';
+  try {
+    await api('/finance/closings', { method: 'POST', body: JSON.stringify({ period, notes, closed_by: closedBy }) });
+    btn.closest('.modal-overlay').remove();
+    toast('Mês fechado com sucesso!', 'success');
+    renderFinanceiro();
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = '🔒 Confirmar Fechamento';
+    toast(err.message || 'Erro ao fechar mês', 'error');
+  }
+}
+
+async function reopenFechamento(id, period) {
+  if (!confirm(`Reabrir o mês ${period}? O registro de fechamento será removido.`)) return;
+  try {
+    await api(`/finance/closings/${id}`, { method: 'DELETE' });
+    toast('Mês reaberto!', 'success');
+    renderFinanceiro();
+  } catch (err) {
+    toast(err.message || 'Erro ao reabrir mês', 'error');
+  }
+}
+
+async function viewFechamentoNotes(period) {
+  const data = await api(`/finance/closings/${period}`);
+  const c = data.closing_data;
+  if (!c) return;
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay active';
+  overlay.innerHTML = `<div class="modal" style="max-width:480px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 style="margin:0">📝 Notas do Fechamento</h3>
+      <button class="modal-close" onclick="this.closest('.modal-overlay').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-light);padding:4px 8px;border-radius:6px">✕</button>
+    </div>
+    <div style="font-size:13px;color:var(--text-light);margin-bottom:8px">
+      <strong>Período:</strong> ${period}<br>
+      <strong>Fechado em:</strong> ${c.closed_at ? new Date(c.closed_at).toLocaleString('pt-BR') : '—'}<br>
+      <strong>Responsável:</strong> ${c.closed_by || '—'}
+    </div>
+    <div style="padding:12px;background:var(--light-card);border-radius:8px;min-height:60px;font-size:14px;white-space:pre-wrap">${c.notes || 'Sem notas.'}</div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Fechar</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
 }
 
 // ============ LEMBRANCINHAS ============

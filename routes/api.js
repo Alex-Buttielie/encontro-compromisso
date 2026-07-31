@@ -351,6 +351,91 @@ router.get('/finance/summary', (req, res) => {
   res.json({ income, expenses, balance: income - expenses, pendingIncome, pendingExpenses, byCategory });
 });
 
+// ============ FINANCE CLOSINGS (FECHAMENTO DE CAIXA) ============
+
+router.get('/finance/closings', (req, res) => {
+  let list = db.getAll('finance_closings');
+  list.sort((a, b) => (b.period || '').localeCompare(a.period || ''));
+  res.json(list);
+});
+
+router.get('/finance/closings/:period', (req, res) => {
+  const period = req.params.period; // YYYY-MM
+  const closing = db.getAll('finance_closings').find(c => c.period === period);
+  const items = db.getAll('finance');
+  const monthItems = items.filter(f => (f.date || '').startsWith(period));
+
+  const receitas = monthItems.filter(f => f.type === 'receita');
+  const despesas = monthItems.filter(f => f.type === 'despesa');
+  const totalReceitas = receitas.filter(f => f.paid).reduce((s, f) => s + (f.amount || 0), 0);
+  const totalDespesas = despesas.filter(f => f.paid).reduce((s, f) => s + (f.amount || 0), 0);
+  const pendenteReceitas = receitas.filter(f => !f.paid).reduce((s, f) => s + (f.amount || 0), 0);
+  const pendenteDespesas = despesas.filter(f => !f.paid).reduce((s, f) => s + (f.amount || 0), 0);
+
+  // Category breakdown for the month
+  const byCategory = {};
+  for (const f of monthItems) {
+    const cat = f.category || 'Outros';
+    if (!byCategory[cat]) byCategory[cat] = { receita: 0, despesa: 0, count: 0 };
+    byCategory[cat].count++;
+    if (f.type === 'receita' && f.paid) byCategory[cat].receita += f.amount || 0;
+    if (f.type === 'despesa' && f.paid) byCategory[cat].despesa += f.amount || 0;
+  }
+
+  res.json({
+    period,
+    closed: !!closing,
+    closing_data: closing || null,
+    items: monthItems,
+    totalReceitas,
+    totalDespesas,
+    saldo: totalReceitas - totalDespesas,
+    pendenteReceitas,
+    pendenteDespesas,
+    byCategory,
+    itemCount: monthItems.length,
+  });
+});
+
+router.post('/finance/closings', (req, res) => {
+  const { period, notes } = req.body;
+  if (!period || !/^\d{4}-\d{2}$/.test(period)) {
+    return res.status(400).json({ error: 'Período inválido. Use o formato YYYY-MM.' });
+  }
+
+  const existing = db.getAll('finance_closings').find(c => c.period === period);
+  if (existing) {
+    return res.status(400).json({ error: 'Este mês já está fechado.' });
+  }
+
+  const items = db.getAll('finance');
+  const monthItems = items.filter(f => (f.date || '').startsWith(period));
+  const totalReceitas = monthItems.filter(f => f.type === 'receita' && f.paid).reduce((s, f) => s + (f.amount || 0), 0);
+  const totalDespesas = monthItems.filter(f => f.type === 'despesa' && f.paid).reduce((s, f) => s + (f.amount || 0), 0);
+
+  const id = db.insert('finance_closings', {
+    period,
+    closed_at: new Date().toISOString(),
+    closed_by: req.body.closed_by || '',
+    total_receitas: totalReceitas,
+    total_despesas: totalDespesas,
+    saldo: totalReceitas - totalDespesas,
+    item_count: monthItems.length,
+    notes: notes || '',
+  });
+  res.json({ id });
+});
+
+router.put('/finance/closings/:id', (req, res) => {
+  db.update('finance_closings', req.params.id, { ...req.body, updated_at: new Date().toISOString() });
+  res.json({ success: true });
+});
+
+router.delete('/finance/closings/:id', (req, res) => {
+  db.remove('finance_closings', req.params.id);
+  res.json({ success: true });
+});
+
 // ============ FINANCE CATEGORIES ============
 
 router.get('/finance/categories', (req, res) => {
