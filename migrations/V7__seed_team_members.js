@@ -103,10 +103,27 @@ const SEED_MEMBERS = [
 ];
 
 module.exports = {
+  SEED_MEMBERS,
   up(db) {
     const existing = db.getAll('team_members');
     if (existing.length > 0) {
-      console.log(`  [V7] team_members already has ${existing.length} records, skipping seed.`);
+      console.log(`  [V7] team_members already has ${existing.length} records, checking for missing members...`);
+      let added = 0;
+      for (const m of SEED_MEMBERS) {
+        const already = existing.find(e => Number(e.team_id) === Number(m.team_id) && e.name.trim().toLowerCase() === m.name.trim().toLowerCase());
+        if (!already) {
+          db.prepare('INSERT INTO team_members (team_id, name, role, phone, email) VALUES (?,?,?,?,?)')
+            .run(m.team_id, m.name, m.role, m.phone, m.email);
+          db.prepare('UPDATE teams SET members_count = (SELECT COUNT(*) FROM team_members WHERE team_id=?) WHERE id=?')
+            .run(m.team_id, m.team_id);
+          added++;
+        }
+      }
+      if (added > 0) {
+        console.log(`  [V7] Added ${added} missing team_members.`);
+      } else {
+        console.log(`  [V7] All seed members already present, no changes needed.`);
+      }
       return;
     }
 
