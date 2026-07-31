@@ -75,14 +75,10 @@ app.get('*', (req, res) => {
 // Run pending migrations on startup (Flyway-style)
 runMigrations();
 
-if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`\n  ========================================`);
-    console.log(`  Meu Coordenador - JUMIRE`);
-    console.log(`  Projeto Compromisso Trin - Gestão`);
-    console.log(`  Servidor rodando em: http://localhost:${PORT}`);
-    console.log(`  ========================================\n`);
-  });
-}
-
-module.exports = app;
+app.listen(PORT, () => {
+  console.log(`\n  ========================================`);
+  console.log(`  Meu Coordenador - JUMIRE`);
+  console.log(`  Projeto Compromisso Trin - Gestão`);
+  console.log(`  Servidor rodando em: http://localhost:${PORT}`);
+  console.log(`  ========================================\n`);
+});
