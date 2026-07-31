@@ -151,7 +151,13 @@ function queryAll(sql, params) {
     }
     return data.teams;
   }
+  if (lower.startsWith('select 1 from team_members where team_id') && lower.includes('and name=')) {
+    return data.team_members.filter(m => Number(m.team_id) === Number(params[0]) && m.name === params[1]);
+  }
   if (lower.startsWith('select * from team_members where team_id')) {
+    if (lower.includes('and name=')) {
+      return data.team_members.filter(m => Number(m.team_id) === Number(params[0]) && m.name === params[1]);
+    }
     return data.team_members.filter(m => Number(m.team_id) === Number(params[0]));
   }
   if (lower.startsWith('select * from team_members where team_id in')) {
