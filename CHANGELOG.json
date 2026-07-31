@@ -1,5 +1,21 @@
 [
   {
+    "version": "1.24.0",
+    "date": "2026-07-30",
+    "title": "Cardápio do Encontro + Lista de Compras da Cozinha",
+    "changes": [
+      "Nova página Cardápio com timeline visual dos 3 dias (Sexta, Sábado, Domingo)",
+      "Refeições organizadas por dia e tipo (Café, Almoço, Lanche, Jantar) com ícones",
+      "CRUD completo: adicionar, editar e excluir refeições via modal",
+      "Lista de Compras da Cozinha com 51 itens alinhados ao cardápio do XV Compromisso",
+      "Itens da cozinha integrados ao Orçamento (budget_items, categoria Alimentação)",
+      "API CRUD /cardapio com ordenação por dia e tipo de refeição",
+      "Tabela cardapio no banco de dados com migration V10",
+      "CSS responsivo: kitchen items grid 2 colunas no mobile, meals em coluna única",
+      "Item de navegação Cardápio adicionado ao menu lateral"
+    ]
+  },
+  {
     "version": "1.23.0",
     "date": "2026-07-30",
     "title": "Relatórios Profissionais com Filtros",

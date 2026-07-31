@@ -1481,6 +1481,219 @@ select:focus, input:focus, textarea:focus { border-color: var(--primary); }
   }
 }
 
+/* CARDÁPIO */
+.cardapio-kitchen-summary {
+  margin-bottom: 20px;
+}
+
+.cardapio-items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+}
+
+.cardapio-kitchen-item {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card-bg);
+  transition: border-color 0.2s;
+}
+
+.cardapio-kitchen-item:hover {
+  border-color: var(--primary);
+}
+
+.cardapio-ki-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.cardapio-ki-qty {
+  font-size: 12px;
+  color: var(--primary);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.cardapio-ki-supplier {
+  font-size: 11px;
+  color: var(--text-light);
+  margin-top: 2px;
+}
+
+.cardapio-timeline {
+  margin-top: 8px;
+}
+
+.cardapio-day-section {
+  margin-bottom: 24px;
+}
+
+.cardapio-day-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--border);
+}
+
+.cardapio-day-icon {
+  font-size: 24px;
+}
+
+.cardapio-day-header h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--dark);
+  flex: 1;
+}
+
+.cardapio-day-meals {
+  font-size: 12px;
+  color: var(--text-light);
+  background: var(--light-card);
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+
+.cardapio-meals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.cardapio-meal-card {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card-bg);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.cardapio-meal-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.cardapio-meal-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.cardapio-meal-icon {
+  font-size: 20px;
+}
+
+.cardapio-meal-header h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--dark);
+  flex: 1;
+}
+
+.cardapio-meal-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.cardapio-meal-actions .btn {
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+.cardapio-meal-items {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.cardapio-meal-items li {
+  padding: 6px 0;
+  font-size: 13px;
+  color: var(--dark);
+  border-bottom: 1px solid var(--light-alt);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cardapio-meal-items li::before {
+  content: '•';
+  color: var(--primary);
+  font-weight: bold;
+}
+
+.cardapio-meal-items li:last-child {
+  border-bottom: none;
+}
+
+.cardapio-meal-notes {
+  font-size: 12px;
+  color: var(--text-light);
+  font-style: italic;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+}
+
+/* CARDÁPIO MOBILE */
+@media (max-width: 768px) {
+  .cardapio-items-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+
+  .cardapio-kitchen-item {
+    padding: 8px 10px;
+  }
+
+  .cardapio-ki-name {
+    font-size: 12px;
+  }
+
+  .cardapio-ki-qty {
+    font-size: 11px;
+  }
+
+  .cardapio-day-header h2 {
+    font-size: 16px;
+  }
+
+  .cardapio-day-icon {
+    font-size: 20px;
+  }
+
+  .cardapio-meals-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .cardapio-meal-card {
+    padding: 14px 12px;
+  }
+
+  .cardapio-meal-header h3 {
+    font-size: 14px;
+  }
+
+  .cardapio-meal-items li {
+    font-size: 12px;
+    padding: 5px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .cardapio-items-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* MODAL */
 .modal-overlay {
   position: fixed;

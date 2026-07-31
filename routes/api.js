@@ -1018,4 +1018,37 @@ router.delete('/donations/:id', (req, res) => {
   res.json({ success: true });
 });
 
+// ============ CARDÁPIO (Menu do Encontro) ============
+
+router.get('/cardapio', (req, res) => {
+  let list = db.getAll('cardapio');
+  const { day } = req.query;
+  if (day) list = list.filter(c => c.day === day);
+  const dayOrder = { 'Sexta-feira': 0, 'Sábado': 1, 'Domingo': 2 };
+  const mealOrder = { 'Café da manhã': 0, 'Almoço': 1, 'Lanche da tarde': 2, 'Jantar': 3, 'Almoço operários': 0 };
+  list.sort((a, b) => (dayOrder[a.day] || 9) - (dayOrder[b.day] || 9) || (mealOrder[a.meal] || 9) - (mealOrder[b.meal] || 9));
+  res.json(list);
+});
+
+router.post('/cardapio', (req, res) => {
+  const { day, meal, items, notes } = req.body;
+  const id = db.insert('cardapio', {
+    day: day || '',
+    meal: meal || '',
+    items: items || [],
+    notes: notes || ''
+  });
+  res.json({ id });
+});
+
+router.put('/cardapio/:id', (req, res) => {
+  db.update('cardapio', req.params.id, { ...req.body, updated_at: new Date().toISOString() });
+  res.json({ success: true });
+});
+
+router.delete('/cardapio/:id', (req, res) => {
+  db.remove('cardapio', req.params.id);
+  res.json({ success: true });
+});
+
 module.exports = router;

@@ -86,7 +86,7 @@ function prettifyPersonName(raw, opts = {}) {
 }
 
 // ============ NAVIGATION (Hash Routing) ============
-const VALID_PAGES = ['dashboard','checklist','cronograma','equipes','encontro','inscritos','padrinhos','pais','fornecedores','escolinhas','alicerces','lembretes','avisos','financeiro','lembrancinhas','kit','relatorios','orcamento','doacoes'];
+const VALID_PAGES = ['dashboard','checklist','cronograma','equipes','encontro','inscritos','padrinhos','pais','fornecedores','escolinhas','alicerces','lembretes','avisos','financeiro','lembrancinhas','kit','relatorios','orcamento','doacoes','cardapio'];
 
 function getPageFromHash() {
   const hash = window.location.hash.replace('#/', '').replace('#', '');
@@ -162,6 +162,7 @@ function renderPage() {
   else if (currentPage === 'relatorios') renderRelatorios();
   else if (currentPage === 'orcamento') renderOrcamento();
   else if (currentPage === 'doacoes') renderDoacoes();
+  else if (currentPage === 'cardapio') renderCardapio();
 }
 
 // ============ DASHBOARD ============
@@ -1504,6 +1505,177 @@ function renderRelatorioDataTable() {
       📁 ${t.category || '—'} · 👥 ${t.responsible_team || '—'} · 📅 ${t.deadline ? new Date(t.deadline + 'T00:00:00').toLocaleDateString('pt-BR') : '—'} · ${priorityLabels[t.priority] || t.priority || '—'}
     </div>
   </div>`).join('');
+}
+
+// ============ CARDÁPIO ============
+async function renderCardapio() {
+  const cardapio = await api('/cardapio');
+  const budgetItems = await api('/budget?category=Alimentação');
+  const kitchenItems = budgetItems.filter(b => b.notes && b.notes.includes('XV Compromisso'));
+
+  const days = ['Sexta-feira', 'Sábado', 'Domingo'];
+  const dayIcons = { 'Sexta-feira': '🌟', 'Sábado': '☀️', 'Domingo': '🌅' };
+  const mealIcons = { 'Café da manhã': '☕', 'Almoço': '🍽️', 'Almoço operários': '🍛', 'Lanche da tarde': '🥪', 'Jantar': '🌙' };
+
+  const main = document.getElementById('main-content');
+  main.innerHTML = `
+    <h1 class="page-title">Cardápio do Encontro</h1>
+    <p class="page-subtitle">Refeições definidas para os 3 dias do Encontro Compromisso Trin</p>
+
+    <div class="cardapio-kitchen-summary">
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title">🛒 Lista de Compras da Cozinha <span style="font-size:12px;color:var(--text-light);font-weight:400">(${kitchenItems.length} itens)</span></div>
+        <p style="font-size:12px;color:var(--text-light);margin-bottom:12px">Itens alinhados com o cardápio para o XV Compromisso</p>
+        <div class="cardapio-items-grid" id="cardapio-kitchen-grid"></div>
+      </div>
+    </div>
+
+    <div class="cardapio-timeline">
+      ${days.map(day => {
+        const dayMeals = cardapio.filter(c => c.day === day);
+        if (dayMeals.length === 0) return '';
+        return `
+          <div class="cardapio-day-section">
+            <div class="cardapio-day-header">
+              <span class="cardapio-day-icon">${dayIcons[day] || '📅'}</span>
+              <h2>${day}</h2>
+              <span class="cardapio-day-meals">${dayMeals.length} refeições</span>
+            </div>
+            <div class="cardapio-meals-grid">
+              ${dayMeals.map(m => `
+                <div class="cardapio-meal-card">
+                  <div class="cardapio-meal-header">
+                    <span class="cardapio-meal-icon">${mealIcons[m.meal] || '🍴'}</span>
+                    <h3>${m.meal}</h3>
+                    <div class="cardapio-meal-actions">
+                      <button class="btn btn-sm btn-secondary" onclick="editCardapioMeal(${m.id})">✏️</button>
+                      <button class="btn btn-sm btn-danger" onclick="deleteCardapioMeal(${m.id})">🗑️</button>
+                    </div>
+                  </div>
+                  <ul class="cardapio-meal-items">
+                    ${(m.items || []).map(item => `<li>${item}</li>`).join('')}
+                  </ul>
+                  ${m.notes ? `<p class="cardapio-meal-notes">${m.notes}</p>` : ''}
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+
+    <div style="margin-top:20px;text-align:center">
+      <button class="btn btn-primary" onclick="openCardapioModal()">+ Adicionar Refeição</button>
+    </div>
+  `;
+
+  renderCardapioKitchenGrid(kitchenItems);
+}
+
+function renderCardapioKitchenGrid(items) {
+  const grid = document.getElementById('cardapio-kitchen-grid');
+  if (!grid) return;
+
+  if (items.length === 0) {
+    grid.innerHTML = '<p style="color:var(--text-light);text-align:center;padding:16px">Nenhum item de cozinha cadastrado.</p>';
+    return;
+  }
+
+  grid.innerHTML = items.map(item => {
+    const qtyText = item.quantity > 0 ? `${item.quantity} ${item.unit}` : 'A definir';
+    return `<div class="cardapio-kitchen-item">
+      <div class="cardapio-ki-name">${item.item_name}</div>
+      <div class="cardapio-ki-qty">${qtyText}</div>
+      ${item.supplier ? `<div class="cardapio-ki-supplier">📦 ${item.supplier}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function openCardapioModal(id) {
+  const existing = id ? null : null;
+  const days = ['Sexta-feira', 'Sábado', 'Domingo'];
+  const meals = ['Café da manhã', 'Almoço', 'Almoço operários', 'Lanche da tarde', 'Jantar'];
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal">
+      <div class="modal-header">
+        <h3>${id ? 'Editar' : 'Adicionar'} Refeição</h3>
+        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Dia</label>
+            <select id="card-modal-day">
+              ${days.map(d => `<option value="${d}">${d}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Refeição</label>
+            <select id="card-modal-meal">
+              ${meals.map(m => `<option value="${m}">${m}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Itens (um por linha)</label>
+          <textarea id="card-modal-items" rows="6" placeholder="Ex: Arroz&#10;Feijão&#10;Salada"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Observações</label>
+          <input type="text" id="card-modal-notes" placeholder="Notas adicionais">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveCardapioMeal(${id || 'null'})">Salvar</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  if (id) {
+    api(`/cardapio`).then(list => {
+      const item = list.find(c => c.id === id);
+      if (item) {
+        document.getElementById('card-modal-day').value = item.day;
+        document.getElementById('card-modal-meal').value = item.meal;
+        document.getElementById('card-modal-items').value = (item.items || []).join('\n');
+        document.getElementById('card-modal-notes').value = item.notes || '';
+      }
+    });
+  }
+}
+
+async function saveCardapioMeal(id) {
+  const day = document.getElementById('card-modal-day').value;
+  const meal = document.getElementById('card-modal-meal').value;
+  const itemsRaw = document.getElementById('card-modal-items').value;
+  const items = itemsRaw.split('\n').map(s => s.trim()).filter(s => s);
+  const notes = document.getElementById('card-modal-notes').value;
+
+  const data = { day, meal, items, notes };
+  if (id) {
+    await api(`/cardapio/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+  } else {
+    await api('/cardapio', { method: 'POST', body: JSON.stringify(data) });
+  }
+  document.querySelector('.modal-overlay').remove();
+  toast('Refeição salva!', 'success');
+  renderCardapio();
+}
+
+async function editCardapioMeal(id) {
+  openCardapioModal(id);
+}
+
+async function deleteCardapioMeal(id) {
+  if (!confirm('Excluir esta refeição?')) return;
+  await api(`/cardapio/${id}`, { method: 'DELETE' });
+  toast('Refeição excluída', 'error');
+  renderCardapio();
 }
 
 // ============ HELPERS ============
