@@ -1,5 +1,26 @@
 [
   {
+    "version": "1.30.0",
+    "date": "2026-07-30",
+    "title": "Cards de Filtro Interativos em Todos os Módulos",
+    "changes": [
+      "CSS genérico reutilizável .filter-card-grid e .filter-card para todos os módulos",
+      "Inscritos: cards Todos/Pagos/Pendentes/Presentes com contagens dinâmicas",
+      "Lembrancinhas: cards Todas/Prontas/Em Produção/Não Iniciadas",
+      "Escolinhas: cards Todas/Agendadas/Concluídas/Canceladas",
+      "Alicerces: cards Todos/Alicerces/Alvenarias/Concluídos",
+      "Fornecedores: cards Todos/Contatados/Pendentes/Contratados + filtro de categoria mantido",
+      "Padrinhos: cards Todos/Em Andamento/Concluídos/Sem Padrinho",
+      "Doações: cards Todas/Dinheiro/Materiais/Pendentes (substitui dropdown)",
+      "Avisos: cards Todos/Alta/Média/Baixa Prioridade",
+      "Cronograma: cards Todos os Dias/Sexta/Sábado/Domingo",
+      "Kit: cards Todos/Não Conferidos/Conferidos/Entregues",
+      "Cada card mostra ícone colorido, nome do filtro e contagem de itens",
+      "Card ativo destacado com borda azul e sombra",
+      "Grid responsivo: 2 colunas no tablet, 1 coluna no mobile"
+    ]
+  },
+  {
     "version": "1.29.0",
     "date": "2026-07-30",
     "title": "Orçamento Interativo por Categorias",

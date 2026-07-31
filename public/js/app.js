@@ -803,14 +803,38 @@ function goToEquipesFromChecklist() {
 }
 
 // ============ CRONOGRAMA ============
+let cronogramaFilterDay = '';
+
 async function renderCronograma() {
   const schedule = await api('/schedule');
   const teams = await api('/teams');
   const days = ['Sexta-feira', 'Sábado', 'Domingo'];
   const main = document.getElementById('main-content');
+  const dayCounts = {};
+  days.forEach(d => {
+    dayCounts[d] = schedule.filter(s => s.day === d).length;
+  });
   main.innerHTML = `
     <h1 class="page-title">Cronograma do Encontro</h1>
     <p class="page-subtitle">Programação completa - Sexta a Domingo</p>
+    <div class="filter-card-grid">
+      <div class="filter-card ${cronogramaFilterDay===''?'active':''}" onclick="selectCronogramaFilter('')" style="border-left-color:var(--primary)">
+        <div class="filter-card-icon" style="background:rgba(44,123,229,0.1);color:var(--primary)">📅</div>
+        <div class="filter-card-body"><div class="filter-card-name">Todos os Dias</div><div class="filter-card-count">${schedule.length} atividades</div></div>
+      </div>
+      <div class="filter-card ${cronogramaFilterDay==='Sexta-feira'?'active':''}" onclick="selectCronogramaFilter('Sexta-feira')" style="border-left-color:#e67e22">
+        <div class="filter-card-icon" style="background:rgba(230,126,34,0.1);color:#e67e22">🔥</div>
+        <div class="filter-card-body"><div class="filter-card-name">Sexta-feira</div><div class="filter-card-count">${dayCounts['Sexta-feira']} atividades</div></div>
+      </div>
+      <div class="filter-card ${cronogramaFilterDay==='Sábado'?'active':''}" onclick="selectCronogramaFilter('Sábado')" style="border-left-color:#3498db">
+        <div class="filter-card-icon" style="background:rgba(52,152,219,0.1);color:#3498db">☀️</div>
+        <div class="filter-card-body"><div class="filter-card-name">Sábado</div><div class="filter-card-count">${dayCounts['Sábado']} atividades</div></div>
+      </div>
+      <div class="filter-card ${cronogramaFilterDay==='Domingo'?'active':''}" onclick="selectCronogramaFilter('Domingo')" style="border-left-color:#2ecc71">
+        <div class="filter-card-icon" style="background:rgba(46,204,113,0.1);color:#2ecc71">🌅</div>
+        <div class="filter-card-body"><div class="filter-card-name">Domingo</div><div class="filter-card-count">${dayCounts['Domingo']} atividades</div></div>
+      </div>
+    </div>
     <div class="filters">
       <div class="filter-group">
         <span class="filter-label">Filtrar por equipe:</span>
@@ -820,30 +844,27 @@ async function renderCronograma() {
         </select>
       </div>
     </div>
-    <div class="card" id="schedule-card">
-      ${days.map(day => {
-        const items = schedule.filter(s => s.day === day);
-        if (items.length === 0) return '';
-        const doneCount = items.filter(s => s.status === 'concluido').length;
-        return `<div class="schedule-day">
-          <div class="schedule-day-header">📅 ${day}<span class="schedule-day-count">${doneCount}/${items.length} concluídas</span></div>
-          ${items.map(s => `<div class="schedule-item">
-            <div class="schedule-time">${s.time}</div>
-            <div class="schedule-activity">${s.activity}</div>
-            <div class="schedule-location">${s.location || ''}</div>
-            <div class="schedule-team" style="cursor:pointer" onclick="document.getElementById('schedule-team-filter').value='${(s.responsible_team||'').replace(/'/g,"\\'")}';filterSchedule()">${s.responsible_team || ''}</div>
-            <div class="schedule-status ${s.status==='concluido'?'done':''} ${s.status==='em_andamento'?'in-progress':''}" data-status="${s.status||'pendente'}" onclick="toggleSchedule(${s.id}, this)"></div>
-          </div>`).join('')}
-        </div>`;
-      }).join('')}
-    </div>`;
+    <div class="card" id="schedule-card"></div>
+  `;
+  filterSchedule(schedule);
 }
 
-async function filterSchedule() {
-  const team = document.getElementById('schedule-team-filter').value;
-  const schedule = team ? await api(`/schedule?team=${encodeURIComponent(team)}`) : await api('/schedule');
-  const days = ['Sexta-feira', 'Sábado', 'Domingo'];
+function selectCronogramaFilter(day) {
+  cronogramaFilterDay = day;
+  document.querySelectorAll('.filter-card').forEach(c => c.classList.remove('active'));
+  const cards = document.querySelectorAll('.filter-card');
+  const idx = { '': 0, 'Sexta-feira': 1, 'Sábado': 2, 'Domingo': 3 };
+  if (cards[idx[day]]) cards[idx[day]].classList.add('active');
+  filterSchedule();
+}
+
+async function filterSchedule(prefetchedSchedule) {
+  const team = document.getElementById('schedule-team-filter')?.value || '';
+  const schedule = prefetchedSchedule || (team ? await api(`/schedule?team=${encodeURIComponent(team)}`) : await api('/schedule'));
+  let days = ['Sexta-feira', 'Sábado', 'Domingo'];
+  if (cronogramaFilterDay) days = [cronogramaFilterDay];
   const card = document.getElementById('schedule-card');
+  if (!card) return;
   card.innerHTML = days.map(day => {
     const items = schedule.filter(s => s.day === day);
     if (items.length === 0) return '';
@@ -2054,6 +2075,7 @@ function updateSidebarProgress(pct) {
 
 // ============ MATÉRIAS-PRIMAS (INSCRITOS) ============
 let participantsCache = [];
+let participantsFilterStatus = '';
 
 async function renderInscritos() {
   participantsCache = await api('/participants');
@@ -2071,6 +2093,24 @@ async function renderInscritos() {
       <div class="stat-card"><div class="stat-icon pending">⭕</div><div class="stat-info"><h3>${pendingCount}</h3><p>Pagamentos Pendentes</p></div></div>
       <div class="stat-card"><div class="stat-icon progress">📍</div><div class="stat-info"><h3>${presentesCount}</h3><p>Presentes no Encontro</p></div></div>
     </div>
+    <div class="filter-card-grid">
+      <div class="filter-card ${participantsFilterStatus===''?'active':''}" onclick="selectParticipantFilter('')" style="border-left-color:var(--primary)">
+        <div class="filter-card-icon" style="background:rgba(44,123,229,0.1);color:var(--primary)">👥</div>
+        <div class="filter-card-body"><div class="filter-card-name">Todos</div><div class="filter-card-count">${participantsCache.length} inscritos</div></div>
+      </div>
+      <div class="filter-card ${participantsFilterStatus==='paid'?'active':''}" onclick="selectParticipantFilter('paid')" style="border-left-color:var(--success)">
+        <div class="filter-card-icon" style="background:rgba(39,174,96,0.1);color:var(--success)">✅</div>
+        <div class="filter-card-body"><div class="filter-card-name">Pagos</div><div class="filter-card-count">${paidCount} confirmados</div></div>
+      </div>
+      <div class="filter-card ${participantsFilterStatus==='pending'?'active':''}" onclick="selectParticipantFilter('pending')" style="border-left-color:var(--warning)">
+        <div class="filter-card-icon" style="background:rgba(241,196,15,0.1);color:#c79a00">⭕</div>
+        <div class="filter-card-body"><div class="filter-card-name">Pendentes</div><div class="filter-card-count">${pendingCount} pendentes</div></div>
+      </div>
+      <div class="filter-card ${participantsFilterStatus==='presente'?'active':''}" onclick="selectParticipantFilter('presente')" style="border-left-color:var(--info)">
+        <div class="filter-card-icon" style="background:rgba(44,123,229,0.1);color:var(--info)">📍</div>
+        <div class="filter-card-body"><div class="filter-card-name">Presentes</div><div class="filter-card-count">${presentesCount} presentes</div></div>
+      </div>
+    </div>
     <div class="filters">
       <input type="text" class="search-box" id="part-search" placeholder="Buscar por nome..." oninput="filterParticipants()">
       <div class="filter-group">
@@ -2084,13 +2124,25 @@ async function renderInscritos() {
     </div>
     <div id="participants-list" class="participant-grid"></div>
   `;
-  renderParticipantCards(participantsCache);
+  filterParticipants();
+}
+
+function selectParticipantFilter(status) {
+  participantsFilterStatus = status;
+  document.querySelectorAll('.filter-card').forEach(c => c.classList.remove('active'));
+  const cards = document.querySelectorAll('.filter-card');
+  const idx = { '': 0, 'paid': 1, 'pending': 2, 'presente': 3 };
+  if (cards[idx[status]]) cards[idx[status]].classList.add('active');
+  filterParticipants();
 }
 
 function filterParticipants() {
-  const search = document.getElementById('part-search').value.toLowerCase();
-  const group = document.getElementById('part-group').value;
+  const search = document.getElementById('part-search')?.value.toLowerCase() || '';
+  const group = document.getElementById('part-group')?.value || '';
   let filtered = participantsCache;
+  if (participantsFilterStatus === 'paid') filtered = filtered.filter(p => p.paid);
+  else if (participantsFilterStatus === 'pending') filtered = filtered.filter(p => !p.paid);
+  else if (participantsFilterStatus === 'presente') filtered = filtered.filter(p => p.presente);
   if (search) filtered = filtered.filter(p => (p.name || '').toLowerCase().includes(search));
   if (group) filtered = filtered.filter(p => p.group === group);
   renderParticipantCards(filtered);
@@ -2832,6 +2884,7 @@ async function deleteFinBudget(id) {
 
 // ============ LEMBRANCINHAS ============
 let lembrancinhasCache = [];
+let lembrancinhasFilterStatus = '';
 
 async function renderLembrancinhas() {
   lembrancinhasCache = await api('/lembrancinhas');
@@ -2851,12 +2904,45 @@ async function renderLembrancinhas() {
       <div class="stat-card"><div class="stat-icon pending">⭕</div><div class="stat-info"><h3>${stats.nao_iniciado}</h3><p>Não Iniciadas</p></div></div>
     </div>
     ${stats.total > 0 ? `<div class="card"><div class="progress-container"><div class="progress-label"><span>Progresso Geral</span><span>${stats.pronto}/${stats.total} (${pct}%)</span></div><div class="progress-bar"><div class="progress-fill ${pct >= 75 ? '' : pct >= 40 ? 'warn' : 'danger'}" style="width:${pct}%"></div></div></div></div>` : ''}
+    <div class="filter-card-grid">
+      <div class="filter-card ${lembrancinhasFilterStatus===''?'active':''}" onclick="selectLembrancinhaFilter('')" style="border-left-color:var(--primary)">
+        <div class="filter-card-icon" style="background:rgba(44,123,229,0.1);color:var(--primary)">🎁</div>
+        <div class="filter-card-body"><div class="filter-card-name">Todas</div><div class="filter-card-count">${stats.total} itens</div></div>
+      </div>
+      <div class="filter-card ${lembrancinhasFilterStatus==='pronto'?'active':''}" onclick="selectLembrancinhaFilter('pronto')" style="border-left-color:var(--success)">
+        <div class="filter-card-icon" style="background:rgba(39,174,96,0.1);color:var(--success)">✅</div>
+        <div class="filter-card-body"><div class="filter-card-name">Prontas</div><div class="filter-card-count">${done} prontas</div></div>
+      </div>
+      <div class="filter-card ${lembrancinhasFilterStatus==='em_andamento'?'active':''}" onclick="selectLembrancinhaFilter('em_andamento')" style="border-left-color:var(--warning)">
+        <div class="filter-card-icon" style="background:rgba(241,196,15,0.1);color:#c79a00">🔧</div>
+        <div class="filter-card-body"><div class="filter-card-name">Em Produção</div><div class="filter-card-count">${inProgress} em andamento</div></div>
+      </div>
+      <div class="filter-card ${lembrancinhasFilterStatus==='nao_iniciado'?'active':''}" onclick="selectLembrancinhaFilter('nao_iniciado')" style="border-left-color:var(--text-light)">
+        <div class="filter-card-icon" style="background:rgba(127,140,141,0.1);color:var(--text-light)">⭕</div>
+        <div class="filter-card-body"><div class="filter-card-name">Não Iniciadas</div><div class="filter-card-count">${notStarted} pendentes</div></div>
+      </div>
+    </div>
     <div class="filters">
       <button class="btn btn-primary btn-sm" onclick="openLembrancinhaModal()">+ Nova Lembrancinha</button>
     </div>
     <div class="team-grid" id="lembrancinhas-grid"></div>
   `;
-  renderLembrancinhaCards(lembrancinhasCache);
+  filterLembrancinhas();
+}
+
+function selectLembrancinhaFilter(status) {
+  lembrancinhasFilterStatus = status;
+  document.querySelectorAll('.filter-card').forEach(c => c.classList.remove('active'));
+  const cards = document.querySelectorAll('.filter-card');
+  const idx = { '': 0, 'pronto': 1, 'em_andamento': 2, 'nao_iniciado': 3 };
+  if (cards[idx[status]]) cards[idx[status]].classList.add('active');
+  filterLembrancinhas();
+}
+
+function filterLembrancinhas() {
+  let list = lembrancinhasCache;
+  if (lembrancinhasFilterStatus) list = list.filter(l => l.status === lembrancinhasFilterStatus);
+  renderLembrancinhaCards(list);
 }
 
 function renderLembrancinhaCards(list) {
@@ -2890,7 +2976,7 @@ async function cycleLembrancinhaStatus(id) {
   const next = l.status === 'nao_iniciado' ? 'em_andamento' : l.status === 'em_andamento' ? 'pronto' : 'nao_iniciado';
   await api(`/lembrancinhas/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status: next }) });
   l.status = next;
-  renderLembrancinhaCards(lembrancinhasCache);
+  filterLembrancinhas();
   toast(`Status: ${next === 'pronto' ? 'Pronto!' : next === 'em_andamento' ? 'Em andamento' : 'Não iniciado'}`, next === 'pronto' ? 'success' : '');
 }
 
@@ -2942,12 +3028,14 @@ async function deleteLembrancinha(id) {
 
 // ============ ESCOLINHAS ============
 let escolinhasCache = [];
+let escolinhasFilterStatus = '';
 
 async function renderEscolinhas() {
   escolinhasCache = await api('/escolinhas');
   const main = document.getElementById('main-content');
   const concluidas = escolinhasCache.filter(e => e.status === 'concluida').length;
   const agendadas = escolinhasCache.filter(e => e.status === 'agendada').length;
+  const canceladas = escolinhasCache.filter(e => e.status === 'cancelada').length;
   main.innerHTML = `
     <h1 class="page-title">Escolinhas de Preparação</h1>
     <p class="page-subtitle">Reuniões periódicas de aprofundamento no serviço cristão</p>
@@ -2956,12 +3044,45 @@ async function renderEscolinhas() {
       <div class="stat-card"><div class="stat-icon done">✅</div><div class="stat-info"><h3>${concluidas}</h3><p>Concluídas</p></div></div>
       <div class="stat-card"><div class="stat-icon pending">📅</div><div class="stat-info"><h3>${agendadas}</h3><p>Agendadas</p></div></div>
     </div>
+    <div class="filter-card-grid">
+      <div class="filter-card ${escolinhasFilterStatus===''?'active':''}" onclick="selectEscolinhaFilter('')" style="border-left-color:var(--primary)">
+        <div class="filter-card-icon" style="background:rgba(44,123,229,0.1);color:var(--primary)">📚</div>
+        <div class="filter-card-body"><div class="filter-card-name">Todas</div><div class="filter-card-count">${escolinhasCache.length} escolinhas</div></div>
+      </div>
+      <div class="filter-card ${escolinhasFilterStatus==='agendada'?'active':''}" onclick="selectEscolinhaFilter('agendada')" style="border-left-color:var(--info)">
+        <div class="filter-card-icon" style="background:rgba(44,123,229,0.1);color:var(--info)">📅</div>
+        <div class="filter-card-body"><div class="filter-card-name">Agendadas</div><div class="filter-card-count">${agendadas} agendadas</div></div>
+      </div>
+      <div class="filter-card ${escolinhasFilterStatus==='concluida'?'active':''}" onclick="selectEscolinhaFilter('concluida')" style="border-left-color:var(--success)">
+        <div class="filter-card-icon" style="background:rgba(39,174,96,0.1);color:var(--success)">✅</div>
+        <div class="filter-card-body"><div class="filter-card-name">Concluídas</div><div class="filter-card-count">${concluidas} concluídas</div></div>
+      </div>
+      <div class="filter-card ${escolinhasFilterStatus==='cancelada'?'active':''}" onclick="selectEscolinhaFilter('cancelada')" style="border-left-color:var(--danger)">
+        <div class="filter-card-icon" style="background:rgba(235,87,87,0.1);color:var(--danger)">❌</div>
+        <div class="filter-card-body"><div class="filter-card-name">Canceladas</div><div class="filter-card-count">${canceladas} canceladas</div></div>
+      </div>
+    </div>
     <div class="filters">
       <button class="btn btn-primary btn-sm" onclick="openEscolinhaModal()">+ Nova Escolinha</button>
     </div>
     <div class="escolinha-timeline" id="escolinhas-list"></div>
   `;
-  renderEscolinhaItems(escolinhasCache);
+  filterEscolinhas();
+}
+
+function selectEscolinhaFilter(status) {
+  escolinhasFilterStatus = status;
+  document.querySelectorAll('.filter-card').forEach(c => c.classList.remove('active'));
+  const cards = document.querySelectorAll('.filter-card');
+  const idx = { '': 0, 'agendada': 1, 'concluida': 2, 'cancelada': 3 };
+  if (cards[idx[status]]) cards[idx[status]].classList.add('active');
+  filterEscolinhas();
+}
+
+function filterEscolinhas() {
+  let list = escolinhasCache;
+  if (escolinhasFilterStatus) list = list.filter(e => e.status === escolinhasFilterStatus);
+  renderEscolinhaItems(list);
 }
 
 function renderEscolinhaItems(list) {
@@ -2993,7 +3114,7 @@ async function cycleEscolinhaStatus(id) {
   const next = e.status === 'agendada' ? 'concluida' : 'agendada';
   await api(`/escolinhas/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status: next }) });
   e.status = next;
-  renderEscolinhaItems(escolinhasCache);
+  filterEscolinhas();
   toast(next === 'concluida' ? 'Escolinha concluída!' : 'Escolinha reaberta', next === 'concluida' ? 'success' : '');
 }
 
@@ -3042,6 +3163,8 @@ async function deleteEscolinha(id) {
 
 // ============ ALICERCES & ALVENARIAS ============
 let alicercesCache = [];
+let alicercesFilterType = '';
+let alicercesFilterStatus = '';
 
 async function renderAlicerces() {
   alicercesCache = await api('/alicerces');
@@ -3049,6 +3172,7 @@ async function renderAlicerces() {
   const alicerces = alicercesCache.filter(a => a.type === 'alicerce');
   const alvenarias = alicercesCache.filter(a => a.type === 'alvenaria');
   const atribuidos = alicercesCache.filter(a => a.status === 'atribuido' || a.status === 'concluido').length;
+  const concluidos = alicercesCache.filter(a => a.status === 'concluido').length;
   main.innerHTML = `
     <h1 class="page-title">Alicerces e Alvenarias</h1>
     <p class="page-subtitle">Pistas de reflexão do Encontro — gestão de construtores</p>
@@ -3056,19 +3180,65 @@ async function renderAlicerces() {
       <div class="stat-card"><div class="stat-icon total">🏗️</div><div class="stat-info"><h3>${alicerces.length}</h3><p>Alicerces</p></div></div>
       <div class="stat-card"><div class="stat-icon done">🧱</div><div class="stat-info"><h3>${alvenarias.length}</h3><p>Alvenarias</p></div></div>
       <div class="stat-card"><div class="stat-icon progress">👤</div><div class="stat-info"><h3>${atribuidos}</h3><p>Atribuídos</p></div></div>
+      <div class="stat-card"><div class="stat-icon pending">✅</div><div class="stat-info"><h3>${concluidos}</h3><p>Concluídos</p></div></div>
     </div>
-    <div class="alicerce-section">
-      <div class="alicerce-section-title">Alicerces</div>
-      <div id="alicerces-list"></div>
-    </div>
-    <div class="alicerce-section">
-      <div class="alicerce-section-title">Alvenarias</div>
-      <div id="alvenarias-list"></div>
+    <div class="filter-card-grid">
+      <div class="filter-card ${alicercesFilterType===''?'active':''}" onclick="selectAlicerceFilter('')" style="border-left-color:var(--primary)">
+        <div class="filter-card-icon" style="background:rgba(44,123,229,0.1);color:var(--primary)">📋</div>
+        <div class="filter-card-body"><div class="filter-card-name">Todos</div><div class="filter-card-count">${alicercesCache.length} itens</div></div>
+      </div>
+      <div class="filter-card ${alicercesFilterType==='alicerce'?'active':''}" onclick="selectAlicerceFilter('alicerce')" style="border-left-color:#e67e22">
+        <div class="filter-card-icon" style="background:rgba(230,126,34,0.1);color:#e67e22">🏗️</div>
+        <div class="filter-card-body"><div class="filter-card-name">Alicerces</div><div class="filter-card-count">${alicerces.length} alicerces</div></div>
+      </div>
+      <div class="filter-card ${alicercesFilterType==='alvenaria'?'active':''}" onclick="selectAlicerceFilter('alvenaria')" style="border-left-color:#e74c3c">
+        <div class="filter-card-icon" style="background:rgba(231,76,60,0.1);color:#e74c3c">🧱</div>
+        <div class="filter-card-body"><div class="filter-card-name">Alvenarias</div><div class="filter-card-count">${alvenarias.length} alvenarias</div></div>
+      </div>
+      <div class="filter-card ${alicercesFilterType==='concluido'?'active':''}" onclick="selectAlicerceFilter('concluido')" style="border-left-color:var(--success)">
+        <div class="filter-card-icon" style="background:rgba(39,174,96,0.1);color:var(--success)">✅</div>
+        <div class="filter-card-body"><div class="filter-card-name">Concluídos</div><div class="filter-card-count">${concluidos} concluídos</div></div>
+      </div>
     </div>
     <button class="btn btn-primary btn-sm" onclick="openAlicerceModal()">+ Novo Alicerce/Alvenaria</button>
+    <div id="alicerces-container" style="margin-top:16px"></div>
   `;
-  renderAlicerceCards(alicerces, 'alicerces-list');
-  renderAlicerceCards(alvenarias, 'alvenarias-list');
+  filterAlicerces();
+}
+
+function selectAlicerceFilter(filter) {
+  alicercesFilterType = filter;
+  document.querySelectorAll('.filter-card').forEach(c => c.classList.remove('active'));
+  const cards = document.querySelectorAll('.filter-card');
+  const idx = { '': 0, 'alicerce': 1, 'alvenaria': 2, 'concluido': 3 };
+  if (cards[idx[filter]]) cards[idx[filter]].classList.add('active');
+  filterAlicerces();
+}
+
+function filterAlicerces() {
+  const container = document.getElementById('alicerces-container');
+  if (!container) return;
+  let list = alicercesCache;
+  if (alicercesFilterType === 'alicerce') list = list.filter(a => a.type === 'alicerce');
+  else if (alicercesFilterType === 'alvenaria') list = list.filter(a => a.type === 'alvenaria');
+  else if (alicercesFilterType === 'concluido') list = list.filter(a => a.status === 'concluido');
+  
+  const alicerces = list.filter(a => a.type === 'alicerce');
+  const alvenarias = list.filter(a => a.type === 'alvenaria');
+  
+  let html = '';
+  if (alicerces.length > 0) {
+    html += '<div class="alicerce-section"><div class="alicerce-section-title">Alicerces</div><div id="alicerces-list"></div></div>';
+  }
+  if (alvenarias.length > 0) {
+    html += '<div class="alicerce-section"><div class="alicerce-section-title">Alvenarias</div><div id="alvenarias-list"></div></div>';
+  }
+  if (list.length === 0) {
+    html = '<div class="empty-state"><p>Nenhum item encontrado.</p></div>';
+  }
+  container.innerHTML = html;
+  if (alicerces.length > 0) renderAlicerceCards(alicerces, 'alicerces-list');
+  if (alvenarias.length > 0) renderAlicerceCards(alvenarias, 'alvenarias-list');
 }
 
 function renderAlicerceCards(list, containerId) {
@@ -3614,6 +3784,7 @@ async function deleteLembrete(id) {
 // ============ PADRINHOS ============
 let padrinhosCache = [];
 let participantsForPadrinhos = [];
+let padrinhosFilterStatus = '';
 
 async function renderPadrinhos() {
   padrinhosCache = await api('/padrinhos');
@@ -3621,6 +3792,7 @@ async function renderPadrinhos() {
   const main = document.getElementById('main-content');
   const atribuidos = padrinhosCache.filter(p => p.status !== 'nao_atribuido').length;
   const concluidos = padrinhosCache.filter(p => p.status === 'concluido').length;
+  const emAndamento = atribuidos - concluidos;
   const semPadrinho = participantsForPadrinhos.filter(p => !padrinhosCache.find(pd => pd.participant_id === p.id)).length;
   main.innerHTML = `
     <h1 class="page-title">Padrinhos & Madrinhas</h1>
@@ -3628,15 +3800,85 @@ async function renderPadrinhos() {
     <div class="stats-grid">
       <div class="stat-card"><div class="stat-icon total">👥</div><div class="stat-info"><h3>${participantsForPadrinhos.length}</h3><p>Matérias-primas</p></div></div>
       <div class="stat-card"><div class="stat-icon done">✅</div><div class="stat-info"><h3>${concluidos}</h3><p>Processo Completo</p></div></div>
-      <div class="stat-card"><div class="stat-icon progress">⏳</div><div class="stat-info"><h3>${atribuidos - concluidos}</h3><p>Em Andamento</p></div></div>
+      <div class="stat-card"><div class="stat-icon progress">⏳</div><div class="stat-info"><h3>${emAndamento}</h3><p>Em Andamento</p></div></div>
       <div class="stat-card"><div class="stat-icon pending">⭕</div><div class="stat-info"><h3>${semPadrinho}</h3><p>Sem Padrinho</p></div></div>
+    </div>
+    <div class="filter-card-grid">
+      <div class="filter-card ${padrinhosFilterStatus===''?'active':''}" onclick="selectPadrinhoFilter('')" style="border-left-color:var(--primary)">
+        <div class="filter-card-icon" style="background:rgba(44,123,229,0.1);color:var(--primary)">👥</div>
+        <div class="filter-card-body"><div class="filter-card-name">Todos</div><div class="filter-card-count">${padrinhosCache.length} padrinhos</div></div>
+      </div>
+      <div class="filter-card ${padrinhosFilterStatus==='em_andamento'?'active':''}" onclick="selectPadrinhoFilter('em_andamento')" style="border-left-color:var(--warning)">
+        <div class="filter-card-icon" style="background:rgba(241,196,15,0.1);color:#c79a00">⏳</div>
+        <div class="filter-card-body"><div class="filter-card-name">Em Andamento</div><div class="filter-card-count">${emAndamento} em andamento</div></div>
+      </div>
+      <div class="filter-card ${padrinhosFilterStatus==='concluido'?'active':''}" onclick="selectPadrinhoFilter('concluido')" style="border-left-color:var(--success)">
+        <div class="filter-card-icon" style="background:rgba(39,174,96,0.1);color:var(--success)">✅</div>
+        <div class="filter-card-body"><div class="filter-card-name">Concluídos</div><div class="filter-card-count">${concluidos} concluídos</div></div>
+      </div>
+      <div class="filter-card ${padrinhosFilterStatus==='sem_padrinho'?'active':''}" onclick="selectPadrinhoFilter('sem_padrinho')" style="border-left-color:var(--danger)">
+        <div class="filter-card-icon" style="background:rgba(235,87,87,0.1);color:var(--danger)">⭕</div>
+        <div class="filter-card-body"><div class="filter-card-name">Sem Padrinho</div><div class="filter-card-count">${semPadrinho} sem padrinho</div></div>
+      </div>
     </div>
     <div class="filters">
       <button class="btn btn-primary btn-sm" onclick="openPadrinhoModal()">+ Atribuir Padrinho</button>
     </div>
     <div id="padrinhos-list"></div>
   `;
-  renderPadrinhoCards();
+  filterPadrinhos();
+}
+
+function selectPadrinhoFilter(status) {
+  padrinhosFilterStatus = status;
+  document.querySelectorAll('.filter-card').forEach(c => c.classList.remove('active'));
+  const cards = document.querySelectorAll('.filter-card');
+  const idx = { '': 0, 'em_andamento': 1, 'concluido': 2, 'sem_padrinho': 3 };
+  if (cards[idx[status]]) cards[idx[status]].classList.add('active');
+  filterPadrinhos();
+}
+
+function filterPadrinhos() {
+  let list = padrinhosCache;
+  if (padrinhosFilterStatus === 'em_andamento') list = list.filter(p => p.status !== 'nao_atribuido' && p.status !== 'concluido');
+  else if (padrinhosFilterStatus === 'concluido') list = list.filter(p => p.status === 'concluido');
+  else if (padrinhosFilterStatus === 'sem_padrinho') {
+    const assigned = new Set(padrinhosCache.map(p => p.participant_id));
+    list = participantsForPadrinhos.filter(p => !assigned.has(p.id)).map(p => ({ participant_id: p.id, padrinho_name: null, status: 'nao_atribuido', steps: {} }));
+  }
+  renderPadrinhoCardsFiltered(list);
+}
+
+function renderPadrinhoCardsFiltered(list) {
+  const container = document.getElementById('padrinhos-list');
+  if (!container) return;
+  if (list.length === 0) { container.innerHTML = '<div class="empty-state"><p>Nenhum padrinho encontrado.</p></div>'; return; }
+  const stepLabels = ['Contato', 'Encontro', 'Acompanhamento', 'Missa', 'Entrega'];
+  const stepIcons = ['📞', '🤝', '👁️', '⛪', '🎁'];
+  container.innerHTML = list.map(p => {
+    const participant = participantsForPadrinhos.find(pt => pt.id === p.participant_id);
+    const pName = prettifyPersonName(participant?.name || 'Desconhecido');
+    const steps = [p.step1, p.step2, p.step3, p.step4, p.step5];
+    const doneSteps = steps.filter(Boolean).length;
+    const isComplete = p.status === 'concluido' || doneSteps === 5;
+    return `<div class="card padrinho-card">
+      <div class="padrinho-header">
+        <div>
+          <div class="padrinho-name">${pName}</div>
+          ${p.padrinho_name ? `<div class="padrinho-meta">👤 ${p.padrinho_name}${p.padrinho_phone ? ' · 📞 ' + p.padrinho_phone : ''}</div>` : '<div class="padrinho-meta" style="color:var(--warning)">⚠️ Sem padrinho atribuído</div>'}
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="badge-sm ${isComplete?'badge-success':'badge-info'}">${isComplete?'Completo':doneSteps+'/5'}</span>
+          <button class="btn-icon" onclick="openPadrinhoModal(${p.id})">✏️</button>
+          ${p.id ? `<button class="btn-icon" onclick="deletePadrinho(${p.id})">🗑️</button>` : ''}
+        </div>
+      </div>
+      <div class="padrinho-steps">
+        ${steps.map((done, i) => `<div class="padrinho-step ${done?'done':''}"><span class="padrinho-step-num">${i+1}</span><span>${stepLabels[i]}</span></div>`).join('')}
+      </div>
+      ${p.notes ? `<div style="font-size:12px;color:var(--text-light);margin-top:8px">${p.notes}</div>` : ''}
+    </div>`;
+  }).join('');
 }
 
 function renderPadrinhoCards() {
@@ -3733,6 +3975,7 @@ async function deletePadrinho(id) {
 
 // ============ FORNECEDORES ============
 let fornecedoresCache = [];
+let fornecedoresFilterStatus = '';
 
 async function renderFornecedores() {
   fornecedoresCache = await api('/fornecedores');
@@ -3740,6 +3983,8 @@ async function renderFornecedores() {
   const list = fornecedoresCache.filter(f => (f.type || 'fornecedor') === 'fornecedor');
   const contratados = list.filter(f => f.status === 'contratado').length;
   const pendentes = list.filter(f => f.status === 'pendente').length;
+  const contatados = list.filter(f => f.status === 'contatado').length;
+  const cancelados = list.filter(f => f.status === 'cancelado').length;
   const categories = [...new Set(list.map(f => f.category).filter(Boolean))].sort();
   main.innerHTML = `
     <h1 class="page-title">Fornecedores</h1>
@@ -3748,6 +3993,24 @@ async function renderFornecedores() {
       <div class="stat-card"><div class="stat-icon total">📦</div><div class="stat-info"><h3>${list.length}</h3><p>Total Fornecedores</p></div></div>
       <div class="stat-card"><div class="stat-icon done">✅</div><div class="stat-info"><h3>${contratados}</h3><p>Contratados</p></div></div>
       <div class="stat-card"><div class="stat-icon pending">⭕</div><div class="stat-info"><h3>${pendentes}</h3><p>Pendentes</p></div></div>
+    </div>
+    <div class="filter-card-grid">
+      <div class="filter-card ${fornecedoresFilterStatus===''?'active':''}" onclick="selectFornecedorFilter('')" style="border-left-color:var(--primary)">
+        <div class="filter-card-icon" style="background:rgba(44,123,229,0.1);color:var(--primary)">📦</div>
+        <div class="filter-card-body"><div class="filter-card-name">Todos</div><div class="filter-card-count">${list.length} fornecedores</div></div>
+      </div>
+      <div class="filter-card ${fornecedoresFilterStatus==='contatado'?'active':''}" onclick="selectFornecedorFilter('contatado')" style="border-left-color:var(--info)">
+        <div class="filter-card-icon" style="background:rgba(44,123,229,0.1);color:var(--info)">📞</div>
+        <div class="filter-card-body"><div class="filter-card-name">Contatados</div><div class="filter-card-count">${contatados} contatados</div></div>
+      </div>
+      <div class="filter-card ${fornecedoresFilterStatus==='pendente'?'active':''}" onclick="selectFornecedorFilter('pendente')" style="border-left-color:var(--warning)">
+        <div class="filter-card-icon" style="background:rgba(241,196,15,0.1);color:#c79a00">⭕</div>
+        <div class="filter-card-body"><div class="filter-card-name">Pendentes</div><div class="filter-card-count">${pendentes} pendentes</div></div>
+      </div>
+      <div class="filter-card ${fornecedoresFilterStatus==='contratado'?'active':''}" onclick="selectFornecedorFilter('contratado')" style="border-left-color:var(--success)">
+        <div class="filter-card-icon" style="background:rgba(39,174,96,0.1);color:var(--success)">✅</div>
+        <div class="filter-card-body"><div class="filter-card-name">Contratados</div><div class="filter-card-count">${contratados} contratados</div></div>
+      </div>
     </div>
     <div class="filters">
       <div class="filter-group">
@@ -3761,12 +4024,22 @@ async function renderFornecedores() {
     </div>
     <div class="fornecedor-grid" id="fornecedores-grid"></div>
   `;
-  renderFornecedorCards(list);
+  filterFornecedores();
+}
+
+function selectFornecedorFilter(status) {
+  fornecedoresFilterStatus = status;
+  document.querySelectorAll('.filter-card').forEach(c => c.classList.remove('active'));
+  const cards = document.querySelectorAll('.filter-card');
+  const idx = { '': 0, 'contatado': 1, 'pendente': 2, 'contratado': 3 };
+  if (cards[idx[status]]) cards[idx[status]].classList.add('active');
+  filterFornecedores();
 }
 
 function filterFornecedores() {
-  const cat = document.getElementById('forn-cat').value;
+  const cat = document.getElementById('forn-cat')?.value || '';
   let list = fornecedoresCache.filter(f => (f.type || 'fornecedor') === 'fornecedor');
+  if (fornecedoresFilterStatus) list = list.filter(f => f.status === fornecedoresFilterStatus);
   if (cat) list = list.filter(f => f.category === cat);
   renderFornecedorCards(list);
 }
@@ -3972,6 +4245,7 @@ async function deleteFornecedor(id) {
 
 // ============ KIT DAS MATÉRIAS-PRIMAS ============
 let kitParticipantsCache = [];
+let kitFilterStatus = '';
 
 async function renderKit() {
   kitParticipantsCache = await api('/participants');
@@ -3980,6 +4254,7 @@ async function renderKit() {
   const kitsConferidos = kitParticipantsCache.filter(p => p.kit_conferido).length;
   const squeezesProntas = kitParticipantsCache.filter(p => p.squeeze_personalizada).length;
   const kitsEntregues = kitParticipantsCache.filter(p => p.kit_entregue).length;
+  const naoConferidos = total - kitsConferidos;
 
   const kitItems = [
     { item: 'Bloco de anotação', momento: 'Início do Encontro', anexo: 'ANEXO VII' },
@@ -4003,36 +4278,43 @@ async function renderKit() {
       <div class="stat-card"><div class="stat-icon progress">👕</div><div class="stat-info"><h3>${squeezesProntas}</h3><p>Squeezes Personalizadas</p></div></div>
       <div class="stat-card"><div class="stat-icon pending">🎁</div><div class="stat-info"><h3>${kitsEntregues}</h3><p>Kits Entregues</p></div></div>
     </div>
+    <div class="filter-card-grid">
+      <div class="filter-card ${kitFilterStatus===''?'active':''}" onclick="selectKitFilter('')" style="border-left-color:var(--primary)">
+        <div class="filter-card-icon" style="background:rgba(44,123,229,0.1);color:var(--primary)">📦</div>
+        <div class="filter-card-body"><div class="filter-card-name">Todos</div><div class="filter-card-count">${total} MPs</div></div>
+      </div>
+      <div class="filter-card ${kitFilterStatus==='nao_conferido'?'active':''}" onclick="selectKitFilter('nao_conferido')" style="border-left-color:var(--warning)">
+        <div class="filter-card-icon" style="background:rgba(241,196,15,0.1);color:#c79a00">⭕</div>
+        <div class="filter-card-body"><div class="filter-card-name">Não Conferidos</div><div class="filter-card-count">${naoConferidos} pendentes</div></div>
+      </div>
+      <div class="filter-card ${kitFilterStatus==='conferido'?'active':''}" onclick="selectKitFilter('conferido')" style="border-left-color:var(--info)">
+        <div class="filter-card-icon" style="background:rgba(44,123,229,0.1);color:var(--info)">✅</div>
+        <div class="filter-card-body"><div class="filter-card-name">Conferidos</div><div class="filter-card-count">${kitsConferidos} conferidos</div></div>
+      </div>
+      <div class="filter-card ${kitFilterStatus==='entregue'?'active':''}" onclick="selectKitFilter('entregue')" style="border-left-color:var(--success)">
+        <div class="filter-card-icon" style="background:rgba(39,174,96,0.1);color:var(--success)">🎁</div>
+        <div class="filter-card-body"><div class="filter-card-name">Entregues</div><div class="filter-card-count">${kitsEntregues} entregues</div></div>
+      </div>
+    </div>
     <div class="card">
       <div class="card-title">Itens do Kit (10 itens por matéria-prima)</div>
       <div class="kit-items-list">
         ${kitItems.map(k => `<div class="kit-item-row">
-          <span class="kit-item-name">${k.item}</span>
-          <span class="kit-item-moment">${k.momento}</span>
-          <span class="kit-item-anexo">${k.anexo}</span>
+          <div class="kit-item-name">${k.item}</div>
+          <div class="kit-item-moment">${k.momento}</div>
+          <div class="kit-item-anexo">${k.anexo}</div>
         </div>`).join('')}
       </div>
     </div>
     <div class="card">
-      <div class="card-title">Controle por Matéria-prima</div>
-      ${total === 0 ? '<div class="empty-state"><p>Nenhuma matéria-prima inscrita ainda.</p></div>' : `
+      <div class="card-title">Controle de Kits por Matéria-prima</div>
       <div class="kit-table-wrapper">
-        <table class="kit-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Nome</th>
-              <th>Kit Conferido</th>
-              <th>Squeeze Personalizada</th>
-              <th>Kit Entregue</th>
-            </tr>
-          </thead>
-          <tbody id="kit-tbody">
-          </tbody>
+        <table class="data-table" id="kit-table">
+          <thead><tr><th>#</th><th>Matéria-prima</th><th>Conferido</th><th>Squeeze</th><th>Entregue</th></tr></thead>
+          <tbody id="kit-tbody"></tbody>
         </table>
       </div>
       <div class="kit-mobile-cards" id="kit-mobile-cards"></div>
-      `}
     </div>
   `;
   renderKitTable();
@@ -4042,7 +4324,11 @@ function renderKitTable() {
   const tbody = document.getElementById('kit-tbody');
   const mobileCards = document.getElementById('kit-mobile-cards');
   if (!tbody) return;
-  tbody.innerHTML = kitParticipantsCache.map((p, i) => `<tr>
+  let list = kitParticipantsCache;
+  if (kitFilterStatus === 'nao_conferido') list = list.filter(p => !p.kit_conferido);
+  else if (kitFilterStatus === 'conferido') list = list.filter(p => p.kit_conferido);
+  else if (kitFilterStatus === 'entregue') list = list.filter(p => p.kit_entregue);
+  tbody.innerHTML = list.map((p, i) => `<tr>
     <td>${i + 1}</td>
     <td class="kit-name">${p.name || '—'}</td>
     <td class="kit-toggle-cell">
@@ -4063,7 +4349,7 @@ function renderKitTable() {
   </tr>`).join('');
 
   if (mobileCards) {
-    mobileCards.innerHTML = kitParticipantsCache.map((p, i) => `<div class="kit-mobile-card">
+    mobileCards.innerHTML = list.map((p, i) => `<div class="kit-mobile-card">
       <div class="kit-mobile-card-top">
         <span class="kit-mobile-card-name">${i + 1}. ${p.name || '—'}</span>
       </div>
@@ -4097,21 +4383,63 @@ async function toggleKitField(participantId, field) {
 
 // ============ AVISOS ============
 let avisosCache = [];
+let avisosFilterPriority = '';
+let avisosFilterTarget = '';
 
 async function renderAvisos() {
   avisosCache = await api('/avisos');
   const main = document.getElementById('main-content');
   const pinned = avisosCache.filter(a => a.pinned);
   const others = avisosCache.filter(a => !a.pinned);
+  const alta = avisosCache.filter(a => a.priority === 'alta').length;
+  const media = avisosCache.filter(a => a.priority === 'media').length;
+  const baixa = avisosCache.filter(a => a.priority === 'baixa').length;
   main.innerHTML = `
     <h1 class="page-title">Avisos & Comunicados</h1>
     <p class="page-subtitle">Mural de comunicações do coordenador para equipes e participantes</p>
+    <div class="filter-card-grid">
+      <div class="filter-card ${avisosFilterPriority===''?'active':''}" onclick="selectAvisoFilter('')" style="border-left-color:var(--primary)">
+        <div class="filter-card-icon" style="background:rgba(44,123,229,0.1);color:var(--primary)">📋</div>
+        <div class="filter-card-body"><div class="filter-card-name">Todos</div><div class="filter-card-count">${avisosCache.length} avisos</div></div>
+      </div>
+      <div class="filter-card ${avisosFilterPriority==='alta'?'active':''}" onclick="selectAvisoFilter('alta')" style="border-left-color:var(--danger)">
+        <div class="filter-card-icon" style="background:rgba(235,87,87,0.1);color:var(--danger)">🔴</div>
+        <div class="filter-card-body"><div class="filter-card-name">Alta Prioridade</div><div class="filter-card-count">${alta} avisos</div></div>
+      </div>
+      <div class="filter-card ${avisosFilterPriority==='media'?'active':''}" onclick="selectAvisoFilter('media')" style="border-left-color:var(--warning)">
+        <div class="filter-card-icon" style="background:rgba(241,196,15,0.1);color:#c79a00">🟡</div>
+        <div class="filter-card-body"><div class="filter-card-name">Média Prioridade</div><div class="filter-card-count">${media} avisos</div></div>
+      </div>
+      <div class="filter-card ${avisosFilterPriority==='baixa'?'active':''}" onclick="selectAvisoFilter('baixa')" style="border-left-color:var(--success)">
+        <div class="filter-card-icon" style="background:rgba(39,174,96,0.1);color:var(--success)">⚪</div>
+        <div class="filter-card-body"><div class="filter-card-name">Baixa Prioridade</div><div class="filter-card-count">${baixa} avisos</div></div>
+      </div>
+    </div>
     <div class="filters">
       <button class="btn btn-primary btn-sm" onclick="openAvisoModal()">+ Novo Aviso</button>
     </div>
     ${pinned.length > 0 ? '<div id="pinned-avisos"></div>' : ''}
     <div id="other-avisos"></div>
   `;
+  filterAvisos();
+}
+
+function selectAvisoFilter(priority) {
+  avisosFilterPriority = priority;
+  document.querySelectorAll('.filter-card').forEach(c => c.classList.remove('active'));
+  const cards = document.querySelectorAll('.filter-card');
+  const idx = { '': 0, 'alta': 1, 'media': 2, 'baixa': 3 };
+  if (cards[idx[priority]]) cards[idx[priority]].classList.add('active');
+  filterAvisos();
+}
+
+function filterAvisos() {
+  let pinned = avisosCache.filter(a => a.pinned);
+  let others = avisosCache.filter(a => !a.pinned);
+  if (avisosFilterPriority) {
+    pinned = pinned.filter(a => a.priority === avisosFilterPriority);
+    others = others.filter(a => a.priority === avisosFilterPriority);
+  }
   renderAvisoCards(pinned, 'pinned-avisos');
   renderAvisoCards(others, 'other-avisos');
 }
@@ -4683,6 +5011,7 @@ function deleteBudgetItem(id) {
 // ============ DOAÇÕES ============
 let donationsCache = [];
 let donationsFilterType = '';
+let donationsFilterConsolidated = '';
 
 async function renderDoacoes() {
   donationsCache = await api('/donations');
@@ -4692,6 +5021,7 @@ async function renderDoacoes() {
   const totalMoney = donationsCache.filter(d => d.type === 'dinheiro').reduce((s, d) => s + (d.value || 0), 0);
   const totalMaterial = donationsCache.filter(d => d.type === 'material').length;
   const consolidated = donationsCache.filter(d => d.consolidated).length;
+  const pending = donationsCache.filter(d => !d.consolidated).length;
 
   main.innerHTML = `
     <h1 class="page-title">Doações Recebidas</h1>
@@ -4714,15 +5044,26 @@ async function renderDoacoes() {
       </div>
     </div>
 
-    <div class="filters">
-      <div class="filter-group">
-        <span class="filter-label">Tipo:</span>
-        <select id="don-filter-type" onchange="filterDonations()">
-          <option value="">Todos</option>
-          <option value="dinheiro" ${donationsFilterType==='dinheiro'?'selected':''}>Dinheiro</option>
-          <option value="material" ${donationsFilterType==='material'?'selected':''}>Material</option>
-        </select>
+    <div class="filter-card-grid">
+      <div class="filter-card ${donationsFilterType===''?'active':''}" onclick="selectDonationFilter('')" style="border-left-color:var(--primary)">
+        <div class="filter-card-icon" style="background:rgba(44,123,229,0.1);color:var(--primary)">🎁</div>
+        <div class="filter-card-body"><div class="filter-card-name">Todas</div><div class="filter-card-count">${donationsCache.length} doações</div></div>
       </div>
+      <div class="filter-card ${donationsFilterType==='dinheiro'?'active':''}" onclick="selectDonationFilter('dinheiro')" style="border-left-color:var(--success)">
+        <div class="filter-card-icon" style="background:rgba(39,174,96,0.1);color:var(--success)">💰</div>
+        <div class="filter-card-body"><div class="filter-card-name">Dinheiro</div><div class="filter-card-count">R$ ${totalMoney.toFixed(0)}</div></div>
+      </div>
+      <div class="filter-card ${donationsFilterType==='material'?'active':''}" onclick="selectDonationFilter('material')" style="border-left-color:var(--info)">
+        <div class="filter-card-icon" style="background:rgba(44,123,229,0.1);color:var(--info)">📦</div>
+        <div class="filter-card-body"><div class="filter-card-name">Materiais</div><div class="filter-card-count">${totalMaterial} doações</div></div>
+      </div>
+      <div class="filter-card ${donationsFilterType==='pending'?'active':''}" onclick="selectDonationFilter('pending')" style="border-left-color:var(--warning)">
+        <div class="filter-card-icon" style="background:rgba(241,196,15,0.1);color:#c79a00">⭕</div>
+        <div class="filter-card-body"><div class="filter-card-name">Pendentes</div><div class="filter-card-count">${pending} não consolidadas</div></div>
+      </div>
+    </div>
+
+    <div class="filters">
       <button class="btn btn-primary btn-sm" onclick="openDonationModal()">+ Doação</button>
     </div>
 
@@ -4737,14 +5078,24 @@ async function renderDoacoes() {
   renderDonationsTable();
 }
 
+function selectDonationFilter(filter) {
+  donationsFilterType = filter;
+  document.querySelectorAll('.filter-card').forEach(c => c.classList.remove('active'));
+  const cards = document.querySelectorAll('.filter-card');
+  const idx = { '': 0, 'dinheiro': 1, 'material': 2, 'pending': 3 };
+  if (cards[idx[filter]]) cards[idx[filter]].classList.add('active');
+  renderDonationsTable();
+}
+
 function filterDonations() {
-  donationsFilterType = document.getElementById('don-filter-type').value;
   renderDonationsTable();
 }
 
 function renderDonationsTable() {
   let list = donationsCache;
-  if (donationsFilterType) list = list.filter(d => d.type === donationsFilterType);
+  if (donationsFilterType === 'dinheiro') list = list.filter(d => d.type === 'dinheiro');
+  else if (donationsFilterType === 'material') list = list.filter(d => d.type === 'material');
+  else if (donationsFilterType === 'pending') list = list.filter(d => !d.consolidated);
 
   const tbody = document.querySelector('#don-table tbody');
   const cards = document.getElementById('don-cards');

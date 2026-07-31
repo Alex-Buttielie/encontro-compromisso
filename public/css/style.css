@@ -3988,6 +3988,77 @@ select:focus, input:focus, textarea:focus { border-color: var(--primary); }
   font-size: 18px;
 }
 
+/* GENERIC FILTER CARDS (reusable across modules) */
+.filter-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.filter-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  user-select: none;
+}
+
+.filter-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.filter-card.active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(44,123,229,0.12);
+}
+
+.filter-card-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.filter-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.filter-card-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.filter-card-count {
+  font-size: 11px;
+  color: var(--text-light);
+  margin-top: 2px;
+}
+
+@media (max-width: 768px) {
+  .filter-card-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 480px) {
+  .filter-card-grid { grid-template-columns: 1fr; }
+}
+
 /* BUDGET CATEGORY CARDS */
 .budget-overview-bar {
   margin-bottom: 16px;
