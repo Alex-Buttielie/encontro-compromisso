@@ -2603,7 +2603,106 @@ function generateEscolinhasReport() {
   return new Promise(resolve => { doc.on('end', () => resolve(Buffer.concat(buffers))); });
 }
 
+function generateAssignedTasksReport() {
+  const doc = createReportDoc();
+  const buffers = [];
+  doc.on('data', buffers.push.bind(buffers));
+
+  reportHeader(doc, 'Tarefas Atribuidas', `Distribuicao por responsavel - Gerado em ${new Date().toLocaleString('pt-BR')}`);
+
+  let y = 155;
+  const allTasks = db.getAll('tasks');
+  const teams = db.getAll('teams').map(t => t.name).sort();
+
+  const groups = {};
+  for (const t of allTasks) {
+    const key = t.responsible_team || 'N/A';
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(t);
+  }
+
+  const moKey = Object.keys(groups).find(k => {
+    const n = k.toLowerCase().replace(/['s]/g, '').trim();
+    return n === 'mo' || n === 'mos' || n === 'mestre de obra' || n === 'mestres de obras';
+  });
+
+  const orderedKeys = [];
+  if (moKey) orderedKeys.push(moKey);
+  for (const k of Object.keys(groups).sort()) {
+    if (k !== moKey) orderedKeys.push(k);
+  }
+
+  const total = allTasks.length;
+  const done = allTasks.filter(t => t.status === 'concluido').length;
+  const inProg = allTasks.filter(t => t.status === 'em_andamento').length;
+  const pend = allTasks.filter(t => t.status === 'pendente').length;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+  summaryCard(doc, 'Total', total, 50, y, 100, 50, COLORS.primary);
+  summaryCard(doc, 'Concluidas', done, 160, y, 100, 50, COLORS.green);
+  summaryCard(doc, 'Em Andamento', inProg, 270, y, 100, 50, COLORS.orange);
+  summaryCard(doc, 'Pendentes', pend, 380, y, 100, 50, COLORS.red);
+  summaryCard(doc, 'Progresso', pct + '%', 490, y, 100, 50, pct >= 50 ? COLORS.green : COLORS.orange);
+  y += 70;
+
+  const statusLabels = { pendente: 'Pendente', em_andamento: 'Em Andamento', concluido: 'Concluido' };
+  const priorityLabels = { alta: 'Alta', media: 'Media', baixa: 'Baixa' };
+
+  for (const key of orderedKeys) {
+    const items = groups[key].sort((a, b) => {
+      const phCmp = (a.phase || 'pre').localeCompare(b.phase || 'pre');
+      if (phCmp !== 0) return phCmp;
+      const stOrder = { pendente: 0, em_andamento: 1, concluido: 2 };
+      const stCmp = (stOrder[a.status] || 9) - (stOrder[b.status] || 9);
+      if (stCmp !== 0) return stCmp;
+      return (a.deadline || 'zzz').localeCompare(b.deadline || 'zzz');
+    });
+    const gDone = items.filter(t => t.status === 'concluido').length;
+    const gPct = items.length > 0 ? Math.round((gDone / items.length) * 100) : 0;
+    const isMO = key === moKey;
+    const label = isMO ? "MO's (Responsabilidades Gerais)" : key;
+
+    y = ensureSpace(doc, 80 + Math.min(items.length, 3) * 24, y);
+    y = sectionTitle(doc, `${label} (${items.length})`, y, isMO ? COLORS.secondary : COLORS.primary);
+
+    doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica-Bold').text(`Concluidas: ${gDone}/${items.length} (${gPct}%)`, 50, y);
+    y += 14;
+    progressBar(doc, gPct, 50, y, CONTENT_WIDTH);
+    y += 18;
+
+    y = tableHeader(doc, [
+      { label: '#', x: 54, w: 30 },
+      { label: 'Tarefa', x: 90, w: 220 },
+      { label: 'Fase', x: 315, w: 70 },
+      { label: 'Prazo', x: 390, w: 60 },
+      { label: 'Prioridade', x: 455, w: 60 },
+      { label: 'Status', x: 520, w: 60 },
+    ], y);
+
+    for (const t of items) {
+      const titleH = calcTextHeight(doc, t.title || '', 220, 9);
+      const rowH = Math.max(22, titleH + 8);
+      y = ensureSpace(doc, rowH, y);
+      zebraRow(doc, y, rowH);
+      doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(t.item_number || '-', 54, y + 4, { width: 30 });
+      doc.font('Helvetica-Bold').text(t.title || '-', 90, y + 4, { width: 220 });
+      doc.font('Helvetica').fillColor(COLORS.gray).fontSize(8).text(t.phase === 'during' ? 'Durante' : 'Pre', 315, y + 4, { width: 70 });
+      doc.text(t.deadline || '-', 390, y + 4, { width: 60 });
+      const pColors = { alta: COLORS.red, media: COLORS.warning, baixa: COLORS.gray };
+      doc.fillColor(pColors[t.priority] || COLORS.gray).fontSize(8).text(priorityLabels[t.priority] || t.priority || '-', 455, y + 4, { width: 60 });
+      const sColors = { concluido: COLORS.green, em_andamento: COLORS.orange, pendente: COLORS.red };
+      doc.fillColor(sColors[t.status] || COLORS.gray).font('Helvetica-Bold').fontSize(8).text(statusLabels[t.status] || t.status, 520, y + 4, { width: 60 });
+      y += rowH;
+    }
+    y += 14;
+  }
+
+  doc.end();
+  return new Promise(resolve => { doc.on('end', () => resolve(Buffer.concat(buffers))); });
+}
+
 module.exports = { generateFullReport, generateCategoryReport, generateTeamReport, generateTeamScheduleReport,
   generateScheduleReport, generateParticipantsReport, generateFinanceReport, generateAlicercesReport,
   generateLembrancinhasReport, generateFornecedoresReport, generateAvisosReport, generateKitReport,
-  generateCoordinatorGuideReport, generatePreparationReport, generateLembretesReport, generateEscolinhasReport };
+  generateCoordinatorGuideReport, generatePreparationReport, generateLembretesReport, generateEscolinhasReport,
+  generateAssignedTasksReport };

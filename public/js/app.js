@@ -1499,6 +1499,7 @@ const RELATORIO_REPORTS = [
     section: '👥 Equipes e Matérias-primas',
     reports: [
       { icon: '🧍', color: 'var(--primary)', bg: 'rgba(192,57,43,0.15)', title: 'Lista de MP\'s', desc: 'Inscritos, grupos, quartos, restrições e pagamentos', url: '/reports/participants' },
+      { icon: '📋', color: 'var(--secondary)', bg: 'rgba(26,58,92,0.15)', title: 'Tarefas Atribuídas', desc: 'Distribuição de tarefas por MO\'s e equipes com status e progresso', url: '/reports/assigned-tasks', featured: true },
       { icon: '🎒', color: 'var(--jumire-green)', bg: 'rgba(45,134,89,0.15)', title: 'Kit da MP', desc: 'Checklist do RH — itens e controle por inscrito', url: '/reports/kit' },
       { icon: '🏛️', color: '#9b59b6', bg: 'rgba(155,89,182,0.15)', title: 'Mapa de Alicerces', desc: 'Construtores, horários e conteúdo das pistas', url: '/reports/alicerces' },
       { icon: '🎁', color: 'var(--accent)', bg: 'rgba(230,126,34,0.15)', title: 'Lembrancinhas', desc: 'Status de confecção por equipe e quantidades', url: '/reports/lembrancinhas' },

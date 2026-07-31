@@ -4,7 +4,8 @@ const {
   generateFullReport, generateCategoryReport, generateTeamReport, generateTeamScheduleReport,
   generateScheduleReport, generateParticipantsReport, generateFinanceReport, generateAlicercesReport,
   generateLembrancinhasReport, generateFornecedoresReport, generateAvisosReport, generateKitReport,
-  generateCoordinatorGuideReport, generatePreparationReport, generateLembretesReport, generateEscolinhasReport
+  generateCoordinatorGuideReport, generatePreparationReport, generateLembretesReport, generateEscolinhasReport,
+  generateAssignedTasksReport
 } = require('./routes/pdf');
 const apiRouter = require('./routes/api');
 const { runMigrations } = require('./migrations/run');
@@ -64,6 +65,7 @@ app.get('/reports/coordinator-guide', reportRoute(() => generateCoordinatorGuide
 app.get('/reports/preparation', reportRoute(() => generatePreparationReport(), 'relatorio-preparacao.pdf'));
 app.get('/reports/lembretes', reportRoute(() => generateLembretesReport(), 'relatorio-lembretes.pdf'));
 app.get('/reports/escolinhas', reportRoute(() => generateEscolinhasReport(), 'calendario-escolinhas-2026.pdf'));
+app.get('/reports/assigned-tasks', reportRoute(() => generateAssignedTasksReport(), 'tarefas-atribuidas.pdf'));
 
 // SPA fallback
 app.get('*', (req, res) => {
