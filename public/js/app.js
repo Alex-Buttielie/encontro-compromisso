@@ -464,6 +464,10 @@ function renderDashboardCharts(stats) {
 let currentPhaseTab = 'pre';
 let currentSort = 'deadline';
 let collapsedCategories = new Set();
+let currentFilterStatus = '';
+let currentFilterPriority = '';
+let currentFilterTeam = '';
+let currentFilterSearch = '';
 
 async function renderChecklist() {
   tasksCache = await api('/tasks');
@@ -536,7 +540,14 @@ async function renderChecklist() {
   teams.forEach(t => { const o = document.createElement('option'); o.value = t; o.textContent = t; teamSelect.appendChild(o); });
   const sortSelect = document.getElementById('filter-sort');
   if (sortSelect) sortSelect.value = currentSort;
-  renderChecklistSections(tasksCache);
+  const statusSelect = document.getElementById('filter-status');
+  if (statusSelect) statusSelect.value = currentFilterStatus;
+  const prioritySelect = document.getElementById('filter-priority');
+  if (prioritySelect) prioritySelect.value = currentFilterPriority;
+  if (teamSelect) teamSelect.value = currentFilterTeam;
+  const searchInput = document.getElementById('task-search');
+  if (searchInput) searchInput.value = currentFilterSearch;
+  filterTasks();
 }
 
 function switchPhaseTab(phase) {
@@ -561,8 +572,15 @@ function filterTasks() {
   const status = document.getElementById('filter-status')?.value || '';
   const team = document.getElementById('filter-team')?.value || '';
   const priority = document.getElementById('filter-priority')?.value || '';
+  currentFilterSearch = search;
+  currentFilterStatus = status;
+  currentFilterTeam = team;
+  currentFilterPriority = priority;
   let filtered = tasksCache;
-  if (search) filtered = filtered.filter(t => t.title.toLowerCase().includes(search) || (t.description || '').toLowerCase().includes(search));
+  if (search) filtered = filtered.filter(t =>
+    (t.title || '').toLowerCase().includes(search) ||
+    (t.description || '').toLowerCase().includes(search)
+  );
   if (status) filtered = filtered.filter(t => t.status === status);
   if (team) filtered = filtered.filter(t => t.responsible_team === team);
   if (priority) filtered = filtered.filter(t => t.priority === priority);
