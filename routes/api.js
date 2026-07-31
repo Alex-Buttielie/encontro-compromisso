@@ -131,7 +131,13 @@ router.post('/teams', (req, res) => {
 
 router.put('/teams/:id', (req, res) => {
   const { name, description, responsible } = req.body;
-  db.prepare('UPDATE teams SET name=?, description=?, responsible=? WHERE id=?').run(name, description, responsible, req.params.id);
+  if (responsible) {
+    const member = db.prepare('SELECT 1 FROM team_members WHERE team_id=? AND name=?').get(req.params.id, responsible);
+    if (!member) {
+      return res.status(400).json({ error: 'O responsável deve ser um membro da equipe' });
+    }
+  }
+  db.prepare('UPDATE teams SET name=?, description=?, responsible=? WHERE id=?').run(name, description, responsible || null, req.params.id);
   res.json({ success: true });
 });
 

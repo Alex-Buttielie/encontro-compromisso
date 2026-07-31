@@ -19,7 +19,11 @@ async function api(path, opts = {}) {
     cache: 'no-cache',
     ...opts
   });
-  if (!res.ok) throw new Error(`API ${path}: ${res.status}`);
+  if (!res.ok) {
+    let msg = `API ${path}: ${res.status}`;
+    try { const body = await res.json(); if (body.error) msg = body.error; } catch {}
+    throw new Error(msg);
+  }
   return res.json();
 }
 
@@ -1431,20 +1435,64 @@ async function viewTeamDetails(teamId) {
 
 function openTeamModal(id) {
   const team = id ? teamsCache.find(t => t.id === id) : null;
+  const members = team?.members || [];
+  const { teamTasks, tasksDone, tasksPct } = team ? getTeamStats(team) : { teamTasks: [], tasksDone: 0, tasksPct: 0 };
+
+  const respOptions = members.length > 0
+    ? `<option value="">— Selecionar responsável —</option>` +
+      members.map(m => `<option value="${m.name.replace(/"/g,'&quot;')}" ${team && team.responsible === m.name ? 'selected' : ''}>${m.name}${m.role ? ' (' + m.role + ')' : ''}</option>`).join('')
+    : `<option value="" ${!team?.responsible ? 'selected' : ''}>${team?.responsible ? team.responsible + ' (membro não cadastrado)' : 'Nenhum membro cadastrado'}</option>`;
+
+  const respNote = members.length === 0
+    ? `<p style="font-size:11px;color:var(--text-light);margin-top:4px">⚠️ Adicione membros à equipe para selecionar um responsável</p>`
+    : `<p style="font-size:11px;color:var(--text-light);margin-top:4px">👤 Apenas membros da equipe podem ser responsáveis</p>`;
+
+  const statsHtml = team ? `
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+      <span style="background:var(--light-card);padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;color:var(--dark)">👥 ${members.length} ${members.length === 1 ? 'membro' : 'membros'}</span>
+      <span style="background:var(--light-card);padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;color:var(--dark)">📋 ${teamTasks.length} ${teamTasks.length === 1 ? 'tarefa' : 'tarefas'}</span>
+      <span style="background:var(--light-card);padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;color:var(--dark)">✅ ${tasksPct}% concluído</span>
+    </div>` : '';
+
+  const membersPreview = team && members.length > 0 ? `
+    <div class="form-group">
+      <label>Membros da equipe</label>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;max-height:120px;overflow-y:auto;padding:4px 0">
+        ${members.map(m => `<span style="display:inline-flex;align-items:center;gap:4px;background:var(--light-card);padding:4px 10px;border-radius:16px;font-size:12px;cursor:pointer;border:1px solid transparent;transition:border-color 0.15s" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='transparent'" onclick="this.closest('.modal-overlay').remove();openMemberModal(${team.id},${m.id})">
+          <span style="width:20px;height:20px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">${(m.name||'?').charAt(0).toUpperCase()}</span>
+          ${m.name}
+        </span>`).join('')}
+        <span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:16px;font-size:12px;cursor:pointer;color:var(--primary);font-weight:600;border:1px dashed var(--border)" onclick="this.closest('.modal-overlay').remove();openMemberModal(${team.id})">+ Adicionar membro</span>
+      </div>
+    </div>` : '';
+
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay active';
-  overlay.innerHTML = `<div class="modal">
-    <h3>${team ? 'Editar Equipe' : 'Nova Equipe'}</h3>
-    <div class="form-group"><label>Nome</label><input id="t-name" value="${team ? team.name.replace(/"/g,'&quot;') : ''}"></div>
-    <div class="form-group"><label>Descrição</label><textarea id="t-desc" rows="3">${team ? (team.description || '').replace(/</g,'&lt;') : ''}</textarea></div>
-    <div class="form-group"><label>Responsável</label><input id="t-resp" value="${team ? (team.responsible || '').replace(/"/g,'&quot;') : ''}"></div>
+  overlay.innerHTML = `<div class="modal" style="max-width:520px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 style="margin:0">${team ? 'Editar Equipe' : 'Nova Equipe'}</h3>
+      <button class="modal-close" onclick="this.closest('.modal-overlay').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-light);padding:4px 8px;border-radius:6px">✕</button>
+    </div>
+    ${statsHtml}
+    <div class="form-group"><label>Nome da equipe</label><input id="t-name" value="${team ? team.name.replace(/"/g,'&quot;') : ''}" placeholder="Ex: Cozinha" style="font-size:15px;font-weight:600"></div>
+    <div class="form-group"><label>Descrição</label><textarea id="t-desc" rows="3" placeholder="Responsabilidades e atribuições da equipe">${team ? (team.description || '').replace(/</g,'&lt;') : ''}</textarea></div>
+    <div class="form-group">
+      <label>Responsável</label>
+      <select id="t-resp" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:#fff;cursor:pointer">
+        ${respOptions}
+      </select>
+      ${respNote}
+    </div>
+    ${membersPreview}
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveTeam(${id || 'null'}, this)">${team ? 'Salvar' : 'Criar'}</button>
+      <button class="btn btn-primary" onclick="saveTeam(${id || 'null'}, this)">${team ? 'Salvar alterações' : 'Criar equipe'}</button>
     </div>
   </div>`;
   document.body.appendChild(overlay);
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  const nameInput = document.getElementById('t-name');
+  if (nameInput) nameInput.focus();
 }
 
 async function saveTeam(id, btn) {
@@ -1453,15 +1501,19 @@ async function saveTeam(id, btn) {
     description: document.getElementById('t-desc').value,
     responsible: document.getElementById('t-resp').value,
   };
-  if (id) {
-    await api(`/teams/${id}`, { method: 'PUT', body: JSON.stringify(data) });
-    toast('Equipe atualizada!', 'success');
-  } else {
-    await api('/teams', { method: 'POST', body: JSON.stringify(data) });
-    toast('Equipe criada!', 'success');
+  try {
+    if (id) {
+      await api(`/teams/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+      toast('Equipe atualizada!', 'success');
+    } else {
+      await api('/teams', { method: 'POST', body: JSON.stringify(data) });
+      toast('Equipe criada!', 'success');
+    }
+    btn.closest('.modal-overlay').remove();
+    renderEquipes();
+  } catch (err) {
+    toast(err.message || 'Erro ao salvar equipe', 'error');
   }
-  btn.closest('.modal-overlay').remove();
-  renderEquipes();
 }
 
 function deleteTeam(id, name) {
