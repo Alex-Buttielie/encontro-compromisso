@@ -16,6 +16,7 @@ function debounce(fn, ms = 300) {
 async function api(path, opts = {}) {
   const res = await fetch(`${API}${path}`, {
     headers: { 'Content-Type': 'application/json' },
+    cache: 'no-cache',
     ...opts
   });
   if (!res.ok) throw new Error(`API ${path}: ${res.status}`);
