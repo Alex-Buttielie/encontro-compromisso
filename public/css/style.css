@@ -3402,6 +3402,35 @@ select:focus, input:focus, textarea:focus { border-color: var(--primary); }
 .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
 
 /* KIT DAS MATÉRIAS-PRIMAS */
+.kit-progress-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.kit-progress-item { display: flex; flex-direction: column; gap: 6px; }
+.kit-progress-label {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 12px; font-weight: 600; color: var(--text-light);
+}
+.kit-progress-val { font-size: 12px; color: var(--dark); }
+.kit-progress-bar {
+  height: 8px; border-radius: 4px; background: var(--bg);
+  overflow: hidden;
+}
+.kit-progress-fill {
+  height: 100%; border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+.kit-toolbar {
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.kit-toolbar .search-box { flex: 1; min-width: 200px; }
+.kit-items-toggle { white-space: nowrap; }
+
+.kit-items-collapse { margin-bottom: 16px; }
 .kit-items-list { display: flex; flex-direction: column; gap: 6px; }
 .kit-item-row {
   display: flex; align-items: center; gap: 12px;
@@ -3431,8 +3460,25 @@ select:focus, input:focus, textarea:focus { border-color: var(--primary); }
   font-size: 14px; font-weight: 700; transition: all 0.2s;
   background: var(--card-bg); color: transparent;
 }
-.kit-toggle:hover { border-color: var(--primary); }
+.kit-toggle:hover { border-color: var(--primary); transform: scale(1.1); }
 .kit-toggle.checked { background: var(--success); border-color: var(--success); color: #fff; }
+
+.kit-row-done { background: rgba(39,174,96,0.04); }
+.kit-row-partial { background: rgba(44,123,229,0.04); }
+.kit-row-pending { background: rgba(241,196,15,0.03); }
+
+.kit-empty {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 40px 20px; color: var(--text-light); text-align: center;
+}
+
+.kit-mobile-cards { display: none; }
+
+@media (max-width: 768px) {
+  .kit-progress-grid { grid-template-columns: 1fr; gap: 8px; }
+  .kit-toolbar { flex-direction: column; align-items: stretch; }
+  .kit-toolbar .search-box { min-width: unset; }
+}
 
 /* FINANCE CHARTS & ANALYTICS */
 .fin-charts-grid {

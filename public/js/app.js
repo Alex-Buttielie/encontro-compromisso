@@ -4191,38 +4191,52 @@ async function deleteFornecedor(id) {
 // ============ KIT DAS MATÉRIAS-PRIMAS ============
 let kitParticipantsCache = [];
 let kitFilterStatus = '';
+let kitSearchQuery = '';
+let kitItemsExpanded = false;
+
+const KIT_ITEMS = [
+  { item: 'Bloco de anotação', momento: 'Início do Encontro', anexo: 'ANEXO VII' },
+  { item: 'Caneta', momento: 'Início do Encontro', anexo: 'ANEXO VIII' },
+  { item: 'Cordão com pingente do Espírito Santo', momento: 'Acabamento', anexo: 'ANEXO IX' },
+  { item: 'Fitas coloridas da JUMIRE (separação das squeezes)', momento: 'Início do Encontro', anexo: 'ANEXO X' },
+  { item: 'Lembrancinhas do RH (18 modelos)', momento: 'Durante o Encontro', anexo: 'ANEXO XI' },
+  { item: 'Livreto de Orações', momento: 'Início do Encontro', anexo: '-' },
+  { item: 'Oração do Compromissado de bolso', momento: 'Acabamento', anexo: 'ANEXO XII' },
+  { item: 'Oração do Espírito Santo para instrutores', momento: 'Início do Encontro', anexo: 'ANEXO XIII' },
+  { item: 'Sacolinha/Mochila', momento: 'Início do Encontro', anexo: 'ANEXO XIV' },
+  { item: 'Squeeze (personalizar com nome)', momento: 'Antes do Encontro', anexo: 'ANEXO XV' },
+];
 
 async function renderKit() {
   kitParticipantsCache = await api('/participants');
   const main = document.getElementById('main-content');
   const total = kitParticipantsCache.length;
-  const kitsConferidos = kitParticipantsCache.filter(p => p.kit_conferido).length;
-  const squeezesProntas = kitParticipantsCache.filter(p => p.squeeze_personalizada).length;
-  const kitsEntregues = kitParticipantsCache.filter(p => p.kit_entregue).length;
-  const naoConferidos = total - kitsConferidos;
-
-  const kitItems = [
-    { item: 'Bloco de anotação', momento: 'Início do Encontro', anexo: 'ANEXO VII' },
-    { item: 'Caneta', momento: 'Início do Encontro', anexo: 'ANEXO VIII' },
-    { item: 'Cordão com pingente do Espírito Santo', momento: 'Acabamento', anexo: 'ANEXO IX' },
-    { item: 'Fitas coloridas da JUMIRE (separação das squeezes)', momento: 'Início do Encontro', anexo: 'ANEXO X' },
-    { item: 'Lembrancinhas do RH (18 modelos)', momento: 'Durante o Encontro', anexo: 'ANEXO XI' },
-    { item: 'Livreto de Orações', momento: 'Início do Encontro', anexo: '-' },
-    { item: 'Oração do Compromissado de bolso', momento: 'Acabamento', anexo: 'ANEXO XII' },
-    { item: 'Oração do Espírito Santo para instrutores', momento: 'Início do Encontro', anexo: 'ANEXO XIII' },
-    { item: 'Sacolinha/Mochila', momento: 'Início do Encontro', anexo: 'ANEXO XIV' },
-    { item: 'Squeeze (personalizar com nome)', momento: 'Antes do Encontro', anexo: 'ANEXO XV' },
-  ];
+  const conferidos = kitParticipantsCache.filter(p => p.kit_conferido).length;
+  const squeezes = kitParticipantsCache.filter(p => p.squeeze_personalizada).length;
+  const entregues = kitParticipantsCache.filter(p => p.kit_entregue).length;
+  const pctConf = total ? Math.round(conferidos / total * 100) : 0;
+  const pctSqueeze = total ? Math.round(squeezes / total * 100) : 0;
+  const pctEnt = total ? Math.round(entregues / total * 100) : 0;
 
   main.innerHTML = `
     <h1 class="page-title">Kit das Matérias-primas</h1>
-    <p class="page-subtitle">Controle de conferência e entrega dos kits — responsabilidade do RH</p>
-    <div class="stats-grid">
-      <div class="stat-card"><div class="stat-icon total">📦</div><div class="stat-info"><h3>${total}</h3><p>Matérias-primas</p></div></div>
-      <div class="stat-card"><div class="stat-icon done">✅</div><div class="stat-info"><h3>${kitsConferidos}</h3><p>Kits Conferidos</p></div></div>
-      <div class="stat-card"><div class="stat-icon progress">👕</div><div class="stat-info"><h3>${squeezesProntas}</h3><p>Squeezes Personalizadas</p></div></div>
-      <div class="stat-card"><div class="stat-icon pending">🎁</div><div class="stat-info"><h3>${kitsEntregues}</h3><p>Kits Entregues</p></div></div>
+    <p class="page-subtitle">Controle de conferência e entrega — responsabilidade do RH</p>
+
+    <div class="kit-progress-grid">
+      <div class="kit-progress-item">
+        <div class="kit-progress-label"><span>Conferidos</span><span class="kit-progress-val">${conferidos}/${total}</span></div>
+        <div class="kit-progress-bar"><div class="kit-progress-fill" style="width:${pctConf}%;background:var(--success)"></div></div>
+      </div>
+      <div class="kit-progress-item">
+        <div class="kit-progress-label"><span>Squeezes</span><span class="kit-progress-val">${squeezes}/${total}</span></div>
+        <div class="kit-progress-bar"><div class="kit-progress-fill" style="width:${pctSqueeze}%;background:var(--info)"></div></div>
+      </div>
+      <div class="kit-progress-item">
+        <div class="kit-progress-label"><span>Entregues</span><span class="kit-progress-val">${entregues}/${total}</span></div>
+        <div class="kit-progress-bar"><div class="kit-progress-fill" style="width:${pctEnt}%;background:var(--primary)"></div></div>
+      </div>
     </div>
+
     <div class="filter-card-grid" id="kit-filter-cards">
       <div class="filter-card ${kitFilterStatus===''?'active':''}" onclick="selectKitFilter('')" style="border-left-color:var(--primary)">
         <div class="filter-card-icon" style="background:rgba(44,123,229,0.1);color:var(--primary)">📦</div>
@@ -4230,29 +4244,36 @@ async function renderKit() {
       </div>
       <div class="filter-card ${kitFilterStatus==='nao_conferido'?'active':''}" onclick="selectKitFilter('nao_conferido')" style="border-left-color:var(--warning)">
         <div class="filter-card-icon" style="background:rgba(241,196,15,0.1);color:#c79a00">⭕</div>
-        <div class="filter-card-body"><div class="filter-card-name">Não Conferidos</div><div class="filter-card-count">${naoConferidos} pendentes</div></div>
+        <div class="filter-card-body"><div class="filter-card-name">Não Conferidos</div><div class="filter-card-count">${total - conferidos} pendentes</div></div>
       </div>
       <div class="filter-card ${kitFilterStatus==='conferido'?'active':''}" onclick="selectKitFilter('conferido')" style="border-left-color:var(--info)">
         <div class="filter-card-icon" style="background:rgba(44,123,229,0.1);color:var(--info)">✅</div>
-        <div class="filter-card-body"><div class="filter-card-name">Conferidos</div><div class="filter-card-count">${kitsConferidos} conferidos</div></div>
+        <div class="filter-card-body"><div class="filter-card-name">Conferidos</div><div class="filter-card-count">${conferidos} conferidos</div></div>
       </div>
       <div class="filter-card ${kitFilterStatus==='entregue'?'active':''}" onclick="selectKitFilter('entregue')" style="border-left-color:var(--success)">
         <div class="filter-card-icon" style="background:rgba(39,174,96,0.1);color:var(--success)">🎁</div>
-        <div class="filter-card-body"><div class="filter-card-name">Entregues</div><div class="filter-card-count">${kitsEntregues} entregues</div></div>
+        <div class="filter-card-body"><div class="filter-card-name">Entregues</div><div class="filter-card-count">${entregues} entregues</div></div>
       </div>
     </div>
-    <div class="card">
-      <div class="card-title">Itens do Kit (10 itens por matéria-prima)</div>
+
+    <div class="kit-toolbar">
+      <input type="text" class="search-box kit-search" placeholder="🔍 Buscar matéria-prima..." oninput="kitSearch(this.value)" id="kit-search-input" value="${kitSearchQuery}">
+      <button class="btn btn-outline kit-items-toggle" onclick="toggleKitItems()">
+        ${kitItemsExpanded ? '▲ Ocultar' : '▼ Ver'} itens do kit (${KIT_ITEMS.length})
+      </button>
+    </div>
+
+    <div class="kit-items-collapse" id="kit-items-collapse" style="display:${kitItemsExpanded ? 'block' : 'none'}">
       <div class="kit-items-list">
-        ${kitItems.map(k => `<div class="kit-item-row">
+        ${KIT_ITEMS.map(k => `<div class="kit-item-row">
           <div class="kit-item-name">${k.item}</div>
           <div class="kit-item-moment">${k.momento}</div>
           <div class="kit-item-anexo">${k.anexo}</div>
         </div>`).join('')}
       </div>
     </div>
+
     <div class="card">
-      <div class="card-title">Controle de Kits por Matéria-prima</div>
       <div class="kit-table-wrapper">
         <table class="data-table" id="kit-table">
           <thead><tr><th>#</th><th>Matéria-prima</th><th>Conferido</th><th>Squeeze</th><th>Entregue</th></tr></thead>
@@ -4260,6 +4281,10 @@ async function renderKit() {
         </table>
       </div>
       <div class="kit-mobile-cards" id="kit-mobile-cards"></div>
+      <div class="kit-empty" id="kit-empty" style="display:none">
+        <span style="font-size:28px">📭</span>
+        <p>Nenhuma matéria-prima encontrada com os filtros atuais.</p>
+      </div>
     </div>
   `;
   renderKitTable();
@@ -4277,15 +4302,50 @@ function selectKitFilter(filter) {
   renderKitTable();
 }
 
-function renderKitTable() {
-  const tbody = document.getElementById('kit-tbody');
-  const mobileCards = document.getElementById('kit-mobile-cards');
-  if (!tbody) return;
+function kitSearch(query) {
+  kitSearchQuery = query;
+  renderKitTable();
+}
+
+function toggleKitItems() {
+  kitItemsExpanded = !kitItemsExpanded;
+  const collapse = document.getElementById('kit-items-collapse');
+  const btn = document.querySelector('.kit-items-toggle');
+  if (collapse) collapse.style.display = kitItemsExpanded ? 'block' : 'none';
+  if (btn) btn.textContent = kitItemsExpanded ? '▲ Ocultar itens do kit' : `▼ Ver itens do kit (${KIT_ITEMS.length})`;
+}
+
+function getKitFilteredList() {
   let list = kitParticipantsCache;
   if (kitFilterStatus === 'nao_conferido') list = list.filter(p => !p.kit_conferido);
   else if (kitFilterStatus === 'conferido') list = list.filter(p => p.kit_conferido);
   else if (kitFilterStatus === 'entregue') list = list.filter(p => p.kit_entregue);
-  tbody.innerHTML = list.map((p, i) => `<tr>
+  if (kitSearchQuery) {
+    const q = kitSearchQuery.toLowerCase();
+    list = list.filter(p => (p.name || '').toLowerCase().includes(q));
+  }
+  return list;
+}
+
+function kitRowClass(p) {
+  if (p.kit_entregue) return 'kit-row-done';
+  if (p.kit_conferido) return 'kit-row-partial';
+  return 'kit-row-pending';
+}
+
+function renderKitTable() {
+  const tbody = document.getElementById('kit-tbody');
+  const mobileCards = document.getElementById('kit-mobile-cards');
+  const empty = document.getElementById('kit-empty');
+  if (!tbody) return;
+  const list = getKitFilteredList();
+
+  const showEmpty = list.length === 0;
+  if (empty) empty.style.display = showEmpty ? 'flex' : 'none';
+  if (tbody) tbody.parentElement.parentElement.style.display = showEmpty ? 'none' : '';
+  if (mobileCards) mobileCards.style.display = showEmpty ? 'none' : '';
+
+  tbody.innerHTML = list.map((p, i) => `<tr class="${kitRowClass(p)}">
     <td>${i + 1}</td>
     <td class="kit-name">${p.name || '—'}</td>
     <td class="kit-toggle-cell">
@@ -4306,7 +4366,7 @@ function renderKitTable() {
   </tr>`).join('');
 
   if (mobileCards) {
-    mobileCards.innerHTML = list.map((p, i) => `<div class="kit-mobile-card">
+    mobileCards.innerHTML = list.map((p, i) => `<div class="kit-mobile-card ${kitRowClass(p)}">
       <div class="kit-mobile-card-top">
         <span class="kit-mobile-card-name">${i + 1}. ${p.name || '—'}</span>
       </div>
