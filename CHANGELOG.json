@@ -1,11 +1,40 @@
 [
   {
+    "version": "1.54.0",
+    "date": "2026-07-31",
+    "title": "Envio de Checklist por WhatsApp (CallMeBot)",
+    "changes": [
+      "Integração com CallMeBot API para envio automático de WhatsApp",
+      "Botão ' Enviar WhatsApp' no módulo de checklist para envio manual",
+      "Botão '' para configurar CallMeBot (API key, números, horário)",
+      "Envio automático diário via cron (node-cron) com horário configurável",
+      "Mensagem gerada com: resumo geral, tarefas de MO's por categoria, tarefas por equipe, contatos dos Mestres de Obras",
+      "Fallback para wa.me link quando CallMeBot não está configurado",
+      "Nova tabela whatsapp_config no banco JSON",
+      "Dependência node-cron adicionada"
+    ]
+  },
+  {
+    "version": "1.53.0",
+    "date": "2026-07-31",
+    "title": "Nomenclatura: Responsável → Encarregado",
+    "changes": [
+      "Troca de nomenclatura de \"Responsável\" para \"Encarregado\" em todo o contexto de equipes",
+      "Card da equipe: \" Encarregado\" em vez de \" Responsável\"",
+      "Modal de detalhes: \" Encarregado\" em vez de \" Responsável\"",
+      "Modal de edição: label \"Encarregado\" e dropdown \"— Selecionar encarregado —\"",
+      "Mensagens auxiliares: \"Adicione membros à equipe para selecionar um encarregado\"",
+      "Mensagem de erro do backend: \"O encarregado deve ser um membro da equipe\""
+    ]
+  },
+  {
     "version": "1.52.0",
     "date": "2026-07-31",
     "title": "Nomenclatura: Responsável → Encarregado",
     "changes": [
       "Troca de nomenclatura de \"Responsável\" para \"Encarregado\" em todo o contexto de equipes",
-      "Card da equipe: \"👤 Encarregado\" em vez de \"👤 Responsável\"",
+      "Card da equipe: \" Encarregado\" em vez de \" Responsável\"",
+      "Modal de detalhes: \" Encarregado\" em vez de \" Responsável\"",
       "Modal de detalhes: \"👤 Encarregado\" em vez de \"👤 Responsável\"",
       "Modal de edição: label \"Encarregado\" e dropdown \"— Selecionar encarregado —\"",
       "Mensagens auxiliares: \"Adicione membros à equipe para selecionar um encarregado\"",

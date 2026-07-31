@@ -534,7 +534,11 @@ async function renderChecklist() {
           <option value="status">📊 Por Status</option>
         </select>
       </div>
-      <button class="btn btn-primary btn-sm" onclick="openTaskModal()">+ Nova Tarefa</button>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-secondary btn-sm" onclick="openWhatsAppConfig()" title="Configurar envio automático">⚙️</button>
+        <button class="btn btn-secondary btn-sm" onclick="sendWhatsAppChecklist()" title="Enviar checklist por WhatsApp">📱 Enviar WhatsApp</button>
+        <button class="btn btn-primary btn-sm" onclick="openTaskModal()">+ Nova Tarefa</button>
+      </div>
     </div>
 
     <div id="task-phase-content"></div>
@@ -598,6 +602,156 @@ function filterByTeam(teamName) {
   if (teamSelect) {
     teamSelect.value = teamName;
     filterTasks();
+  }
+}
+
+// ============ WHATSAPP CHECKLIST ============
+
+async function sendWhatsAppChecklist() {
+  try {
+    const res = await api('/whatsapp/checklist-message');
+    const msg = res.message || '';
+    const config = await api('/whatsapp/config');
+
+    if (config.api_key && (config.phone_numbers || '').trim()) {
+      const overlay = document.createElement('div');
+      overlay.className = 'modal-overlay active';
+      overlay.innerHTML = `<div class="modal" style="max-width:480px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h3 style="margin:0">📱 Enviar Checklist por WhatsApp</h3>
+          <button class="modal-close" onclick="this.closest('.modal-overlay').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-light);padding:4px 8px;border-radius:6px">✕</button>
+        </div>
+        <div class="form-group">
+          <label>Mensagem que será enviada</label>
+          <textarea id="wa-msg" rows="12" style="font-size:12px;font-family:monospace;white-space:pre-wrap">${msg.replace(/</g,'&lt;')}</textarea>
+        </div>
+        <div style="font-size:12px;color:var(--text-light);margin-bottom:12px">
+          📞 Destinatários: ${config.phone_numbers}<br>
+          🔑 API: CallMeBot (envio automático)
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancelar</button>
+          <button class="btn btn-primary" onclick="confirmSendWhatsApp(this)">📤 Enviar Agora</button>
+        </div>
+      </div>`;
+      document.body.appendChild(overlay);
+      overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+    } else {
+      // No API key configured — fallback to wa.me link
+      const phones = (config.phone_numbers || '').split(',').map(p => p.trim()).filter(Boolean);
+      const phoneParam = phones.length > 0 ? phones[0] : '';
+      const waUrl = `https://wa.me/${phoneParam}?text=${encodeURIComponent(msg)}`;
+      const overlay = document.createElement('div');
+      overlay.className = 'modal-overlay active';
+      overlay.innerHTML = `<div class="modal" style="max-width:480px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h3 style="margin:0">📱 Enviar Checklist por WhatsApp</h3>
+          <button class="modal-close" onclick="this.closest('.modal-overlay').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-light);padding:4px 8px;border-radius:6px">✕</button>
+        </div>
+        <div class="form-group">
+          <label>Mensagem pronta para envio</label>
+          <textarea id="wa-msg" rows="12" style="font-size:12px;font-family:monospace;white-space:pre-wrap">${msg.replace(/</g,'&lt;')}</textarea>
+        </div>
+        <div style="font-size:12px;color:var(--warning);margin-bottom:12px">
+          ⚠️ CallMeBot não configurado. Clique em ⚙️ para configurar o envio automático.<br>
+          Você pode copiar a mensagem ou abrir o WhatsApp diretamente.
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" onclick="navigator.clipboard.writeText(document.getElementById('wa-msg').value);toast('Mensagem copiada!','success')">📋 Copiar</button>
+          <button class="btn btn-primary" onclick="window.open('${waUrl}','_blank')">📱 Abrir WhatsApp</button>
+        </div>
+      </div>`;
+      document.body.appendChild(overlay);
+      overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+    }
+  } catch (err) {
+    toast(err.message || 'Erro ao gerar mensagem', 'error');
+  }
+}
+
+async function confirmSendWhatsApp(btn) {
+  btn.disabled = true;
+  btn.textContent = 'Enviando...';
+  try {
+    const res = await api('/whatsapp/send-now', { method: 'POST', body: JSON.stringify({}) });
+    btn.closest('.modal-overlay').remove();
+    if (res.success) {
+      toast('✅ Checklist enviado para todos os números!', 'success');
+    } else {
+      const failed = (res.results || []).filter(r => !r.success).map(r => `${r.phone}: ${r.error}`).join('\n');
+      toast('Algumas mensagens falharam. Verifique a configuração.', 'error');
+      console.error('WhatsApp send failures:', failed);
+    }
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = '📤 Enviar Agora';
+    toast(err.message || 'Erro ao enviar', 'error');
+  }
+}
+
+async function openWhatsAppConfig() {
+  let config = { api_key: '', phone_numbers: '', schedule_time: '08:00', enabled: false };
+  try {
+    config = await api('/whatsapp/config');
+  } catch {}
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay active';
+  overlay.innerHTML = `<div class="modal" style="max-width:520px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 style="margin:0">⚙️ Configurar WhatsApp</h3>
+      <button class="modal-close" onclick="this.closest('.modal-overlay').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-light);padding:4px 8px;border-radius:6px">✕</button>
+    </div>
+    <div style="font-size:12px;color:var(--text-light);margin-bottom:16px;padding:10px;background:var(--light-card);border-radius:8px">
+      <strong>CallMeBot</strong> — API gratuita para envio automático de WhatsApp.<br>
+      1. Adicione o número <strong>+34 621 347 856</strong> aos seus contatos<br>
+      2. Envie a mensagem: <code>I allow callmebot to send me messages</code><br>
+      3. Você receberá sua API Key. Cole abaixo.
+    </div>
+    <div class="form-group">
+      <label>CallMeBot API Key</label>
+      <input id="wa-apikey" value="${config.api_key || ''}" placeholder="Sua API key do CallMeBot">
+    </div>
+    <div class="form-group">
+      <label>Números de telefone (separados por vírgula)</label>
+      <input id="wa-phones" value="${config.phone_numbers || ''}" placeholder="Ex: 5511999999999,5511888888888">
+      <p style="font-size:11px;color:var(--text-light);margin-top:4px">📱 Formato: código do país + DDD + número (sem + ou espaços)</p>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Horário do envio automático</label>
+        <input id="wa-time" type="time" value="${config.schedule_time || '08:00'}">
+      </div>
+      <div class="form-group">
+        <label>Envio automático</label>
+        <select id="wa-enabled" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:#fff">
+          <option value="false" ${!config.enabled ? 'selected' : ''}>Desativado</option>
+          <option value="true" ${config.enabled ? 'selected' : ''}>Ativado</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveWhatsAppConfig(this)">Salvar Configuração</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+}
+
+async function saveWhatsAppConfig(btn) {
+  const data = {
+    api_key: document.getElementById('wa-apikey').value.trim(),
+    phone_numbers: document.getElementById('wa-phones').value.trim(),
+    schedule_time: document.getElementById('wa-time').value || '08:00',
+    enabled: document.getElementById('wa-enabled').value === 'true',
+  };
+  try {
+    await api('/whatsapp/config', { method: 'PUT', body: JSON.stringify(data) });
+    toast('Configuração salva!', 'success');
+    btn.closest('.modal-overlay').remove();
+  } catch (err) {
+    toast(err.message || 'Erro ao salvar configuração', 'error');
   }
 }
 

@@ -7,14 +7,14 @@ const TABLES = ['tasks', 'teams', 'schedule', 'encounters', 'team_members',
   'participants', 'finance', 'lembrancinhas', 'escolinhas', 'alicerces',
   'lembretes', 'padrinhos', 'fornecedores', 'avisos', 'migrations',
   'finance_categories', 'finance_events', 'finance_budget',
-  'budget_items', 'donations', 'cardapio'];
+  'budget_items', 'donations', 'cardapio', 'whatsapp_config'];
 
 let data = {
   tasks: [], teams: [], schedule: [], encounters: [], team_members: [],
   participants: [], finance: [], lembrancinhas: [], escolinhas: [], alicerces: [],
   lembretes: [], padrinhos: [], fornecedores: [], avisos: [], migrations: [],
   finance_categories: [], finance_events: [], finance_budget: [],
-  budget_items: [], donations: [], cardapio: [],
+  budget_items: [], donations: [], cardapio: [], whatsapp_config: [],
   _seq: {}
 };
 for (const t of TABLES) data._seq[t] = 0;

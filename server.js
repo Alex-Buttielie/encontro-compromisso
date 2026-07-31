@@ -8,6 +8,7 @@ const {
   generateAssignedTasksReport
 } = require('./routes/pdf');
 const apiRouter = require('./routes/api');
+const { router: whatsappRouter, rescheduleCron } = require('./routes/whatsapp');
 const { runMigrations } = require('./migrations/run');
 
 const app = express();
@@ -26,6 +27,7 @@ app.use(express.static(path.join(__dirname, 'public'), {
 
 // API routes
 app.use('/api', apiRouter);
+app.use('/api/whatsapp', whatsappRouter);
 
 // PDF report helper
 function sendPdf(res, pdf, filename) {
@@ -74,6 +76,8 @@ app.get('*', (req, res) => {
 
 // Run pending migrations on startup (Flyway-style)
 runMigrations();
+
+rescheduleCron();
 
 app.listen(PORT, () => {
   console.log(`\n  ========================================`);
