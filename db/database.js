@@ -76,7 +76,7 @@ const db = {
   getAll(table) { load(); return getTable(table); },
   getById(table, id) { load(); return findById(table, id); },
   insert(table, obj) { load(); const id = nextId(table); obj.id = id; obj.created_at = new Date().toISOString(); if (table === 'team_members' && obj.team_id !== undefined) obj.team_id = Number(obj.team_id); getTable(table).push(obj); save(); return id; },
-  update(table, id, fields) { load(); const r = findById(table, id); if (r) { Object.assign(r, fields, { updated_at: new Date().toISOString() }); save(); } return r; },
+  update(table, id, fields) { load(); const r = findById(table, id); if (r) { if (table === 'team_members' && fields.team_id !== undefined) fields.team_id = Number(fields.team_id); Object.assign(r, fields, { updated_at: new Date().toISOString() }); save(); } return r; },
   remove(table, id) { load(); const arr = getTable(table); const before = arr.length; data[table] = arr.filter(r => r.id !== Number(id)); save(); return before - data[table].length; },
   filter(table, criteria) { load(); return filterBy(table, criteria); }
 };

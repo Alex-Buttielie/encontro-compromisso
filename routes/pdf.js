@@ -304,7 +304,7 @@ function generateFullReport() {
       doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica').text(team.description, 50, y, { width: CONTENT_WIDTH });
       y += 18;
     }
-    const members = db.getAll('team_members').filter(m => m.team_id === team.id);
+    const members = db.getAll('team_members').filter(m => Number(m.team_id) === Number(team.id));
     if (members.length > 0) {
       doc.fontSize(9).fillColor(COLORS.gray).font('Helvetica-Bold').text(`Membros (${members.length}):`, 50, y);
       y += 14;
@@ -553,7 +553,7 @@ function generateTeamReport() {
     progressBar(doc, pct, 50, y, CONTENT_WIDTH);
     y += 18;
 
-    const members = db.getAll('team_members').filter(m => m.team_id === team.id);
+    const members = db.getAll('team_members').filter(m => Number(m.team_id) === Number(team.id));
     if (members.length > 0) {
       doc.fontSize(9).fillColor(COLORS.gray).font('Helvetica-Bold').text(`Membros (${members.length}):`, 50, y);
       y += 14;
@@ -609,7 +609,7 @@ function generateTeamScheduleReport() {
     }
 
     // Members inline
-    const members = db.getAll('team_members').filter(m => m.team_id === team.id);
+    const members = db.getAll('team_members').filter(m => Number(m.team_id) === Number(team.id));
     if (members.length > 0) {
       doc.fontSize(9).fillColor(COLORS.gray).font('Helvetica-Bold').text('Membros: ', 50, y, { continued: true });
       doc.font('Helvetica').fillColor(COLORS.dark).text(members.map(m => `${m.name}${m.role ? ' (' + m.role + ')' : ''}`).join(', '), { width: CONTENT_WIDTH });
@@ -1355,10 +1355,10 @@ function generateCoordinatorGuideReport() {
 
   // Quick reference: key contacts
   y = sectionTitle(doc, 'Contatos Rapidos', y, COLORS.primary);
-  const mo = members.filter(m => { const t = teams.find(te => te.id === m.team_id); return t && (t.name.includes('Mestre') || t.name.includes('Coordena') || t.name.includes('Supervisor')); });
+  const mo = members.filter(m => { const t = teams.find(te => Number(te.id) === Number(m.team_id)); return t && (t.name.includes('Mestre') || t.name.includes('Coordena') || t.name.includes('Supervisor')); });
   if (mo.length > 0) {
     for (const m of mo) {
-      const t = teams.find(te => te.id === m.team_id);
+      const t = teams.find(te => Number(te.id) === Number(m.team_id));
       zebraRow(doc, y, 16);
       doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica-Bold').text(`${m.name}`, 55, y + 3, { continued: true });
       doc.font('Helvetica').fillColor(COLORS.gray).text(`  - ${t ? t.name : ''}  ${m.phone ? '| ' + m.phone : ''}  ${m.role ? '| ' + m.role : ''}`);
@@ -1381,7 +1381,7 @@ function generateCoordinatorGuideReport() {
       doc.fillColor(COLORS.gray).fontSize(9).font('Helvetica').text(team.description, 55, y, { width: CONTENT_WIDTH });
       y += 14;
     }
-    const tm = members.filter(m => m.team_id === team.id);
+    const tm = members.filter(m => Number(m.team_id) === Number(team.id));
     if (tm.length > 0) {
       for (const m of tm) {
         if (y > PAGE_BOTTOM) { doc.addPage(); y = 50; }

@@ -3,6 +3,16 @@ let currentPage = 'dashboard';
 let tasksCache = [];
 let teamsCache = [];
 
+const LOADING_HTML = '<div class="loading-overlay"><div class="loading-spinner"></div></div>';
+
+function debounce(fn, ms = 300) {
+  let t = null;
+  return function (...args) {
+    if (t) clearTimeout(t);
+    t = setTimeout(() => fn.apply(this, args), ms);
+  };
+}
+
 async function api(path, opts = {}) {
   const res = await fetch(`${API}${path}`, {
     headers: { 'Content-Type': 'application/json' },
@@ -144,7 +154,7 @@ document.getElementById('sidebar-close-btn').addEventListener('click', closeSide
 
 function renderPage() {
   const main = document.getElementById('main-content');
-  main.innerHTML = '';
+  main.innerHTML = LOADING_HTML;
   if (currentPage === 'dashboard') renderDashboard();
   else if (currentPage === 'checklist') renderChecklist();
   else if (currentPage === 'cronograma') renderCronograma();
@@ -469,7 +479,7 @@ async function renderChecklist() {
 
     <div class="checklist-toolbar">
       <div class="checklist-toolbar-left">
-        <input type="text" class="search-box" id="task-search" placeholder="🔍 Buscar tarefa..." oninput="filterTasks()">
+        <input type="text" class="search-box" id="task-search" placeholder="🔍 Buscar tarefa..." oninput="debouncedFilterTasks()">
         <select id="filter-status" onchange="filterTasks()" class="checklist-select">
           <option value="">📊 Status: Todos</option>
           <option value="pendente">⭕ Pendente</option>
@@ -534,6 +544,8 @@ function filterTasks() {
   if (priority) filtered = filtered.filter(t => t.priority === priority);
   renderChecklistSections(filtered);
 }
+
+const debouncedFilterTasks = debounce(filterTasks, 250);
 
 function filterByTeam(teamName) {
   const teamSelect = document.getElementById('filter-team');
@@ -804,23 +816,24 @@ function goToEquipesFromChecklist() {
 
 // ============ CRONOGRAMA ============
 let cronogramaFilterDay = '';
+let cronogramaCache = [];
 
 async function renderCronograma() {
-  const schedule = await api('/schedule');
+  cronogramaCache = await api('/schedule');
   const teams = await api('/teams');
   const days = ['Sexta-feira', 'Sábado', 'Domingo'];
   const main = document.getElementById('main-content');
   const dayCounts = {};
   days.forEach(d => {
-    dayCounts[d] = schedule.filter(s => s.day === d).length;
+    dayCounts[d] = cronogramaCache.filter(s => s.day === d).length;
   });
   main.innerHTML = `
     <h1 class="page-title">Cronograma do Encontro</h1>
     <p class="page-subtitle">Programação completa - Sexta a Domingo</p>
-    <div class="filter-card-grid">
+    <div class="filter-card-grid" id="cronograma-filter-cards">
       <div class="filter-card ${cronogramaFilterDay===''?'active':''}" onclick="selectCronogramaFilter('')" style="border-left-color:var(--primary)">
         <div class="filter-card-icon" style="background:rgba(44,123,229,0.1);color:var(--primary)">📅</div>
-        <div class="filter-card-body"><div class="filter-card-name">Todos os Dias</div><div class="filter-card-count">${schedule.length} atividades</div></div>
+        <div class="filter-card-body"><div class="filter-card-name">Todos os Dias</div><div class="filter-card-count">${cronogramaCache.length} atividades</div></div>
       </div>
       <div class="filter-card ${cronogramaFilterDay==='Sexta-feira'?'active':''}" onclick="selectCronogramaFilter('Sexta-feira')" style="border-left-color:#e67e22">
         <div class="filter-card-icon" style="background:rgba(230,126,34,0.1);color:#e67e22">🔥</div>
@@ -846,21 +859,25 @@ async function renderCronograma() {
     </div>
     <div class="card" id="schedule-card"></div>
   `;
-  filterSchedule(schedule);
+  filterSchedule();
 }
 
 function selectCronogramaFilter(day) {
   cronogramaFilterDay = day;
-  document.querySelectorAll('.filter-card').forEach(c => c.classList.remove('active'));
-  const cards = document.querySelectorAll('.filter-card');
-  const idx = { '': 0, 'Sexta-feira': 1, 'Sábado': 2, 'Domingo': 3 };
-  if (cards[idx[day]]) cards[idx[day]].classList.add('active');
+  const grid = document.getElementById('cronograma-filter-cards');
+  if (grid) {
+    grid.querySelectorAll('.filter-card').forEach(c => c.classList.remove('active'));
+    const idx = { '': 0, 'Sexta-feira': 1, 'Sábado': 2, 'Domingo': 3 };
+    const cards = grid.querySelectorAll('.filter-card');
+    if (cards[idx[day]]) cards[idx[day]].classList.add('active');
+  }
   filterSchedule();
 }
 
-async function filterSchedule(prefetchedSchedule) {
+function filterSchedule() {
   const team = document.getElementById('schedule-team-filter')?.value || '';
-  const schedule = prefetchedSchedule || (team ? await api(`/schedule?team=${encodeURIComponent(team)}`) : await api('/schedule'));
+  let schedule = cronogramaCache;
+  if (team) schedule = schedule.filter(s => (s.responsible_team || '').includes(team));
   let days = ['Sexta-feira', 'Sábado', 'Domingo'];
   if (cronogramaFilterDay) days = [cronogramaFilterDay];
   const card = document.getElementById('schedule-card');
@@ -875,7 +892,8 @@ async function filterSchedule(prefetchedSchedule) {
         <div class="schedule-time">${s.time}</div>
         <div class="schedule-activity">${s.activity}</div>
         <div class="schedule-location">${s.location || ''}</div>
-        <div class="schedule-team" style="cursor:pointer" onclick="document.getElementById('schedule-team-filter').value='${(s.responsible_team||'').replace(/'/g,"\\'")}';filterSchedule()">${s.responsible_team || ''}</div>
+        <div class="schedule-team" style="cursor:pointer" onclick="document.getElementById('schedule-team-filter').value='${(s.responsible_team||'').replace(/'/g,"\\'")}'
+filterSchedule()">${s.responsible_team || ''}</div>
         <div class="schedule-status ${s.status==='concluido'?'done':''} ${s.status==='em_andamento'?'in-progress':''}" data-status="${s.status||'pendente'}" onclick="toggleSchedule(${s.id}, this)"></div>
       </div>`).join('')}
     </div>`;
@@ -898,13 +916,19 @@ async function toggleSchedule(id, el) {
 // ============ EQUIPES ============
 let equipesSearchText = '';
 let equipesExpanded = new Set();
+let equipesCache = { tasks: [], schedule: [], lembrancinhas: [], alicerces: [] };
 
 async function renderEquipes() {
   teamsCache = await api('/teams');
-  const allTasks = await api('/tasks');
-  const allSchedule = await api('/schedule');
-  const allLembrancinhas = await api('/lembrancinhas');
-  const allAlicerces = await api('/alicerces');
+  equipesCache.tasks = await api('/tasks');
+  equipesCache.schedule = await api('/schedule');
+  equipesCache.lembrancinhas = await api('/lembrancinhas');
+  equipesCache.alicerces = await api('/alicerces');
+  renderEquipesGrid();
+}
+
+function renderEquipesGrid() {
+  const { tasks: allTasks, schedule: allSchedule, lembrancinhas: allLembrancinhas, alicerces: allAlicerces } = equipesCache;
   const main = document.getElementById('main-content');
 
   let filteredTeams = teamsCache;
@@ -1045,15 +1069,15 @@ async function renderEquipes() {
   `;
 }
 
-function filterEquipes(val) {
+const filterEquipes = debounce(function(val) {
   equipesSearchText = val;
-  renderEquipes();
-}
+  renderEquipesGrid();
+}, 250);
 
 function toggleEquipeExpand(id) {
   if (equipesExpanded.has(id)) equipesExpanded.delete(id);
   else equipesExpanded.add(id);
-  renderEquipes();
+  renderEquipesGrid();
 }
 
 async function viewTeamDetails(teamId) {
@@ -2093,7 +2117,7 @@ async function renderInscritos() {
       <div class="stat-card"><div class="stat-icon pending">⭕</div><div class="stat-info"><h3>${pendingCount}</h3><p>Pagamentos Pendentes</p></div></div>
       <div class="stat-card"><div class="stat-icon progress">📍</div><div class="stat-info"><h3>${presentesCount}</h3><p>Presentes no Encontro</p></div></div>
     </div>
-    <div class="filter-card-grid">
+    <div class="filter-card-grid" id="participants-filter-cards">
       <div class="filter-card ${participantsFilterStatus===''?'active':''}" onclick="selectParticipantFilter('')" style="border-left-color:var(--primary)">
         <div class="filter-card-icon" style="background:rgba(44,123,229,0.1);color:var(--primary)">👥</div>
         <div class="filter-card-body"><div class="filter-card-name">Todos</div><div class="filter-card-count">${participantsCache.length} inscritos</div></div>
@@ -2112,7 +2136,7 @@ async function renderInscritos() {
       </div>
     </div>
     <div class="filters">
-      <input type="text" class="search-box" id="part-search" placeholder="Buscar por nome..." oninput="filterParticipants()">
+      <input type="text" class="search-box" id="part-search" placeholder="Buscar por nome..." oninput="debouncedFilterParticipants()">
       <div class="filter-group">
         <span class="filter-label">Grupo:</span>
         <select id="part-group" onchange="filterParticipants()">
@@ -2129,10 +2153,13 @@ async function renderInscritos() {
 
 function selectParticipantFilter(status) {
   participantsFilterStatus = status;
-  document.querySelectorAll('.filter-card').forEach(c => c.classList.remove('active'));
-  const cards = document.querySelectorAll('.filter-card');
-  const idx = { '': 0, 'paid': 1, 'pending': 2, 'presente': 3 };
-  if (cards[idx[status]]) cards[idx[status]].classList.add('active');
+  const grid = document.getElementById('participants-filter-cards');
+  if (grid) {
+    grid.querySelectorAll('.filter-card').forEach(c => c.classList.remove('active'));
+    const idx = { '': 0, 'paid': 1, 'pending': 2, 'presente': 3 };
+    const cards = grid.querySelectorAll('.filter-card');
+    if (cards[idx[status]]) cards[idx[status]].classList.add('active');
+  }
   filterParticipants();
 }
 
@@ -2147,6 +2174,8 @@ function filterParticipants() {
   if (group) filtered = filtered.filter(p => p.group === group);
   renderParticipantCards(filtered);
 }
+
+const debouncedFilterParticipants = debounce(filterParticipants, 250);
 
 function renderParticipantCards(list) {
   const container = document.getElementById('participants-list');
@@ -2904,7 +2933,7 @@ async function renderLembrancinhas() {
       <div class="stat-card"><div class="stat-icon pending">⭕</div><div class="stat-info"><h3>${stats.nao_iniciado}</h3><p>Não Iniciadas</p></div></div>
     </div>
     ${stats.total > 0 ? `<div class="card"><div class="progress-container"><div class="progress-label"><span>Progresso Geral</span><span>${stats.pronto}/${stats.total} (${pct}%)</span></div><div class="progress-bar"><div class="progress-fill ${pct >= 75 ? '' : pct >= 40 ? 'warn' : 'danger'}" style="width:${pct}%"></div></div></div></div>` : ''}
-    <div class="filter-card-grid">
+    <div class="filter-card-grid" id="lembrancinhas-filter-cards">
       <div class="filter-card ${lembrancinhasFilterStatus===''?'active':''}" onclick="selectLembrancinhaFilter('')" style="border-left-color:var(--primary)">
         <div class="filter-card-icon" style="background:rgba(44,123,229,0.1);color:var(--primary)">🎁</div>
         <div class="filter-card-body"><div class="filter-card-name">Todas</div><div class="filter-card-count">${stats.total} itens</div></div>
@@ -2932,10 +2961,13 @@ async function renderLembrancinhas() {
 
 function selectLembrancinhaFilter(status) {
   lembrancinhasFilterStatus = status;
-  document.querySelectorAll('.filter-card').forEach(c => c.classList.remove('active'));
-  const cards = document.querySelectorAll('.filter-card');
-  const idx = { '': 0, 'pronto': 1, 'em_andamento': 2, 'nao_iniciado': 3 };
-  if (cards[idx[status]]) cards[idx[status]].classList.add('active');
+  const grid = document.getElementById('lembrancinhas-filter-cards');
+  if (grid) {
+    grid.querySelectorAll('.filter-card').forEach(c => c.classList.remove('active'));
+    const idx = { '': 0, 'pronto': 1, 'em_andamento': 2, 'nao_iniciado': 3 };
+    const cards = grid.querySelectorAll('.filter-card');
+    if (cards[idx[status]]) cards[idx[status]].classList.add('active');
+  }
   filterLembrancinhas();
 }
 
@@ -3044,7 +3076,7 @@ async function renderEscolinhas() {
       <div class="stat-card"><div class="stat-icon done">✅</div><div class="stat-info"><h3>${concluidas}</h3><p>Concluídas</p></div></div>
       <div class="stat-card"><div class="stat-icon pending">📅</div><div class="stat-info"><h3>${agendadas}</h3><p>Agendadas</p></div></div>
     </div>
-    <div class="filter-card-grid">
+    <div class="filter-card-grid" id="escolinhas-filter-cards">
       <div class="filter-card ${escolinhasFilterStatus===''?'active':''}" onclick="selectEscolinhaFilter('')" style="border-left-color:var(--primary)">
         <div class="filter-card-icon" style="background:rgba(44,123,229,0.1);color:var(--primary)">📚</div>
         <div class="filter-card-body"><div class="filter-card-name">Todas</div><div class="filter-card-count">${escolinhasCache.length} escolinhas</div></div>
@@ -3072,10 +3104,13 @@ async function renderEscolinhas() {
 
 function selectEscolinhaFilter(status) {
   escolinhasFilterStatus = status;
-  document.querySelectorAll('.filter-card').forEach(c => c.classList.remove('active'));
-  const cards = document.querySelectorAll('.filter-card');
-  const idx = { '': 0, 'agendada': 1, 'concluida': 2, 'cancelada': 3 };
-  if (cards[idx[status]]) cards[idx[status]].classList.add('active');
+  const grid = document.getElementById('escolinhas-filter-cards');
+  if (grid) {
+    grid.querySelectorAll('.filter-card').forEach(c => c.classList.remove('active'));
+    const idx = { '': 0, 'agendada': 1, 'concluida': 2, 'cancelada': 3 };
+    const cards = grid.querySelectorAll('.filter-card');
+    if (cards[idx[status]]) cards[idx[status]].classList.add('active');
+  }
   filterEscolinhas();
 }
 
@@ -3182,7 +3217,7 @@ async function renderAlicerces() {
       <div class="stat-card"><div class="stat-icon progress">👤</div><div class="stat-info"><h3>${atribuidos}</h3><p>Atribuídos</p></div></div>
       <div class="stat-card"><div class="stat-icon pending">✅</div><div class="stat-info"><h3>${concluidos}</h3><p>Concluídos</p></div></div>
     </div>
-    <div class="filter-card-grid">
+    <div class="filter-card-grid" id="alicerces-filter-cards">
       <div class="filter-card ${alicercesFilterType===''?'active':''}" onclick="selectAlicerceFilter('')" style="border-left-color:var(--primary)">
         <div class="filter-card-icon" style="background:rgba(44,123,229,0.1);color:var(--primary)">📋</div>
         <div class="filter-card-body"><div class="filter-card-name">Todos</div><div class="filter-card-count">${alicercesCache.length} itens</div></div>
@@ -3208,10 +3243,13 @@ async function renderAlicerces() {
 
 function selectAlicerceFilter(filter) {
   alicercesFilterType = filter;
-  document.querySelectorAll('.filter-card').forEach(c => c.classList.remove('active'));
-  const cards = document.querySelectorAll('.filter-card');
-  const idx = { '': 0, 'alicerce': 1, 'alvenaria': 2, 'concluido': 3 };
-  if (cards[idx[filter]]) cards[idx[filter]].classList.add('active');
+  const grid = document.getElementById('alicerces-filter-cards');
+  if (grid) {
+    grid.querySelectorAll('.filter-card').forEach(c => c.classList.remove('active'));
+    const idx = { '': 0, 'alicerce': 1, 'alvenaria': 2, 'concluido': 3 };
+    const cards = grid.querySelectorAll('.filter-card');
+    if (cards[idx[filter]]) cards[idx[filter]].classList.add('active');
+  }
   filterAlicerces();
 }
 
@@ -3803,7 +3841,7 @@ async function renderPadrinhos() {
       <div class="stat-card"><div class="stat-icon progress">⏳</div><div class="stat-info"><h3>${emAndamento}</h3><p>Em Andamento</p></div></div>
       <div class="stat-card"><div class="stat-icon pending">⭕</div><div class="stat-info"><h3>${semPadrinho}</h3><p>Sem Padrinho</p></div></div>
     </div>
-    <div class="filter-card-grid">
+    <div class="filter-card-grid" id="padrinhos-filter-cards">
       <div class="filter-card ${padrinhosFilterStatus===''?'active':''}" onclick="selectPadrinhoFilter('')" style="border-left-color:var(--primary)">
         <div class="filter-card-icon" style="background:rgba(44,123,229,0.1);color:var(--primary)">👥</div>
         <div class="filter-card-body"><div class="filter-card-name">Todos</div><div class="filter-card-count">${padrinhosCache.length} padrinhos</div></div>
@@ -3831,10 +3869,13 @@ async function renderPadrinhos() {
 
 function selectPadrinhoFilter(status) {
   padrinhosFilterStatus = status;
-  document.querySelectorAll('.filter-card').forEach(c => c.classList.remove('active'));
-  const cards = document.querySelectorAll('.filter-card');
-  const idx = { '': 0, 'em_andamento': 1, 'concluido': 2, 'sem_padrinho': 3 };
-  if (cards[idx[status]]) cards[idx[status]].classList.add('active');
+  const grid = document.getElementById('padrinhos-filter-cards');
+  if (grid) {
+    grid.querySelectorAll('.filter-card').forEach(c => c.classList.remove('active'));
+    const idx = { '': 0, 'em_andamento': 1, 'concluido': 2, 'sem_padrinho': 3 };
+    const cards = grid.querySelectorAll('.filter-card');
+    if (cards[idx[status]]) cards[idx[status]].classList.add('active');
+  }
   filterPadrinhos();
 }
 
@@ -3994,7 +4035,7 @@ async function renderFornecedores() {
       <div class="stat-card"><div class="stat-icon done">✅</div><div class="stat-info"><h3>${contratados}</h3><p>Contratados</p></div></div>
       <div class="stat-card"><div class="stat-icon pending">⭕</div><div class="stat-info"><h3>${pendentes}</h3><p>Pendentes</p></div></div>
     </div>
-    <div class="filter-card-grid">
+    <div class="filter-card-grid" id="fornecedores-filter-cards">
       <div class="filter-card ${fornecedoresFilterStatus===''?'active':''}" onclick="selectFornecedorFilter('')" style="border-left-color:var(--primary)">
         <div class="filter-card-icon" style="background:rgba(44,123,229,0.1);color:var(--primary)">📦</div>
         <div class="filter-card-body"><div class="filter-card-name">Todos</div><div class="filter-card-count">${list.length} fornecedores</div></div>
@@ -4029,10 +4070,13 @@ async function renderFornecedores() {
 
 function selectFornecedorFilter(status) {
   fornecedoresFilterStatus = status;
-  document.querySelectorAll('.filter-card').forEach(c => c.classList.remove('active'));
-  const cards = document.querySelectorAll('.filter-card');
-  const idx = { '': 0, 'contatado': 1, 'pendente': 2, 'contratado': 3 };
-  if (cards[idx[status]]) cards[idx[status]].classList.add('active');
+  const grid = document.getElementById('fornecedores-filter-cards');
+  if (grid) {
+    grid.querySelectorAll('.filter-card').forEach(c => c.classList.remove('active'));
+    const idx = { '': 0, 'contatado': 1, 'pendente': 2, 'contratado': 3 };
+    const cards = grid.querySelectorAll('.filter-card');
+    if (cards[idx[status]]) cards[idx[status]].classList.add('active');
+  }
   filterFornecedores();
 }
 
@@ -4278,7 +4322,7 @@ async function renderKit() {
       <div class="stat-card"><div class="stat-icon progress">👕</div><div class="stat-info"><h3>${squeezesProntas}</h3><p>Squeezes Personalizadas</p></div></div>
       <div class="stat-card"><div class="stat-icon pending">🎁</div><div class="stat-info"><h3>${kitsEntregues}</h3><p>Kits Entregues</p></div></div>
     </div>
-    <div class="filter-card-grid">
+    <div class="filter-card-grid" id="kit-filter-cards">
       <div class="filter-card ${kitFilterStatus===''?'active':''}" onclick="selectKitFilter('')" style="border-left-color:var(--primary)">
         <div class="filter-card-icon" style="background:rgba(44,123,229,0.1);color:var(--primary)">📦</div>
         <div class="filter-card-body"><div class="filter-card-name">Todos</div><div class="filter-card-count">${total} MPs</div></div>
@@ -4317,6 +4361,18 @@ async function renderKit() {
       <div class="kit-mobile-cards" id="kit-mobile-cards"></div>
     </div>
   `;
+  renderKitTable();
+}
+
+function selectKitFilter(filter) {
+  kitFilterStatus = filter;
+  const grid = document.getElementById('kit-filter-cards');
+  if (grid) {
+    grid.querySelectorAll('.filter-card').forEach(c => c.classList.remove('active'));
+    const idx = { '': 0, 'nao_conferido': 1, 'conferido': 2, 'entregue': 3 };
+    const cards = grid.querySelectorAll('.filter-card');
+    if (cards[idx[filter]]) cards[idx[filter]].classList.add('active');
+  }
   renderKitTable();
 }
 
@@ -4397,7 +4453,7 @@ async function renderAvisos() {
   main.innerHTML = `
     <h1 class="page-title">Avisos & Comunicados</h1>
     <p class="page-subtitle">Mural de comunicações do coordenador para equipes e participantes</p>
-    <div class="filter-card-grid">
+    <div class="filter-card-grid" id="avisos-filter-cards">
       <div class="filter-card ${avisosFilterPriority===''?'active':''}" onclick="selectAvisoFilter('')" style="border-left-color:var(--primary)">
         <div class="filter-card-icon" style="background:rgba(44,123,229,0.1);color:var(--primary)">📋</div>
         <div class="filter-card-body"><div class="filter-card-name">Todos</div><div class="filter-card-count">${avisosCache.length} avisos</div></div>
@@ -4426,10 +4482,13 @@ async function renderAvisos() {
 
 function selectAvisoFilter(priority) {
   avisosFilterPriority = priority;
-  document.querySelectorAll('.filter-card').forEach(c => c.classList.remove('active'));
-  const cards = document.querySelectorAll('.filter-card');
-  const idx = { '': 0, 'alta': 1, 'media': 2, 'baixa': 3 };
-  if (cards[idx[priority]]) cards[idx[priority]].classList.add('active');
+  const grid = document.getElementById('avisos-filter-cards');
+  if (grid) {
+    grid.querySelectorAll('.filter-card').forEach(c => c.classList.remove('active'));
+    const idx = { '': 0, 'alta': 1, 'media': 2, 'baixa': 3 };
+    const cards = grid.querySelectorAll('.filter-card');
+    if (cards[idx[priority]]) cards[idx[priority]].classList.add('active');
+  }
   filterAvisos();
 }
 
@@ -5044,7 +5103,7 @@ async function renderDoacoes() {
       </div>
     </div>
 
-    <div class="filter-card-grid">
+    <div class="filter-card-grid" id="donations-filter-cards">
       <div class="filter-card ${donationsFilterType===''?'active':''}" onclick="selectDonationFilter('')" style="border-left-color:var(--primary)">
         <div class="filter-card-icon" style="background:rgba(44,123,229,0.1);color:var(--primary)">🎁</div>
         <div class="filter-card-body"><div class="filter-card-name">Todas</div><div class="filter-card-count">${donationsCache.length} doações</div></div>
@@ -5080,10 +5139,13 @@ async function renderDoacoes() {
 
 function selectDonationFilter(filter) {
   donationsFilterType = filter;
-  document.querySelectorAll('.filter-card').forEach(c => c.classList.remove('active'));
-  const cards = document.querySelectorAll('.filter-card');
-  const idx = { '': 0, 'dinheiro': 1, 'material': 2, 'pending': 3 };
-  if (cards[idx[filter]]) cards[idx[filter]].classList.add('active');
+  const grid = document.getElementById('donations-filter-cards');
+  if (grid) {
+    grid.querySelectorAll('.filter-card').forEach(c => c.classList.remove('active'));
+    const idx = { '': 0, 'dinheiro': 1, 'material': 2, 'pending': 3 };
+    const cards = grid.querySelectorAll('.filter-card');
+    if (cards[idx[filter]]) cards[idx[filter]].classList.add('active');
+  }
   renderDonationsTable();
 }
 

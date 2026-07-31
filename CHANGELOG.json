@@ -1,5 +1,22 @@
 [
   {
+    "version": "1.31.0",
+    "date": "2026-07-30",
+    "title": "Correção de Flickering/Piscagem nas Telas",
+    "changes": [
+      "renderPage() agora exibe spinner de loading em vez de tela branca durante chamadas async",
+      "Equipes: separação entre fetch de dados (renderEquipes) e renderização (renderEquipesGrid) — filtros e expand/collapse não re-buscam API",
+      "Equipes: busca textual com debounce 250ms em vez de re-fetch a cada tecla",
+      "Cronograma: dados de schedule cacheados em cronogramaCache — filtros não re-buscam API",
+      "Cronograma: filterSchedule agora é síncrono (filtragem client-side em vez de API call)",
+      "Filter cards: seletores escopados por ID de container (elimina interferência entre módulos)",
+      "Kit: adicionada função selectKitFilter que estava faltando (erro de runtime ao clicar nos filtros)",
+      "Checklist e Inscritos: busca textual com debounce 250ms",
+      "CSS: adicionado .loading-overlay e .loading-spinner para feedback visual durante carregamento",
+      "db.update: normalização de team_id para Number em team_members (consistência com db.insert)"
+    ]
+  },
+  {
     "version": "1.30.0",
     "date": "2026-07-30",
     "title": "Cards de Filtro Interativos em Todos os Módulos",
