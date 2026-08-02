@@ -5574,6 +5574,7 @@ async function renderOrcamento() {
           ${BUDGET_STATUSES.map(st => `<option value="${st}" ${budgetFilterStatus===st?'selected':''}>${BUDGET_STATUS_LABELS[st]}</option>`).join('')}
         </select>
       </div>
+      <button class="btn btn-secondary btn-sm" onclick="printBudgetReport()">🖨️ Imprimir Relatório</button>
       <button class="btn btn-primary btn-sm" onclick="openBudgetModal()">+ Novo Item</button>
     </div>
 
@@ -5691,6 +5692,12 @@ function renderBudgetItems() {
       `}
     </div>`;
   }).join('');
+}
+
+function printBudgetReport() {
+  const cat = budgetActiveCategory || '';
+  const url = cat ? `/reports/budget/${encodeURIComponent(cat)}` : '/reports/budget';
+  window.open(url, '_blank');
 }
 
 function openBudgetModal(id, defaultCategory) {

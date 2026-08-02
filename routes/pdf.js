@@ -2701,8 +2701,165 @@ function generateAssignedTasksReport() {
   return new Promise(resolve => { doc.on('end', () => resolve(Buffer.concat(buffers))); });
 }
 
+function generateBudgetReport(category) {
+  const doc = createReportDoc();
+  const buffers = [];
+  doc.on('data', buffers.push.bind(buffers));
+
+  const subtitle = category ? `Categoria: ${category}` : 'Todas as categorias';
+  reportHeader(doc, 'Relatorio de Orcamento', subtitle);
+
+  let items = db.getAll('budget_items');
+  if (category) items = items.filter(b => b.category === category);
+  items.sort((a, b) => (a.category || '').localeCompare(b.category || '') || (a.item_name || '').localeCompare(b.item_name || ''));
+
+  const totalEstimated = items.reduce((s, b) => s + ((b.quantity || 0) * (b.estimated_unit_cost || 0)), 0);
+  const totalActual = items.reduce((s, b) => s + (b.actual_cost || 0), 0);
+  const totalItems = items.length;
+  const purchased = items.filter(b => b.status === 'comprado').length;
+  const received = items.filter(b => b.status === 'recebido').length;
+  const pending = items.filter(b => b.status === 'orcado').length;
+  const cancelled = items.filter(b => b.status === 'cancelado').length;
+
+  let y = 155;
+
+  // Summary cards
+  summaryCard(doc, 'Itens', String(totalItems), 50, y, 95, 55, COLORS.secondary);
+  summaryCard(doc, 'Orcado Total', fmtMoney(totalEstimated), 155, y, 120, 55, COLORS.primary);
+  summaryCard(doc, 'Gasto Real', fmtMoney(totalActual), 285, y, 120, 55, COLORS.red);
+  summaryCard(doc, 'Comprados', `${purchased + received}/${totalItems}`, 415, y, 95, 55, COLORS.green);
+  summaryCard(doc, 'Pendentes', String(pending), 520, y, 80, 55, COLORS.orange);
+  y += 75;
+
+  // Totals by category (only if not filtered)
+  if (!category) {
+    y = sectionTitle(doc, 'Totalizadores por Categoria', y, COLORS.primary);
+    const cats = {};
+    for (const b of items) {
+      if (!cats[b.category]) cats[b.category] = { estimated: 0, actual: 0, count: 0, purchased: 0, received: 0 };
+      cats[b.category].estimated += (b.quantity || 0) * (b.estimated_unit_cost || 0);
+      cats[b.category].actual += b.actual_cost || 0;
+      cats[b.category].count++;
+      if (b.status === 'comprado') cats[b.category].purchased++;
+      if (b.status === 'recebido') cats[b.category].received++;
+    }
+    y = tableHeader(doc, [
+      { label: 'Categoria', x: 54, w: 160 },
+      { label: 'Itens', x: 220, w: 50, align: 'center' },
+      { label: 'Orcado', x: 280, w: 100, align: 'right' },
+      { label: 'Gasto', x: 385, w: 100, align: 'right' },
+      { label: 'Saldo', x: 490, w: 80, align: 'right' },
+      { label: '%', x: 575, w: 30, align: 'right' },
+    ], y);
+    for (const [cat, v] of Object.entries(cats).sort((a, b) => a[0].localeCompare(b[0]))) {
+      y = ensureSpace(doc, 16, y);
+      zebraRow(doc, y, 16);
+      const bal = v.estimated - v.actual;
+      const pct = v.estimated > 0 ? Math.round((v.actual / v.estimated) * 100) : 0;
+      doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(cat, 56, y + 3, { width: 160 });
+      doc.fillColor(COLORS.gray).text(String(v.count), 220, y + 3, { width: 50, align: 'center' });
+      doc.fillColor(COLORS.secondary).text(fmtMoney(v.estimated), 280, y + 3, { width: 100, align: 'right' });
+      doc.fillColor(COLORS.red).text(fmtMoney(v.actual), 385, y + 3, { width: 100, align: 'right' });
+      doc.fillColor(bal >= 0 ? COLORS.green : COLORS.red).font('Helvetica-Bold').text(fmtMoney(bal), 490, y + 3, { width: 80, align: 'right' });
+      doc.fillColor(pct > 100 ? COLORS.red : pct > 80 ? COLORS.orange : COLORS.green).font('Helvetica').text(`${pct}%`, 575, y + 3, { width: 30, align: 'right' });
+      y += 16;
+    }
+    // Grand total row
+    y = ensureSpace(doc, 20, y);
+    doc.fillColor(COLORS.secondary).rect(50, y - 2, CONTENT_WIDTH, 18).fill();
+    doc.fillColor('#fff').fontSize(9).font('Helvetica-Bold').text('TOTAL GERAL', 56, y + 3, { width: 160 });
+    doc.fillColor('#fff').text(String(totalItems), 220, y + 3, { width: 50, align: 'center' });
+    doc.fillColor('#fff').text(fmtMoney(totalEstimated), 280, y + 3, { width: 100, align: 'right' });
+    doc.fillColor('#fff').text(fmtMoney(totalActual), 385, y + 3, { width: 100, align: 'right' });
+    doc.fillColor('#fff').text(fmtMoney(totalEstimated - totalActual), 490, y + 3, { width: 80, align: 'right' });
+    const overallPct = totalEstimated > 0 ? Math.round((totalActual / totalEstimated) * 100) : 0;
+    doc.fillColor('#fff').text(`${overallPct}%`, 575, y + 3, { width: 30, align: 'right' });
+    y += 26;
+  }
+
+  // Status summary
+  y = ensureSpace(doc, 40, y);
+  y = sectionTitle(doc, 'Resumo por Status', y, COLORS.secondary);
+  y = tableHeader(doc, [
+    { label: 'Status', x: 54, w: 150 },
+    { label: 'Quantidade', x: 220, w: 100, align: 'center' },
+    { label: 'Percentual', x: 350, w: 100, align: 'right' },
+  ], y);
+  const statusData = [
+    { label: 'Orcado', count: pending, color: COLORS.gray },
+    { label: 'Comprado', count: purchased, color: COLORS.green },
+    { label: 'Recebido', count: received, color: COLORS.primary },
+    { label: 'Cancelado', count: cancelled, color: COLORS.red },
+  ];
+  for (const s of statusData) {
+    y = ensureSpace(doc, 16, y);
+    zebraRow(doc, y, 16);
+    doc.fillColor(s.color).fontSize(9).font('Helvetica-Bold').text(s.label, 56, y + 3, { width: 150 });
+    doc.fillColor(COLORS.dark).font('Helvetica').text(String(s.count), 220, y + 3, { width: 100, align: 'center' });
+    const pct = totalItems > 0 ? Math.round((s.count / totalItems) * 100) : 0;
+    doc.fillColor(COLORS.dark).text(`${pct}%`, 350, y + 3, { width: 100, align: 'right' });
+    y += 16;
+  }
+
+  // Detailed items list
+  y += 12;
+  y = ensureSpace(doc, 40, y);
+  y = sectionTitle(doc, 'Itens Detalhados', y, COLORS.primary);
+  y = tableHeader(doc, [
+    { label: 'Item', x: 54, w: 180 },
+    { label: 'Qtd', x: 240, w: 55, align: 'center' },
+    { label: 'Custo Unit.', x: 300, w: 70, align: 'right' },
+    { label: 'Total Est.', x: 375, w: 75, align: 'right' },
+    { label: 'Custo Real', x: 455, w: 75, align: 'right' },
+    { label: 'Status', x: 535, w: 70, align: 'right' },
+  ], y);
+
+  for (const b of items) {
+    const itemText = b.item_name || '-';
+    const descText = b.description ? `\n${b.description}` : '';
+    const supplierText = b.supplier ? `\nForn: ${b.supplier}` : '';
+    const notesText = b.notes ? `\nObs: ${b.notes}` : '';
+    const fullText = itemText + descText + supplierText + notesText;
+    const itemH = calcTextHeight(doc, fullText, 180, 9);
+    const rowH = Math.max(20, itemH + 4);
+    y = ensureSpace(doc, rowH, y);
+    zebraRow(doc, y, rowH);
+
+    const estTotal = (b.quantity || 0) * (b.estimated_unit_cost || 0);
+    const statusLabels = { orcado: 'Orcado', comprado: 'Comprado', recebido: 'Recebido', cancelado: 'Cancelado' };
+    const statusColors = { orcado: COLORS.gray, comprado: COLORS.green, recebido: COLORS.primary, cancelado: COLORS.red };
+
+    doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica-Bold').text(itemText, 56, y + 2, { width: 180 });
+    if (b.description) {
+      doc.fillColor(COLORS.gray).fontSize(7).font('Helvetica').text(b.description, 56, y + 13, { width: 180 });
+    }
+    if (b.supplier) {
+      doc.fillColor(COLORS.gray).fontSize(7).font('Helvetica').text(`Forn: ${b.supplier}`, 56, y + (b.description ? 22 : 13), { width: 180 });
+    }
+    doc.fillColor(COLORS.dark).fontSize(9).font('Helvetica').text(`${b.quantity || 0} ${b.unit || ''}`, 240, y + 3, { width: 55, align: 'center' });
+    doc.fillColor(COLORS.dark).text(fmtMoney(b.estimated_unit_cost || 0), 300, y + 3, { width: 70, align: 'right' });
+    doc.fillColor(COLORS.secondary).font('Helvetica-Bold').text(fmtMoney(estTotal), 375, y + 3, { width: 75, align: 'right' });
+    doc.fillColor((b.actual_cost || 0) > 0 ? COLORS.red : COLORS.grayLight).font('Helvetica').text((b.actual_cost || 0) > 0 ? fmtMoney(b.actual_cost) : '-', 455, y + 3, { width: 75, align: 'right' });
+    doc.fillColor(statusColors[b.status] || COLORS.gray).font('Helvetica-Bold').fontSize(8).text(statusLabels[b.status] || b.status, 535, y + 3, { width: 70, align: 'right' });
+    y += rowH;
+  }
+
+  // Grand total footer
+  y = ensureSpace(doc, 24, y);
+  y += 6;
+  doc.strokeColor(COLORS.divider).lineWidth(0.5).moveTo(50, y).lineTo(CONTENT_RIGHT, y).stroke();
+  y += 6;
+  doc.fillColor(COLORS.dark).fontSize(10).font('Helvetica-Bold').text('TOTAL GERAL:', 300, y, { width: 75, align: 'right' });
+  doc.fillColor(COLORS.secondary).text(fmtMoney(totalEstimated), 375, y, { width: 75, align: 'right' });
+  doc.fillColor(COLORS.red).text(fmtMoney(totalActual), 455, y, { width: 75, align: 'right' });
+  doc.fillColor(totalEstimated - totalActual >= 0 ? COLORS.green : COLORS.red).text(fmtMoney(totalEstimated - totalActual), 535, y, { width: 70, align: 'right' });
+
+  doc.end();
+  return new Promise(resolve => { doc.on('end', () => resolve(Buffer.concat(buffers))); });
+}
+
 module.exports = { generateFullReport, generateCategoryReport, generateTeamReport, generateTeamScheduleReport,
   generateScheduleReport, generateParticipantsReport, generateFinanceReport, generateAlicercesReport,
   generateLembrancinhasReport, generateFornecedoresReport, generateAvisosReport, generateKitReport,
   generateCoordinatorGuideReport, generatePreparationReport, generateLembretesReport, generateEscolinhasReport,
-  generateAssignedTasksReport };
+  generateAssignedTasksReport, generateBudgetReport };

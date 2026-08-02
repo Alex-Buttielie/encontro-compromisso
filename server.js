@@ -5,7 +5,7 @@ const {
   generateScheduleReport, generateParticipantsReport, generateFinanceReport, generateAlicercesReport,
   generateLembrancinhasReport, generateFornecedoresReport, generateAvisosReport, generateKitReport,
   generateCoordinatorGuideReport, generatePreparationReport, generateLembretesReport, generateEscolinhasReport,
-  generateAssignedTasksReport
+  generateAssignedTasksReport, generateBudgetReport
 } = require('./routes/pdf');
 const apiRouter = require('./routes/api');
 const { router: whatsappRouter, rescheduleCron } = require('./routes/whatsapp');
@@ -68,6 +68,8 @@ app.get('/reports/preparation', reportRoute(() => generatePreparationReport(), '
 app.get('/reports/lembretes', reportRoute(() => generateLembretesReport(), 'relatorio-lembretes.pdf'));
 app.get('/reports/escolinhas', reportRoute(() => generateEscolinhasReport(), 'calendario-escolinhas-2026.pdf'));
 app.get('/reports/assigned-tasks', reportRoute(() => generateAssignedTasksReport(), 'tarefas-atribuidas.pdf'));
+app.get('/reports/budget', reportRoute(() => generateBudgetReport(), 'relatorio-orcamento.pdf'));
+app.get('/reports/budget/:category', reportRoute(req => generateBudgetReport(decodeURIComponent(req.params.category)), 'relatorio-orcamento.pdf'));
 
 // SPA fallback
 app.get('*', (req, res) => {
