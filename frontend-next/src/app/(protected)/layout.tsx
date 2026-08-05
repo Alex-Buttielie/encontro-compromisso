@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Layout } from '@/components/Layout';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { ReleaseNotesDialog } from '@/components/ReleaseNotesDialog';
 
 export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -17,5 +18,10 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
 
   if (loading || !user) return <LoadingSpinner />;
 
-  return <Layout>{children}</Layout>;
+  return (
+    <Layout>
+      {children}
+      <ReleaseNotesDialog />
+    </Layout>
+  );
 }
