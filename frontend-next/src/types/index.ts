@@ -190,12 +190,16 @@ export interface CRMClient {
 export interface InventoryItem {
   id: number;
   name: string;
-  quantity: number;
-  minQuantity: number;
-  unitPrice: number;
-  unitPriceFormatted?: string;
   sku?: string;
-  supplier?: string;
+  category?: string;
+  unit?: string;
+  currentStock: number;
+  minStock: number;
+  unitPrice: number;
+  stockValue?: number;
+  supplierId?: number | null;
+  active?: boolean;
+  belowMinimum?: boolean;
 }
 
 export interface Campaign {
