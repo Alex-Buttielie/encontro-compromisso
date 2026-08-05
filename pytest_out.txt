@@ -1,0 +1,638 @@
+........................................................................ [ 10%]
+........................................................................ [ 20%]
+........................................................................ [ 30%]
+........................................................................ [ 40%]
+........................................................................ [ 50%]
+........................................................................ [ 60%]
+........................................................................ [ 70%]
+........................................................................ [ 80%]
+........................................................................ [ 90%]
+....................................................................     [100%]
+============================== warnings summary ===============================
+backend/tests/integration/test_auth_flows.py: 20 warnings
+backend/tests/integration/test_jwt_flows.py: 8 warnings
+backend/tests/integration/test_phase2_flows.py: 20 warnings
+backend/tests/integration/test_phase3_flows.py: 17 warnings
+backend/tests/integration/test_phase4_flows.py: 14 warnings
+backend/tests/integration/test_phase5_flows.py: 21 warnings
+backend/tests/integration/test_phase6_flows.py: 30 warnings
+backend/tests/integration/test_phase7_flows.py: 23 warnings
+backend/tests/integration/test_phase8_flows.py: 25 warnings
+backend/tests/unit/test_payment_service.py: 9 warnings
+backend/tests/unit/test_phase2_services.py: 12 warnings
+backend/tests/unit/test_wallet_service.py: 10 warnings
+  C:\Users\Alex.Buttielie\AppData\Local\Programs\Python\Python314\Lib\site-packages\google\cloud\firestore_v1\base_collection.py:317: UserWarning: Detected filter using positional arguments. Prefer using the 'filter' keyword argument instead.
+    return query.where(field_path, op_string, value)
+
+backend/tests/integration/test_auth_flows.py: 37 warnings
+backend/tests/integration/test_jwt_flows.py: 14 warnings
+backend/tests/integration/test_phase2_flows.py: 118 warnings
+backend/tests/integration/test_phase3_flows.py: 65 warnings
+backend/tests/integration/test_phase4_flows.py: 65 warnings
+backend/tests/integration/test_phase5_flows.py: 77 warnings
+backend/tests/integration/test_phase6_flows.py: 117 warnings
+backend/tests/integration/test_phase7_flows.py: 114 warnings
+backend/tests/integration/test_phase8_flows.py: 99 warnings
+backend/tests/unit/test_analytics_domain.py: 4 warnings
+backend/tests/unit/test_auth_service_recovery.py: 8 warnings
+backend/tests/unit/test_branch_domain.py: 13 warnings
+backend/tests/unit/test_chat_notification_domain.py: 26 warnings
+backend/tests/unit/test_commission_domain.py: 12 warnings
+backend/tests/unit/test_crm_domain.py: 16 warnings
+backend/tests/unit/test_employee_domain.py: 13 warnings
+backend/tests/unit/test_erp_domain.py: 14 warnings
+backend/tests/unit/test_giftcard_domain.py: 13 warnings
+backend/tests/unit/test_inventory_domain.py: 18 warnings
+backend/tests/unit/test_loyalty_domain.py: 34 warnings
+backend/tests/unit/test_marketing_domain.py: 18 warnings
+backend/tests/unit/test_package_domain.py: 11 warnings
+backend/tests/unit/test_payment_domain.py: 17 warnings
+backend/tests/unit/test_payment_service.py: 26 warnings
+backend/tests/unit/test_phase2_services.py: 47 warnings
+backend/tests/unit/test_phase6_domain.py: 44 warnings
+backend/tests/unit/test_phase7_domain.py: 42 warnings
+backend/tests/unit/test_phase8_domain.py: 23 warnings
+backend/tests/unit/test_social_domain.py: 27 warnings
+backend/tests/unit/test_user_account_recovery.py: 13 warnings
+backend/tests/unit/test_wallet_domain.py: 39 warnings
+backend/tests/unit/test_wallet_service.py: 47 warnings
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\domain\entity.py:42: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.created_at = kwargs.pop('created_at', datetime.datetime.utcnow())
+
+backend/tests/integration/test_auth_flows.py: 15 warnings
+backend/tests/integration/test_jwt_flows.py: 8 warnings
+backend/tests/integration/test_phase2_flows.py: 22 warnings
+backend/tests/integration/test_phase3_flows.py: 17 warnings
+backend/tests/integration/test_phase4_flows.py: 15 warnings
+backend/tests/integration/test_phase5_flows.py: 21 warnings
+backend/tests/integration/test_phase6_flows.py: 30 warnings
+backend/tests/integration/test_phase7_flows.py: 23 warnings
+backend/tests/integration/test_phase8_flows.py: 31 warnings
+backend/tests/unit/test_auth_service_recovery.py: 8 warnings
+backend/tests/unit/test_user_account_recovery.py: 13 warnings
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:110: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    now = datetime.utcnow()
+
+backend/tests/integration/test_auth_flows.py: 15 warnings
+backend/tests/integration/test_jwt_flows.py: 8 warnings
+backend/tests/integration/test_phase2_flows.py: 22 warnings
+backend/tests/integration/test_phase3_flows.py: 17 warnings
+backend/tests/integration/test_phase4_flows.py: 15 warnings
+backend/tests/integration/test_phase5_flows.py: 21 warnings
+backend/tests/integration/test_phase6_flows.py: 30 warnings
+backend/tests/integration/test_phase7_flows.py: 23 warnings
+backend/tests/integration/test_phase8_flows.py: 31 warnings
+backend/tests/unit/test_auth_service_recovery.py: 8 warnings
+backend/tests/unit/test_user_account_recovery.py: 13 warnings
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:159: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.email_confirmation_expires_at = datetime.utcnow() + self._EMAIL_CONFIRMATION_TTL
+
+backend/tests/integration/test_auth_flows.py: 18 warnings
+backend/tests/integration/test_jwt_flows.py: 12 warnings
+backend/tests/integration/test_phase2_flows.py: 22 warnings
+backend/tests/integration/test_phase3_flows.py: 17 warnings
+backend/tests/integration/test_phase4_flows.py: 15 warnings
+backend/tests/integration/test_phase5_flows.py: 21 warnings
+backend/tests/integration/test_phase6_flows.py: 30 warnings
+backend/tests/integration/test_phase7_flows.py: 23 warnings
+backend/tests/integration/test_phase8_flows.py: 31 warnings
+backend/tests/unit/test_auth_service_recovery.py: 1 warning
+backend/tests/unit/test_jwt_auth.py: 4 warnings
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\services\auth_service.py:26: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    'exp': datetime.utcnow() + Config.JWT_EXPIRATION,
+
+backend/tests/integration/test_auth_flows.py: 18 warnings
+backend/tests/integration/test_jwt_flows.py: 12 warnings
+backend/tests/integration/test_phase2_flows.py: 22 warnings
+backend/tests/integration/test_phase3_flows.py: 17 warnings
+backend/tests/integration/test_phase4_flows.py: 15 warnings
+backend/tests/integration/test_phase5_flows.py: 21 warnings
+backend/tests/integration/test_phase6_flows.py: 30 warnings
+backend/tests/integration/test_phase7_flows.py: 23 warnings
+backend/tests/integration/test_phase8_flows.py: 31 warnings
+backend/tests/unit/test_auth_service_recovery.py: 1 warning
+backend/tests/unit/test_jwt_auth.py: 4 warnings
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\services\auth_service.py:27: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    'iat': datetime.utcnow(),
+
+backend/tests/integration/test_auth_flows.py: 15 warnings
+backend/tests/integration/test_jwt_flows.py: 8 warnings
+backend/tests/integration/test_phase2_flows.py: 19 warnings
+backend/tests/integration/test_phase3_flows.py: 17 warnings
+backend/tests/integration/test_phase4_flows.py: 14 warnings
+backend/tests/integration/test_phase5_flows.py: 21 warnings
+backend/tests/integration/test_phase6_flows.py: 30 warnings
+backend/tests/integration/test_phase7_flows.py: 23 warnings
+backend/tests/integration/test_phase8_flows.py: 24 warnings
+backend/tests/unit/test_auth_service_recovery.py: 1 warning
+backend/tests/unit/test_jwt_auth.py: 4 warnings
+  C:\Users\Alex.Buttielie\AppData\Local\Programs\Python\Python314\Lib\site-packages\jwt\api_jwt.py:147: InsecureKeyLengthWarning: The HMAC key is 22 bytes long, which is below the minimum recommended length of 32 bytes for SHA256. See RFC 7518 Section 3.2.
+    return self._jws.encode(
+
+backend/tests/integration/test_auth_flows.py::TestLogin::test_login_deleted_account_blocked
+backend/tests/integration/test_auth_flows.py::TestAccountDeletion::test_delete_account_success
+backend/tests/integration/test_auth_flows.py::TestAccountDeletion::test_delete_account_already_deleted
+backend/tests/unit/test_auth_service_recovery.py::TestDeleteAccount::test_delete_account_marks_user_deleted
+backend/tests/unit/test_auth_service_recovery.py::TestLoginBlocksDeletedAccounts::test_login_fails_for_deleted_account
+backend/tests/unit/test_user_account_recovery.py::TestAccountDeletion::test_mark_deleted_sets_timestamp
+backend/tests/unit/test_user_account_recovery.py::TestAccountDeletion::test_mark_deleted_twice_raises
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:197: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.deleted_at = datetime.utcnow()
+
+backend/tests/integration/test_auth_flows.py::TestEmailConfirmation::test_confirm_email_success
+backend/tests/unit/test_auth_service_recovery.py::TestEmailConfirmationFlow::test_confirm_email_with_valid_token_succeeds
+backend/tests/unit/test_user_account_recovery.py::TestEmailConfirmation::test_confirm_email_with_valid_token_succeeds
+backend/tests/unit/test_user_account_recovery.py::TestEmailConfirmation::test_confirm_email_with_expired_token_fails
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:166: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    if self.email_confirmation_expires_at and datetime.utcnow() > self.email_confirmation_expires_at:
+
+backend/tests/integration/test_auth_flows.py::TestPasswordReset::test_password_reset_request_always_succeeds
+backend/tests/integration/test_auth_flows.py::TestPasswordReset::test_password_reset_execute_success
+backend/tests/integration/test_auth_flows.py::TestPasswordReset::test_password_reset_execute_weak_password
+backend/tests/unit/test_auth_service_recovery.py::TestPasswordRecoveryFlow::test_request_password_reset_for_existing_user_sends_email
+backend/tests/unit/test_auth_service_recovery.py::TestPasswordRecoveryFlow::test_reset_password_with_valid_token_updates_hash
+backend/tests/unit/test_user_account_recovery.py::TestPasswordReset::test_generate_password_reset_token_sets_expiry
+backend/tests/unit/test_user_account_recovery.py::TestPasswordReset::test_reset_password_with_valid_token_updates_hash
+backend/tests/unit/test_user_account_recovery.py::TestPasswordReset::test_reset_password_with_wrong_token_fails
+backend/tests/unit/test_user_account_recovery.py::TestPasswordReset::test_reset_password_with_expired_token_fails
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:176: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.password_reset_expires_at = datetime.utcnow() + self._PASSWORD_RESET_TTL
+
+backend/tests/integration/test_auth_flows.py::TestPasswordReset::test_password_reset_execute_success
+backend/tests/unit/test_auth_service_recovery.py::TestPasswordRecoveryFlow::test_reset_password_with_valid_token_updates_hash
+backend/tests/unit/test_user_account_recovery.py::TestPasswordReset::test_reset_password_with_valid_token_updates_hash
+backend/tests/unit/test_user_account_recovery.py::TestPasswordReset::test_reset_password_with_expired_token_fails
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:183: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    if self.password_reset_expires_at and datetime.utcnow() > self.password_reset_expires_at:
+
+backend/tests/integration/test_jwt_flows.py::TestJWTAuth::test_jwt_token_decodes_to_correct_user
+backend/tests/integration/test_jwt_flows.py::TestJWTAuth::test_jwt_token_works_for_auth
+backend/tests/integration/test_jwt_flows.py::TestJWTAuth::test_tampered_jwt_rejected
+backend/tests/unit/test_jwt_auth.py::TestJWTGeneration::test_login_returns_jwt_token
+backend/tests/unit/test_jwt_auth.py::TestJWTGeneration::test_register_returns_jwt_token
+backend/tests/unit/test_jwt_auth.py::TestJWTGeneration::test_jwt_token_has_expiration
+backend/tests/unit/test_jwt_auth.py::TestJWTGeneration::test_jwt_token_invalid_when_tampered
+  C:\Users\Alex.Buttielie\AppData\Local\Programs\Python\Python314\Lib\site-packages\jwt\api_jwt.py:368: InsecureKeyLengthWarning: The HMAC key is 22 bytes long, which is below the minimum recommended length of 32 bytes for SHA256. See RFC 7518 Section 3.2.
+    decoded = self.decode_complete(
+
+backend/tests/integration/test_phase2_flows.py: 14 warnings
+backend/tests/unit/test_payment_domain.py: 20 warnings
+backend/tests/unit/test_payment_service.py: 19 warnings
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:897: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.updated_at = datetime.utcnow()
+
+backend/tests/integration/test_phase2_flows.py: 2 warnings
+backend/tests/unit/test_package_domain.py: 11 warnings
+backend/tests/unit/test_phase2_services.py: 4 warnings
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:1178: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    expires_at=datetime.utcnow() + timedelta(days=validity_days),
+
+backend/tests/integration/test_phase2_flows.py: 4 warnings
+backend/tests/unit/test_package_domain.py: 7 warnings
+backend/tests/unit/test_phase2_services.py: 2 warnings
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:1198: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    if self.current_status == PackageStatus.ACTIVE and datetime.utcnow() > self.expires_at:
+
+backend/tests/integration/test_phase2_flows.py: 2 warnings
+backend/tests/unit/test_giftcard_domain.py: 13 warnings
+backend/tests/unit/test_phase2_services.py: 4 warnings
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:1263: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    expires_at=datetime.utcnow() + timedelta(days=days),
+
+backend/tests/integration/test_phase2_flows.py::TestGiftCardFlow::test_buy_and_redeem_gift_card
+backend/tests/unit/test_giftcard_domain.py::TestGiftCardRedemption::test_redeem_active_gift_card
+backend/tests/unit/test_giftcard_domain.py::TestGiftCardRedemption::test_redeem_already_redeemed_rejected
+backend/tests/unit/test_giftcard_domain.py::TestGiftCardRedemption::test_redeem_expired_gift_card_rejected
+backend/tests/unit/test_giftcard_domain.py::TestGiftCardFraudPrevention::test_block_already_redeemed_rejected
+backend/tests/unit/test_giftcard_domain.py::TestGiftCardExpiry::test_check_expiry_marks_expired
+backend/tests/unit/test_giftcard_domain.py::TestGiftCardExpiry::test_check_expiry_active_stays_active
+backend/tests/unit/test_phase2_services.py::TestGiftCardService::test_redeem_gift_card
+backend/tests/unit/test_phase2_services.py::TestGiftCardService::test_redeem_already_redeemed
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:1292: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    if self.current_status == GiftCardStatus.ACTIVE and datetime.utcnow() > self.expires_at:
+
+backend/tests/integration/test_phase2_flows.py::TestGiftCardFlow::test_buy_and_redeem_gift_card
+backend/tests/unit/test_giftcard_domain.py::TestGiftCardRedemption::test_redeem_active_gift_card
+backend/tests/unit/test_giftcard_domain.py::TestGiftCardRedemption::test_redeem_already_redeemed_rejected
+backend/tests/unit/test_giftcard_domain.py::TestGiftCardFraudPrevention::test_block_already_redeemed_rejected
+backend/tests/unit/test_phase2_services.py::TestGiftCardService::test_redeem_gift_card
+backend/tests/unit/test_phase2_services.py::TestGiftCardService::test_redeem_already_redeemed
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:1281: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.redeemed_at = datetime.utcnow()
+
+backend/tests/integration/test_phase3_flows.py::TestInventoryE2E::test_low_stock_alert
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\repositories\inventory_repository.py:24: UserWarning: Detected filter using positional arguments. Prefer using the 'filter' keyword argument instead.
+    docs = self._collection().where('user_id', '==', user_id).where('active', '==', True).stream()
+
+backend/tests/integration/test_phase3_flows.py::TestERPE2E::test_financial_period_close
+backend/tests/unit/test_erp_domain.py::TestFinancialPeriod::test_close_period
+backend/tests/unit/test_erp_domain.py::TestFinancialPeriod::test_close_already_closed
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:1861: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.closed_at = datetime.utcnow()
+
+backend/tests/integration/test_phase3_flows.py::TestMarketingE2E::test_campaign_full_lifecycle
+backend/tests/unit/test_marketing_domain.py::TestCampaign::test_start_campaign
+backend/tests/unit/test_marketing_domain.py::TestCampaign::test_complete_campaign
+backend/tests/unit/test_marketing_domain.py::TestCampaign::test_pause_and_resume
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:2093: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.started_at = datetime.utcnow()
+
+backend/tests/integration/test_phase3_flows.py::TestMarketingE2E::test_campaign_full_lifecycle
+backend/tests/unit/test_marketing_domain.py::TestCampaign::test_complete_campaign
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:2109: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.completed_at = datetime.utcnow()
+
+backend/tests/integration/test_phase3_flows.py: 3 warnings
+backend/tests/unit/test_crm_domain.py: 15 warnings
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:1570: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    now = datetime.utcnow()
+
+backend/tests/integration/test_phase3_flows.py::TestCRME2E::test_record_visit_and_segmentation
+backend/tests/integration/test_phase3_flows.py::TestCRME2E::test_record_visit_and_segmentation
+backend/tests/integration/test_phase3_flows.py::TestCRME2E::test_record_visit_and_segmentation
+backend/tests/unit/test_crm_domain.py::TestClientProfile::test_segment_becomes_inactive
+backend/tests/unit/test_crm_domain.py::TestClientProfile::test_segment_becomes_lost
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:1585: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    days_since = (datetime.utcnow() - self.last_visit_at).days
+
+backend/tests/integration/test_phase3_flows.py::TestCRME2E::test_record_visit_and_segmentation
+backend/tests/integration/test_phase3_flows.py::TestCRME2E::test_record_visit_and_segmentation
+backend/tests/integration/test_phase3_flows.py::TestCRME2E::test_record_visit_and_segmentation
+backend/tests/unit/test_crm_domain.py::TestClientProfile::test_segment_upgrades_to_vip
+backend/tests/unit/test_crm_domain.py::TestClientProfile::test_segment_becomes_inactive
+backend/tests/unit/test_crm_domain.py::TestClientProfile::test_segment_becomes_lost
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:1592: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.updated_at = datetime.utcnow()
+
+backend/tests/integration/test_phase3_flows.py::TestCRME2E::test_satisfaction_survey
+backend/tests/unit/test_crm_domain.py::TestSatisfactionSurvey::test_respond_survey
+backend/tests/unit/test_crm_domain.py::TestSatisfactionSurvey::test_respond_already_responded_rejected
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:1647: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.responded_at = datetime.utcnow()
+
+backend/tests/integration/test_phase4_flows.py: 2 warnings
+backend/tests/unit/test_employee_domain.py: 8 warnings
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:2389: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.accepted_at = datetime.utcnow()
+
+backend/tests/integration/test_phase4_flows.py::TestEmployeeE2E::test_employee_lifecycle_suspend_reactivate_terminate
+backend/tests/unit/test_employee_domain.py::TestEmployee::test_employee_suspend
+backend/tests/unit/test_employee_domain.py::TestEmployee::test_employee_reactivate
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:2397: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.suspended_at = datetime.utcnow()
+
+backend/tests/integration/test_phase4_flows.py::TestEmployeeE2E::test_employee_lifecycle_suspend_reactivate_terminate
+backend/tests/unit/test_employee_domain.py::TestEmployee::test_employee_terminate
+backend/tests/unit/test_employee_domain.py::TestEmployee::test_terminated_cannot_be_suspended
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:2403: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.terminated_at = datetime.utcnow()
+
+backend/tests/integration/test_phase4_flows.py::TestCommissionE2E::test_create_percentage_rule_and_calculate
+backend/tests/integration/test_phase4_flows.py::TestCommissionE2E::test_create_fixed_rule_and_calculate
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\repositories\commission_repository.py:18: UserWarning: Detected filter using positional arguments. Prefer using the 'filter' keyword argument instead.
+    docs = self._collection().where('user_id', '==', user_id).where('employee_id', '==', employee_id).where('active', '==', True).stream()
+
+backend/tests/integration/test_phase4_flows.py::TestBranchE2E::test_transfer_stock_between_branches
+backend/tests/unit/test_branch_domain.py::TestStockTransfer::test_approve_transfer
+backend/tests/unit/test_branch_domain.py::TestStockTransfer::test_ship_transfer
+backend/tests/unit/test_branch_domain.py::TestStockTransfer::test_complete_transfer
+backend/tests/unit/test_branch_domain.py::TestStockTransfer::test_complete_without_ship_rejected
+backend/tests/unit/test_branch_domain.py::TestStockTransfer::test_approve_already_completed
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:2625: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.approved_at = datetime.utcnow()
+
+backend/tests/integration/test_phase4_flows.py::TestBranchE2E::test_transfer_stock_between_branches
+backend/tests/unit/test_branch_domain.py::TestStockTransfer::test_ship_transfer
+backend/tests/unit/test_branch_domain.py::TestStockTransfer::test_complete_transfer
+backend/tests/unit/test_branch_domain.py::TestStockTransfer::test_approve_already_completed
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:2632: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.shipped_at = datetime.utcnow()
+
+backend/tests/integration/test_phase4_flows.py::TestBranchE2E::test_transfer_stock_between_branches
+backend/tests/unit/test_branch_domain.py::TestStockTransfer::test_complete_transfer
+backend/tests/unit/test_branch_domain.py::TestStockTransfer::test_approve_already_completed
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:2636: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.completed_at = datetime.utcnow()
+
+backend/tests/integration/test_phase5_flows.py::TestSocialE2E::test_client_views_feed_likes_and_shares
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\repositories\social_repository.py:18: UserWarning: Detected filter using positional arguments. Prefer using the 'filter' keyword argument instead.
+    docs = self._collection().where('user_id', '==', user_id).where('status', '==', 'published').stream()
+
+backend/tests/integration/test_phase5_flows.py::TestSocialE2E::test_create_story
+backend/tests/unit/test_social_domain.py::TestStory::test_create_story
+backend/tests/unit/test_social_domain.py::TestStory::test_story_expired
+backend/tests/unit/test_social_domain.py::TestStory::test_story_not_expired
+backend/tests/unit/test_social_domain.py::TestStory::test_remove_story
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:2795: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    expires_at=datetime.utcnow() + timedelta(hours=_STORY_DURATION_HOURS),
+
+backend/tests/integration/test_phase5_flows.py::TestSocialE2E::test_follow_and_unfollow
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\repositories\social_repository.py:74: UserWarning: Detected filter using positional arguments. Prefer using the 'filter' keyword argument instead.
+    docs = self._collection().where('follower_id', '==', follower_id).where('following_id', '==', following_id).limit(1).stream()
+
+backend/tests/integration/test_phase5_flows.py::TestChatE2E::test_get_messages
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\repositories\chat_repository.py:41: UserWarning: Detected filter using positional arguments. Prefer using the 'filter' keyword argument instead.
+    docs = self._collection().where('chat_id', '==', chat_id).where('deleted', '==', False).stream()
+
+backend/tests/integration/test_phase5_flows.py::TestChatE2E::test_delete_message
+backend/tests/integration/test_phase5_flows.py::TestChatE2E::test_delete_chat_history_lgpd
+backend/tests/unit/test_chat_notification_domain.py::TestMessage::test_delete_message
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:3012: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.deleted_at = datetime.utcnow()
+
+backend/tests/integration/test_phase5_flows.py::TestNotificationE2E::test_send_notification
+backend/tests/integration/test_phase5_flows.py::TestNotificationE2E::test_disable_notification_type
+backend/tests/integration/test_phase5_flows.py::TestNotificationE2E::test_get_notifications
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:3084: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    check_time = datetime.utcnow().time()
+
+backend/tests/integration/test_phase5_flows.py::TestNotificationE2E::test_send_notification
+backend/tests/integration/test_phase5_flows.py::TestNotificationE2E::test_get_notifications
+backend/tests/unit/test_chat_notification_domain.py::TestNotification::test_mark_sent
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:3135: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.sent_at = datetime.utcnow()
+
+backend/tests/integration/test_phase6_flows.py::TestHomeCareE2E::test_get_service_area
+backend/tests/integration/test_phase6_flows.py::TestHomeCareE2E::test_coverage_check_within_radius
+backend/tests/integration/test_phase6_flows.py::TestHomeCareE2E::test_coverage_check_outside_radius
+backend/tests/integration/test_phase6_flows.py::TestHomeCareE2E::test_estimate_travel
+backend/tests/integration/test_phase6_flows.py::TestHomeCareE2E::test_schedule_conflict_detection
+backend/tests/integration/test_phase6_flows.py::TestFullE2EFlow::test_complete_homecare_flow
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\repositories\phase6_repository.py:14: UserWarning: Detected filter using positional arguments. Prefer using the 'filter' keyword argument instead.
+    docs = self._collection().where('user_id', '==', user_id).where('active', '==', True).limit(1).stream()
+
+backend/tests/integration/test_phase6_flows.py::TestQuoteE2E::test_reject_quote_with_comment
+backend/tests/integration/test_phase6_flows.py::TestQuoteE2E::test_add_negotiation_comment
+backend/tests/unit/test_phase6_domain.py::TestQuote::test_quote_reject
+backend/tests/unit/test_phase6_domain.py::TestQuote::test_quote_add_negotiation_comment
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:3299: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    'at': datetime.utcnow().isoformat(),
+
+backend/tests/integration/test_phase6_flows.py::TestContractE2E::test_create_and_sign_contract
+backend/tests/integration/test_phase6_flows.py::TestContractE2E::test_activate_contract
+backend/tests/integration/test_phase6_flows.py::TestContractE2E::test_terminate_contract
+backend/tests/unit/test_phase6_domain.py::TestContract::test_contract_sign
+backend/tests/unit/test_phase6_domain.py::TestContract::test_contract_activate
+backend/tests/unit/test_phase6_domain.py::TestContract::test_contract_terminate
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:3362: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.signed_at = datetime.utcnow()
+
+backend/tests/integration/test_phase6_flows.py::TestCheckInOutE2E::test_check_in
+backend/tests/integration/test_phase6_flows.py::TestCheckInOutE2E::test_check_out_with_attachments
+backend/tests/integration/test_phase6_flows.py::TestCheckInOutE2E::test_get_checkin_records
+backend/tests/integration/test_phase6_flows.py::TestFullE2EFlow::test_complete_homecare_flow
+backend/tests/unit/test_phase6_domain.py::TestCheckInOut::test_check_in
+backend/tests/unit/test_phase6_domain.py::TestCheckInOut::test_check_out
+backend/tests/unit/test_phase6_domain.py::TestCheckInOut::test_check_in_with_location
+backend/tests/unit/test_phase6_domain.py::TestCheckInOut::test_add_attachment
+backend/tests/unit/test_phase6_domain.py::TestCheckInOut::test_add_observation
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:3436: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.checked_in_at = datetime.utcnow()
+
+backend/tests/integration/test_phase6_flows.py::TestCheckInOutE2E::test_check_out_with_attachments
+backend/tests/integration/test_phase6_flows.py::TestFullE2EFlow::test_complete_homecare_flow
+backend/tests/unit/test_phase6_domain.py::TestCheckInOut::test_check_out
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:3442: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.checked_out_at = datetime.utcnow()
+
+backend/tests/integration/test_phase6_flows.py::TestCheckInOutE2E::test_check_out_with_attachments
+backend/tests/integration/test_phase6_flows.py::TestCheckInOutE2E::test_check_out_with_attachments
+backend/tests/integration/test_phase6_flows.py::TestFullE2EFlow::test_complete_homecare_flow
+backend/tests/unit/test_phase6_domain.py::TestCheckInOut::test_add_attachment
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:3449: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    attachments.append({'url': url, 'at': datetime.utcnow().isoformat()})
+
+backend/tests/integration/test_phase6_flows.py::TestWorkflowE2E::test_trigger_workflow_condition_met
+backend/tests/integration/test_phase6_flows.py::TestWorkflowE2E::test_trigger_workflow_condition_not_met
+backend/tests/integration/test_phase6_flows.py::TestWorkflowE2E::test_workflow_idempotency
+backend/tests/integration/test_phase6_flows.py::TestWorkflowE2E::test_workflow_executions_history
+backend/tests/integration/test_phase6_flows.py::TestWorkflowE2E::test_trigger_by_type
+backend/tests/integration/test_phase6_flows.py::TestFullE2EFlow::test_complete_homecare_flow
+backend/tests/unit/test_phase6_domain.py::TestWorkflowExecution::test_execution_start
+backend/tests/unit/test_phase6_domain.py::TestWorkflowExecution::test_execution_complete
+backend/tests/unit/test_phase6_domain.py::TestWorkflowExecution::test_execution_fail
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:3576: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.started_at = datetime.utcnow()
+
+backend/tests/integration/test_phase6_flows.py::TestWorkflowE2E::test_trigger_workflow_condition_met
+backend/tests/integration/test_phase6_flows.py::TestWorkflowE2E::test_workflow_idempotency
+backend/tests/integration/test_phase6_flows.py::TestWorkflowE2E::test_workflow_executions_history
+backend/tests/integration/test_phase6_flows.py::TestWorkflowE2E::test_trigger_by_type
+backend/tests/integration/test_phase6_flows.py::TestFullE2EFlow::test_complete_homecare_flow
+backend/tests/unit/test_phase6_domain.py::TestWorkflowExecution::test_execution_complete
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:3581: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.completed_at = datetime.utcnow()
+
+backend/tests/integration/test_phase6_flows.py::TestWorkflowE2E::test_trigger_workflow_condition_not_met
+backend/tests/unit/test_phase6_domain.py::TestWorkflowExecution::test_execution_skip
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:3591: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.completed_at = datetime.utcnow()
+
+backend/tests/integration/test_phase6_flows.py::TestWorkflowE2E::test_trigger_by_type
+backend/tests/integration/test_phase6_flows.py::TestFullE2EFlow::test_complete_homecare_flow
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\repositories\phase6_repository.py:85: UserWarning: Detected filter using positional arguments. Prefer using the 'filter' keyword argument instead.
+    docs = self._collection().where('trigger', '==', trigger_type).where('status', '==', 'active').stream()
+
+backend/tests/integration/test_phase7_flows.py: 8 warnings
+backend/tests/unit/test_phase7_domain.py: 10 warnings
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:3641: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    now = datetime.utcnow()
+
+backend/tests/integration/test_phase7_flows.py::TestSubscriptionE2E::test_process_billing
+backend/tests/integration/test_phase7_flows.py::TestSubscriptionE2E::test_fail_billing_and_retry
+backend/tests/integration/test_phase7_flows.py::TestSubscriptionE2E::test_billing_history
+backend/tests/integration/test_phase7_flows.py::TestFullE2EFlow::test_complete_flow
+backend/tests/unit/test_phase7_domain.py::TestBilling::test_billing_mark_paid
+backend/tests/unit/test_phase7_domain.py::TestBilling::test_billing_refund
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:3724: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.paid_at = datetime.utcnow()
+
+backend/tests/integration/test_phase7_flows.py::TestSubscriptionE2E::test_process_billing
+backend/tests/integration/test_phase7_flows.py::TestSubscriptionE2E::test_billing_history
+backend/tests/integration/test_phase7_flows.py::TestFullE2EFlow::test_complete_flow
+backend/tests/unit/test_phase7_domain.py::TestSubscription::test_subscription_renew
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:3678: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    now = datetime.utcnow()
+
+backend/tests/integration/test_phase7_flows.py::TestSubscriptionE2E::test_cancel_subscription
+backend/tests/unit/test_phase7_domain.py::TestSubscription::test_subscription_cancel
+backend/tests/unit/test_phase7_domain.py::TestSubscription::test_subscription_cancelled_cannot_reactivate
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:3663: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.cancelled_at = datetime.utcnow()
+
+backend/tests/integration/test_phase7_flows.py::TestReferralE2E::test_register_and_convert_referral
+backend/tests/integration/test_phase7_flows.py::TestReferralE2E::test_reward_referral
+backend/tests/integration/test_phase7_flows.py::TestFullE2EFlow::test_complete_flow
+backend/tests/unit/test_phase7_domain.py::TestReferral::test_referral_convert
+backend/tests/unit/test_phase7_domain.py::TestReferral::test_referral_reward
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:3789: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.converted_at = datetime.utcnow()
+
+backend/tests/integration/test_phase7_flows.py::TestReferralE2E::test_reward_referral
+backend/tests/unit/test_phase7_domain.py::TestReferral::test_referral_reward
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:3793: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.rewarded_at = datetime.utcnow()
+
+backend/tests/integration/test_phase7_flows.py::TestReferralE2E::test_referral_stats
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\repositories\phase7_repository.py:50: UserWarning: Detected filter using positional arguments. Prefer using the 'filter' keyword argument instead.
+    docs = self._collection().where('referrer_id', '==', referrer_id).where('status', '==', 'converted').stream()
+
+backend/tests/integration/test_phase7_flows.py::TestReferralE2E::test_referral_stats
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\repositories\phase7_repository.py:54: UserWarning: Detected filter using positional arguments. Prefer using the 'filter' keyword argument instead.
+    docs = self._collection().where('referrer_id', '==', referrer_id).where('status', '==', 'rewarded').stream()
+
+backend/tests/integration/test_phase7_flows.py: 11 warnings
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\repositories\phase7_repository.py:80: UserWarning: Detected filter using positional arguments. Prefer using the 'filter' keyword argument instead.
+    docs = self._collection().where('user_id', '==', user_id).where('agent_type', '==', agent_type).limit(1).stream()
+
+backend/tests/integration/test_phase7_flows.py: 6 warnings
+backend/tests/unit/test_phase7_domain.py: 6 warnings
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:3903: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.completed_at = datetime.utcnow()
+
+backend/tests/integration/test_phase7_flows.py::TestAIAgentE2E::test_propose_and_approve_action
+backend/tests/integration/test_phase7_flows.py::TestAIAgentE2E::test_reject_action
+backend/tests/integration/test_phase7_flows.py::TestAIAgentE2E::test_non_sensitive_action_no_approval
+backend/tests/integration/test_phase7_flows.py::TestFullE2EFlow::test_complete_flow
+backend/tests/unit/test_phase7_domain.py::TestAgentExecution::test_execution_set_action_pending_approval
+backend/tests/unit/test_phase7_domain.py::TestAgentExecution::test_execution_approve_action
+backend/tests/unit/test_phase7_domain.py::TestAgentExecution::test_execution_reject_action
+backend/tests/unit/test_phase7_domain.py::TestAgentExecution::test_execution_action_without_approval
+backend/tests/unit/test_phase7_domain.py::TestAgentExecution::test_execution_audit_trail
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:3920: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    'setAt': datetime.utcnow().isoformat(),
+
+backend/tests/integration/test_phase7_flows.py::TestAIAgentE2E::test_propose_and_approve_action
+backend/tests/integration/test_phase7_flows.py::TestFullE2EFlow::test_complete_flow
+backend/tests/unit/test_phase7_domain.py::TestAgentExecution::test_execution_approve_action
+backend/tests/unit/test_phase7_domain.py::TestAgentExecution::test_execution_audit_trail
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:3939: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    action['approvedAt'] = datetime.utcnow().isoformat()
+
+backend/tests/integration/test_phase7_flows.py::TestAIAgentE2E::test_reject_action
+backend/tests/unit/test_phase7_domain.py::TestAgentExecution::test_execution_reject_action
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:3947: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    action['rejectedAt'] = datetime.utcnow().isoformat()
+
+backend/tests/integration/test_phase8_flows.py::TestPublicApiE2E::test_revoke_api_key
+backend/tests/unit/test_phase8_domain.py::TestApiKey::test_api_key_revoke
+backend/tests/unit/test_phase8_domain.py::TestApiKey::test_api_key_is_valid
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:4042: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.revoked_at = datetime.utcnow()
+
+backend/tests/integration/test_phase8_flows.py::TestPublicApiE2E::test_public_api_with_valid_key
+backend/tests/integration/test_phase8_flows.py::TestPublicApiE2E::test_public_api_invalid_scope
+backend/tests/integration/test_phase8_flows.py::TestFullE2EFlow::test_complete_api_and_lgpd_flow
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:4052: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.last_used_at = datetime.utcnow()
+
+backend/tests/integration/test_phase8_flows.py::TestLgpdE2E::test_process_export_request
+backend/tests/integration/test_phase8_flows.py::TestLgpdE2E::test_process_deletion_request
+backend/tests/integration/test_phase8_flows.py::TestFullE2EFlow::test_complete_api_and_lgpd_flow
+backend/tests/integration/test_phase8_flows.py::TestFullE2EFlow::test_complete_api_and_lgpd_flow
+backend/tests/unit/test_phase8_domain.py::TestDataRequest::test_data_request_start_processing
+backend/tests/unit/test_phase8_domain.py::TestDataRequest::test_data_request_complete
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:4163: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.processing_at = datetime.utcnow()
+
+backend/tests/integration/test_phase8_flows.py::TestLgpdE2E::test_process_export_request
+backend/tests/integration/test_phase8_flows.py::TestLgpdE2E::test_process_deletion_request
+backend/tests/integration/test_phase8_flows.py::TestFullE2EFlow::test_complete_api_and_lgpd_flow
+backend/tests/integration/test_phase8_flows.py::TestFullE2EFlow::test_complete_api_and_lgpd_flow
+backend/tests/unit/test_phase8_domain.py::TestDataRequest::test_data_request_complete
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:4170: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.completed_at = datetime.utcnow()
+
+backend/tests/integration/test_phase8_flows.py::TestLgpdE2E::test_reject_lgpd_request
+backend/tests/unit/test_phase8_domain.py::TestDataRequest::test_data_request_reject
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:4175: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.completed_at = datetime.utcnow()
+
+backend/tests/unit/test_chat_notification_domain.py::TestMessage::test_mark_delivered
+backend/tests/unit/test_chat_notification_domain.py::TestMessage::test_mark_read_correct
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:3001: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.delivered_at = datetime.utcnow()
+
+backend/tests/unit/test_chat_notification_domain.py::TestMessage::test_mark_read_correct
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:3005: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.read_at = datetime.utcnow()
+
+backend/tests/unit/test_commission_domain.py::TestCommissionPayment::test_mark_paid
+backend/tests/unit/test_commission_domain.py::TestCommissionPayment::test_mark_paid_already_paid
+backend/tests/unit/test_commission_domain.py::TestCommissionPayment::test_cancel_already_paid
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:2566: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.paid_at = datetime.utcnow()
+
+backend/tests/unit/test_crm_domain.py::TestClientProfile::test_segment_becomes_inactive
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\tests\unit\test_crm_domain.py:55: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    profile.last_visit_at = datetime.utcnow() - timedelta(days=90)
+
+backend/tests/unit/test_crm_domain.py::TestClientProfile::test_segment_becomes_lost
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\tests\unit\test_crm_domain.py:62: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    profile.last_visit_at = datetime.utcnow() - timedelta(days=180)
+
+backend/tests/unit/test_crm_domain.py::TestClientProfile::test_is_birthday
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\tests\unit\test_crm_domain.py:69: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    profile.birthday = datetime.utcnow().date()
+
+backend/tests/unit/test_crm_domain.py::TestClientProfile::test_is_birthday
+backend/tests/unit/test_crm_domain.py::TestClientProfile::test_is_not_birthday
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:1601: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    today = datetime.utcnow().date()
+
+backend/tests/unit/test_crm_domain.py::TestClientProfile::test_is_not_birthday
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\tests\unit\test_crm_domain.py:75: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    profile.birthday = datetime.utcnow().date() - timedelta(days=1)
+
+backend/tests/unit/test_giftcard_domain.py::TestGiftCardRedemption::test_redeem_expired_gift_card_rejected
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\tests\unit\test_giftcard_domain.py:97: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    gc.expires_at = datetime.utcnow() - timedelta(days=1)
+
+backend/tests/unit/test_giftcard_domain.py::TestGiftCardExpiry::test_check_expiry_marks_expired
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\tests\unit\test_giftcard_domain.py:137: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    gc.expires_at = datetime.utcnow() - timedelta(days=1)
+
+backend/tests/unit/test_package_domain.py::TestPackageExpiry::test_expired_package_cannot_be_used
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\tests\unit\test_package_domain.py:98: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    pkg.expires_at = datetime.utcnow() - timedelta(days=1)
+
+backend/tests/unit/test_phase6_domain.py::TestWorkflowExecution::test_execution_fail
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:3586: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.completed_at = datetime.utcnow()
+
+backend/tests/unit/test_phase7_domain.py::TestAgentExecution::test_execution_mark_failed
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:3908: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.completed_at = datetime.utcnow()
+
+backend/tests/unit/test_phase8_domain.py::TestWebhook::test_webhook_record_delivery
+backend/tests/unit/test_phase8_domain.py::TestWebhook::test_webhook_record_failed_delivery
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:4113: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.last_delivery_at = datetime.utcnow()
+
+backend/tests/unit/test_social_domain.py::TestStory::test_story_expired
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\tests\unit\test_social_domain.py:213: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    story.expires_at = datetime.utcnow() - timedelta(hours=1)
+
+backend/tests/unit/test_social_domain.py::TestStory::test_story_expired
+backend/tests/unit/test_social_domain.py::TestStory::test_story_not_expired
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:2799: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    return datetime.utcnow() > self.expires_at
+
+backend/tests/unit/test_social_domain.py::TestReport::test_report_resolve
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\models.py:2866: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.reviewed_at = datetime.utcnow()
+
+backend/tests/unit/test_user_account_recovery.py::TestEmailConfirmation::test_confirm_email_with_expired_token_fails
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\tests\unit\test_user_account_recovery.py:67: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    user.email_confirmation_expires_at = datetime.utcnow() - timedelta(seconds=1)
+
+backend/tests/unit/test_user_account_recovery.py::TestPasswordReset::test_generate_password_reset_token_sets_expiry
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\tests\unit\test_user_account_recovery.py:79: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    assert user.password_reset_expires_at > datetime.utcnow()
+
+backend/tests/unit/test_user_account_recovery.py::TestPasswordReset::test_reset_password_with_expired_token_fails
+  C:\Users\Alex.Buttielie\Downloads\profissional-os\backend\tests\unit\test_user_account_recovery.py:98: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    user.password_reset_expires_at = datetime.utcnow() - timedelta(seconds=1)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+716 passed, 2822 warnings in 90.05s (0:01:30)

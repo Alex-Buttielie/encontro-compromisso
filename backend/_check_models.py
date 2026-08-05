@@ -1,0 +1,6 @@
+content = open('models.py', 'r', encoding='utf-8').read()
+print('db.Column count:', content.count('db.Column'))
+print('db.relationship count:', content.count('db.relationship'))
+print('FirestoreModel count:', content.count('FirestoreModel'))
+print('db.Model count:', content.count('db.Model'))
+print("collection = count:", content.count("collection ="))
