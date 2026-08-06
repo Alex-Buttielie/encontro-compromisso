@@ -1,5 +1,67 @@
 [
   {
+    "version": "1.61.0",
+    "date": "2026-08-05",
+    "title": "Relatorio Detalhado de Orcamento com 7 Secoes",
+    "changes": [
+      "Relatorio de orcamento completamente reformulado com 7 secoes estruturadas",
+      "Resumo executivo com 10 cards de totalizadores (itens, orcado, gasto, saldo, conclusao, doacoes, despesas, orcamento liquido, saldo restante)",
+      "Barras de progresso visuais para execucao do orcamento e itens comprados/recebidos",
+      "Totalizadores por categoria com quantidade de itens, quantidade total, orcado, gasto, saldo e % de execucao",
+      "Mini barras de progresso para as 5 maiores categorias",
+      "Analise por status com quantidade, percentual, valor estimado e valor gasto por status",
+      "Alerta didatico para itens sem cotacao (destaca quantos faltam cotar)",
+      "Itens detalhados agrupados por categoria com subtotais por categoria",
+      "Coluna de variancia (estimado vs real) com codigo de cores verde/vermelho",
+      "Resumo financeiro consolidado integrando doacoes e despesas do modulo financeiro",
+      "Rodape com data/hora de geracao e nome do encontro"
+    ]
+  },
+  {
+    "version": "1.60.0",
+    "date": "2026-08-05",
+    "title": "Itens de Orcamento Unificados (98 Insumos)",
+    "changes": [
+      "Migration V13 adicionando 98 itens unificados de orcamento para o XV Compromisso Trin",
+      "44 itens com valores estimados e 54 itens sem cotacao (a definir)",
+      "Itens organizados em 12 categorias: Alimentacao, Limpeza, Decoracao, Materiais Diversos, Logistica, Espaco Fisico, Som e Tecnica, Primeiros Socorros, Capela, Hospedagem, Honorarios e Outros",
+      "Sistema de duplicacao automatico (skip de itens ja existentes)"
+    ]
+  },
+  {
+    "version": "1.59.0",
+    "date": "2026-08-05",
+    "title": "Avisos Automaticos de Versao no Frontend",
+    "changes": [
+      "Dialog modal de release notes exibido automaticamente quando uma nova versao e detectada",
+      "Controle via localStorage para nao repetir o aviso da mesma versao",
+      "Exibicao de versao, data, titulo e lista de mudancas com formatacao",
+      "Botao de fechamento e clique fora para dispensar"
+    ]
+  },
+  {
+    "version": "1.58.0",
+    "date": "2026-08-05",
+    "title": "Correcao do Modulo de Estoque",
+    "changes": [
+      "Alinhamento dos campos do frontend de estoque com o backend (currentStock, minStock em vez de quantity, minQuantity)",
+      "Adicao de exibicao de categoria nos itens de estoque",
+      "Filtro por categoria no modulo de estoque",
+      "Busca por nome nos itens de estoque"
+    ]
+  },
+  {
+    "version": "1.57.0",
+    "date": "2026-08-05",
+    "title": "Sistema Profissional-OS com Lista de Compras Unificada",
+    "changes": [
+      "Sistema profissional-os integrado com seed de lista de compras unificada",
+      "98 insumos cadastrados para o XV Compromisso Trin",
+      "Provider user automatico para seed de produtos",
+      "Script de seed para Firestore (dev) e migration para JSON DB (prod)"
+    ]
+  },
+  {
     "version": "1.56.0",
     "date": "2026-07-31",
     "title": "Correção de sincronização + Versão Mobile do Financeiro",
