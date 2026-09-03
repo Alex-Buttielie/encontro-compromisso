@@ -1,68 +1,97 @@
 [
   {
-    "version": "1.60.0",
-    "date": "2026-08-05",
+    "version": "1.63.0",
+    "date": "2026-08-06",
     "title": "Navegacao em 5 Etapas - Manual dos Mestres de Obras",
     "changes": [
-      "Nova arquitetura de navegacao em 5 Etapas: Fundacao -> Captacao -> Obra -> Acabamento -> Entrega (inspirada no Manual dos Mestres de Obras p.11-15)",
-      "Drawer reorganizado em etapas colapsaveis com agrupamento logico de 41 rotas em fluxo sequencial inconsciente",
-      "Stepper horizontal no AppBar com navegacao direta entre etapas e breadcrumb estrutural em todas as paginas",
-      "Busca rapida global (Ctrl+K / /) com Command Palette filtrando por nome, rota e descricao",
-      "Onboarding por etapa: tour contextualizado conforme a etapa ativa do usuario",
-      "PageHeader com chip de etapa + componente EmptyState com CTA de proxima acao",
-      "Correcao de ReleaseNotesDialog (X icon) e uiSlice com hydrateUi/startOnboarding por etapa",
-      "Testes Cypress atualizados para nova navegacao por etapas"
+      "Nova arquitetura de navegacao em 5 Etapas: Fundacao -> Captacao -> Obra -> Acabamento -> Entrega (Manual Mestres p.11-15)",
+      "Drawer reorganizado em etapas colapsaveis com agrupamento logico de 41 rotas em fluxo sequencial",
+      "Stepper horizontal no AppBar com navegacao direta entre etapas e breadcrumb estrutural",
+      "Busca rapida global (Ctrl+K / /) com Command Palette",
+      "Onboarding por etapa, PageHeader com chip de etapa e EmptyState com CTA",
+      "Correcao ReleaseNotesDialog e uiSlice (hydrateUi/startOnboarding por etapa)",
+      "Cypress 09-navigation atualizado para novas etapas",
+      ".gitignore: ignora frontend-next/.next e artefatos de build"
+    ]
+  },
+  {
+    "version": "1.61.0",
+    "date": "2026-08-05",
+    "title": "Relatorio Detalhado de Orcamento com 7 Secoes",
+    "changes": [
+      "Relatorio de orcamento completamente reformulado com 7 secoes estruturadas",
+      "Resumo executivo com 10 cards de totalizadores (itens, orcado, gasto, saldo, conclusao, doacoes, despesas, orcamento liquido, saldo restante)",
+      "Barras de progresso visuais para execucao do orcamento e itens comprados/recebidos",
+      "Totalizadores por categoria com quantidade de itens, quantidade total, orcado, gasto, saldo e % de execucao",
+      "Mini barras de progresso para as 5 maiores categorias",
+      "Analise por status com quantidade, percentual, valor estimado e valor gasto por status",
+      "Alerta didatico para itens sem cotacao (destaca quantos faltam cotar)",
+      "Itens detalhados agrupados por categoria com subtotais por categoria",
+      "Coluna de variancia (estimado vs real) com codigo de cores verde/vermelho",
+      "Resumo financeiro consolidado integrando doacoes e despesas do modulo financeiro",
+      "Rodape com data/hora de geracao e nome do encontro"
+    ]
+  },
+  {
+    "version": "1.60.0",
+    "date": "2026-08-05",
+    "title": "Itens de Orcamento Unificados (98 Insumos)",
+    "changes": [
+      "Migration V13 adicionando 98 itens unificados de orcamento para o XV Compromisso Trin",
+      "44 itens com valores estimados e 54 itens sem cotacao (a definir)",
+      "Itens organizados em 12 categorias: Alimentacao, Limpeza, Decoracao, Materiais Diversos, Logistica, Espaco Fisico, Som e Tecnica, Primeiros Socorros, Capela, Hospedagem, Honorarios e Outros",
+      "Sistema de duplicacao automatico (skip de itens ja existentes)"
     ]
   },
   {
     "version": "1.59.0",
     "date": "2026-08-05",
-    "title": "Dialog de Notas de Versao Automatico",
+    "title": "Avisos Automaticos de Versao no Frontend",
     "changes": [
-      "Dialog automatico de notas de versao exibido quando ha nova versao",
-      "Armazenamento da ultima versao vista no localStorage",
-      "Historico de versoes com data, titulo e lista de mudancas"
+      "Dialog modal de release notes exibido automaticamente quando uma nova versao e detectada",
+      "Controle via localStorage para nao repetir o aviso da mesma versao",
+      "Exibicao de versao, data, titulo e lista de mudancas com formatacao",
+      "Botao de fechamento e clique fora para dispensar"
     ]
   },
   {
     "version": "1.58.0",
     "date": "2026-08-05",
-    "title": "Correcao do modulo de Estoque/Orcamento",
+    "title": "Correcao do Modulo de Estoque",
     "changes": [
-      "Corrigida incompatibilidade de campos entre frontend e backend no modulo de estoque",
-      "Tipo InventoryItem atualizado para refletir os campos reais do Product (currentStock, minStock, category, unit, belowMinimum)",
-      "Adicionado filtro por categoria e busca por nome na pagina de estoque",
-      "Total estimado dos itens exibido em tempo real conforme filtros",
-      "Formulario de criacao agora inclui campos de categoria e unidade"
+      "Alinhamento dos campos do frontend de estoque com o backend (currentStock, minStock em vez de quantity, minQuantity)",
+      "Adicao de exibicao de categoria nos itens de estoque",
+      "Filtro por categoria no modulo de estoque",
+      "Busca por nome nos itens de estoque"
     ]
   },
   {
     "version": "1.57.0",
     "date": "2026-08-05",
-    "title": "Carga de orcamento do XV Compromisso Trin",
+    "title": "Sistema Profissional-OS com Lista de Compras Unificada",
     "changes": [
-      "Script de seed com 98 itens da lista unificada de compras",
-      "11 categorias organizadas",
-      "44 itens com valor estimado R\\$ 13.885,00",
-      "54 itens sem valor para cotacoes"
+      "Sistema profissional-os integrado com seed de lista de compras unificada",
+      "98 insumos cadastrados para o XV Compromisso Trin",
+      "Provider user automatico para seed de produtos",
+      "Script de seed para Firestore (dev) e migration para JSON DB (prod)"
     ]
   },
   {
     "version": "1.56.0",
     "date": "2026-07-31",
-    "title": "Correção de sincronização + Versão Mobile do Financeiro",
+    "title": "CorreÃ§Ã£o de sincronizaÃ§Ã£o + VersÃ£o Mobile do Financeiro",
     "changes": [
-      "Corrigido loop de re-renderização do módulo financeiro (resize em mobile disparava renderFinanceiro completo)",
+      "Corrigido loop de re-renderizaÃ§Ã£o do mÃ³dulo financeiro (resize em mobile disparava renderFinanceiro completo)",
       "Resize handler agora verifica se a largura da tela realmente mudou antes de re-renderizar",
-      "Criada função refreshFinanceTab() que atualiza apenas a aba atual sem reconstruir toda a página",
+      "Criada funÃ§Ã£o refreshFinanceTab() que atualiza apenas a aba atual sem reconstruir toda a pÃ¡gina",
       "saveFinance, deleteFinance, confirmFechamento e reopenFechamento agora usam refreshFinanceTab()",
-      "Tab bar do financeiro agora é horizontalmente scrollável com scroll suave (touch)",
+      "Tab bar do financeiro agora Ã© horizontalmente scrollÃ¡vel com scroll suave (touch)",
       "Cards de resumo financeiro viram carrossel horizontal em telas muito pequenas (<=480px)",
       "Tabelas do Fechamento com scroll horizontal otimizado para mobile",
-      "Botões com alvos de toque maiores (36px) para mobile",
+      "BotÃµes com alvos de toque maiores (36px) para mobile",
       "Modais em tela cheia no mobile com inputs em font-size 15px (previne zoom no iOS)",
       "Charts com altura reduzida e layout single-column no mobile",
-      "Cards de lançamentos, eventos, categorias e orçamento compactados para mobile",
+      "Cards de lanÃ§amentos, eventos, categorias e orÃ§amento compactados para mobile",
       "Breakpoint extra para telas muito pequenas (<=380px) com layout single-column"
     ]
   },
@@ -71,15 +100,15 @@
     "date": "2026-07-31",
     "title": "Fechamento de Caixa Mensal no Financeiro",
     "changes": [
-      "Nova aba '📅 Fechamento' no módulo financeiro",
-      "Seleção de mês para visualizar lançamentos e totais do período",
-      "Resumo do mês: receitas pagas, despesas pagas, saldo, pendentes (a receber/a pagar)",
+      "Nova aba 'ðŸ“… Fechamento' no mÃ³dulo financeiro",
+      "SeleÃ§Ã£o de mÃªs para visualizar lanÃ§amentos e totais do perÃ­odo",
+      "Resumo do mÃªs: receitas pagas, despesas pagas, saldo, pendentes (a receber/a pagar)",
       "Resumo por categoria com receitas, despesas e saldo por categoria",
-      "Lista de todos os lançamentos do mês com tabela rolável",
-      "Fechar mês com modal de confirmação (notas + responsável)",
-      "Reabrir mês fechado (remove o registro de fechamento)",
+      "Lista de todos os lanÃ§amentos do mÃªs com tabela rolÃ¡vel",
+      "Fechar mÃªs com modal de confirmaÃ§Ã£o (notas + responsÃ¡vel)",
+      "Reabrir mÃªs fechado (remove o registro de fechamento)",
       "Visualizar notas do fechamento",
-      "Histórico de meses fechados com totais e data de fechamento",
+      "HistÃ³rico de meses fechados com totais e data de fechamento",
       "Nova tabela finance_closings no banco JSON",
       "Endpoints: GET/POST/PUT/DELETE /api/finance/closings e GET /api/finance/closings/:period"
     ]
@@ -89,153 +118,153 @@
     "date": "2026-07-31",
     "title": "Envio de Checklist por WhatsApp (CallMeBot)",
     "changes": [
-      "Integração com CallMeBot API para envio automático de WhatsApp",
-      "Botão ' Enviar WhatsApp' no módulo de checklist para envio manual",
-      "Botão '' para configurar CallMeBot (API key, números, horário)",
-      "Envio automático diário via cron (node-cron) com horário configurável",
+      "IntegraÃ§Ã£o com CallMeBot API para envio automÃ¡tico de WhatsApp",
+      "BotÃ£o ' Enviar WhatsApp' no mÃ³dulo de checklist para envio manual",
+      "BotÃ£o '' para configurar CallMeBot (API key, nÃºmeros, horÃ¡rio)",
+      "Envio automÃ¡tico diÃ¡rio via cron (node-cron) com horÃ¡rio configurÃ¡vel",
       "Mensagem gerada com: resumo geral, tarefas de MO's por categoria, tarefas por equipe, contatos dos Mestres de Obras",
-      "Fallback para wa.me link quando CallMeBot não está configurado",
+      "Fallback para wa.me link quando CallMeBot nÃ£o estÃ¡ configurado",
       "Nova tabela whatsapp_config no banco JSON",
-      "Dependência node-cron adicionada"
+      "DependÃªncia node-cron adicionada"
     ]
   },
   {
     "version": "1.53.0",
     "date": "2026-07-31",
-    "title": "Nomenclatura: Responsável → Encarregado",
+    "title": "Nomenclatura: ResponsÃ¡vel â†’ Encarregado",
     "changes": [
-      "Troca de nomenclatura de \"Responsável\" para \"Encarregado\" em todo o contexto de equipes",
-      "Card da equipe: \" Encarregado\" em vez de \" Responsável\"",
-      "Modal de detalhes: \" Encarregado\" em vez de \" Responsável\"",
-      "Modal de edição: label \"Encarregado\" e dropdown \"— Selecionar encarregado —\"",
-      "Mensagens auxiliares: \"Adicione membros à equipe para selecionar um encarregado\"",
+      "Troca de nomenclatura de \"ResponsÃ¡vel\" para \"Encarregado\" em todo o contexto de equipes",
+      "Card da equipe: \" Encarregado\" em vez de \" ResponsÃ¡vel\"",
+      "Modal de detalhes: \" Encarregado\" em vez de \" ResponsÃ¡vel\"",
+      "Modal de ediÃ§Ã£o: label \"Encarregado\" e dropdown \"â€” Selecionar encarregado â€”\"",
+      "Mensagens auxiliares: \"Adicione membros Ã  equipe para selecionar um encarregado\"",
       "Mensagem de erro do backend: \"O encarregado deve ser um membro da equipe\""
     ]
   },
   {
     "version": "1.52.0",
     "date": "2026-07-31",
-    "title": "Nomenclatura: Responsável → Encarregado",
+    "title": "Nomenclatura: ResponsÃ¡vel â†’ Encarregado",
     "changes": [
-      "Troca de nomenclatura de \"Responsável\" para \"Encarregado\" em todo o contexto de equipes",
-      "Card da equipe: \" Encarregado\" em vez de \" Responsável\"",
-      "Modal de detalhes: \" Encarregado\" em vez de \" Responsável\"",
-      "Modal de detalhes: \"👤 Encarregado\" em vez de \"👤 Responsável\"",
-      "Modal de edição: label \"Encarregado\" e dropdown \"— Selecionar encarregado —\"",
-      "Mensagens auxiliares: \"Adicione membros à equipe para selecionar um encarregado\"",
+      "Troca de nomenclatura de \"ResponsÃ¡vel\" para \"Encarregado\" em todo o contexto de equipes",
+      "Card da equipe: \" Encarregado\" em vez de \" ResponsÃ¡vel\"",
+      "Modal de detalhes: \" Encarregado\" em vez de \" ResponsÃ¡vel\"",
+      "Modal de detalhes: \"ðŸ‘¤ Encarregado\" em vez de \"ðŸ‘¤ ResponsÃ¡vel\"",
+      "Modal de ediÃ§Ã£o: label \"Encarregado\" e dropdown \"â€” Selecionar encarregado â€”\"",
+      "Mensagens auxiliares: \"Adicione membros Ã  equipe para selecionar um encarregado\"",
       "Mensagem de erro do backend: \"O encarregado deve ser um membro da equipe\""
     ]
   },
   {
     "version": "1.51.0",
     "date": "2026-07-31",
-    "title": "Modal de Edição de Equipes Mais Interativo",
+    "title": "Modal de EdiÃ§Ã£o de Equipes Mais Interativo",
     "changes": [
-      "Campo Responsável agora é um dropdown que só lista membros da própria equipe",
-      "Validação no backend: responsável deve ser membro da equipe (retorna 400 se não for)",
-      "Preview de membros dentro do modal com chips clicáveis para editar/adicionar",
-      "Resumo de stats no topo do modal (membros, tarefas, % concluído)",
-      "Botão de fechar (✕) no canto do modal",
-      "Função api() aprimorada: extrai mensagem de erro do backend JSON",
+      "Campo ResponsÃ¡vel agora Ã© um dropdown que sÃ³ lista membros da prÃ³pria equipe",
+      "ValidaÃ§Ã£o no backend: responsÃ¡vel deve ser membro da equipe (retorna 400 se nÃ£o for)",
+      "Preview de membros dentro do modal com chips clicÃ¡veis para editar/adicionar",
+      "Resumo de stats no topo do modal (membros, tarefas, % concluÃ­do)",
+      "BotÃ£o de fechar (âœ•) no canto do modal",
+      "FunÃ§Ã£o api() aprimorada: extrai mensagem de erro do backend JSON",
       "Tratamento de erro no saveTeam: exibe toast sem fechar o modal"
     ]
   },
   {
     "version": "1.50.0",
     "date": "2026-07-31",
-    "title": "Modal de Edição de Equipes Mais Interativo",
+    "title": "Modal de EdiÃ§Ã£o de Equipes Mais Interativo",
     "changes": [
-      "Campo Responsável agora é um dropdown que só lista membros da própria equipe",
-      "Validação no backend: responsável deve ser membro da equipe (retorna 400 se não for)",
-      "Preview de membros dentro do modal com chips clicáveis para editar/adicionar",
-      "Resumo de stats no topo do modal (membros, tarefas, % concluído)",
-      "Botão de fechar (✕) no canto do modal",
-      "Função api() aprimorada: extrai mensagem de erro do backend JSON",
+      "Campo ResponsÃ¡vel agora Ã© um dropdown que sÃ³ lista membros da prÃ³pria equipe",
+      "ValidaÃ§Ã£o no backend: responsÃ¡vel deve ser membro da equipe (retorna 400 se nÃ£o for)",
+      "Preview de membros dentro do modal com chips clicÃ¡veis para editar/adicionar",
+      "Resumo de stats no topo do modal (membros, tarefas, % concluÃ­do)",
+      "BotÃ£o de fechar (âœ•) no canto do modal",
+      "FunÃ§Ã£o api() aprimorada: extrai mensagem de erro do backend JSON",
       "Tratamento de erro no saveTeam: exibe toast sem fechar o modal"
     ]
   },
   {
     "version": "1.49.0",
     "date": "2026-07-31",
-    "title": "Atualização do CHANGELOG e Limpeza",
+    "title": "AtualizaÃ§Ã£o do CHANGELOG e Limpeza",
     "changes": [
       "Adicionada entrada v1.47.0 ao CHANGELOG",
-      "Remoção de scripts temporários de diagnóstico da VPS",
-      "Atualização da seção de Deploy no README"
+      "RemoÃ§Ã£o de scripts temporÃ¡rios de diagnÃ³stico da VPS",
+      "AtualizaÃ§Ã£o da seÃ§Ã£o de Deploy no README"
     ]
   },
   {
     "version": "1.48.0",
     "date": "2026-07-31",
-    "title": "Atualização do CHANGELOG e Limpeza",
+    "title": "AtualizaÃ§Ã£o do CHANGELOG e Limpeza",
     "changes": [
       "Adicionada entrada v1.47.0 ao CHANGELOG",
-      "Remoção de scripts temporários de diagnóstico da VPS",
-      "Atualização da seção de Deploy no README"
+      "RemoÃ§Ã£o de scripts temporÃ¡rios de diagnÃ³stico da VPS",
+      "AtualizaÃ§Ã£o da seÃ§Ã£o de Deploy no README"
     ]
   },
   {
     "version": "1.47.0",
     "date": "2026-07-31",
-    "title": "Correção de Membros Órfãos em Produção (VPS)",
+    "title": "CorreÃ§Ã£o de Membros Ã“rfÃ£os em ProduÃ§Ã£o (VPS)",
     "changes": [
-      "Migration V12: remapeia team_members órfãos usando nome da equipe como referência",
-      "Migration V1 corrigida: agora remapeia team_id após db.insert() atribuir novos IDs",
-      "Causa raiz: db.insert() atribuía novos IDs sequenciais às teams (39-57 na VPS), mas team_members mantinham team_ids originais (1-20)",
+      "Migration V12: remapeia team_members Ã³rfÃ£os usando nome da equipe como referÃªncia",
+      "Migration V1 corrigida: agora remapeia team_id apÃ³s db.insert() atribuir novos IDs",
+      "Causa raiz: db.insert() atribuÃ­a novos IDs sequenciais Ã s teams (39-57 na VPS), mas team_members mantinham team_ids originais (1-20)",
       "Corrigido em PROD, DEV e HOMOLOG na VPS Hostgator",
-      "Scripts temporários de diagnóstico removidos"
+      "Scripts temporÃ¡rios de diagnÃ³stico removidos"
     ]
   },
   {
     "version": "1.46.0",
     "date": "2026-07-31",
-    "title": "Atualização do CHANGELOG e README",
+    "title": "AtualizaÃ§Ã£o do CHANGELOG e README",
     "changes": [
       "Adicionadas 10 entradas faltantes no CHANGELOG (v1.39.0 a v1.45.0)",
-      "README atualizado com novas funcionalidades (Orçamento, Cardápio, Tutorial, Relatório de Tarefas Atribuídas)",
-      "README: adicionada seção de Migrations (V1-V11)",
-      "README: adicionada seção de Deploy com instruções para VPS Hostgator"
+      "README atualizado com novas funcionalidades (OrÃ§amento, CardÃ¡pio, Tutorial, RelatÃ³rio de Tarefas AtribuÃ­das)",
+      "README: adicionada seÃ§Ã£o de Migrations (V1-V11)",
+      "README: adicionada seÃ§Ã£o de Deploy com instruÃ§Ãµes para VPS Hostgator"
     ]
   },
   {
     "version": "1.45.0",
     "date": "2026-07-31",
-    "title": "Correção de Membros de Equipes Ausentes em Produção",
+    "title": "CorreÃ§Ã£o de Membros de Equipes Ausentes em ProduÃ§Ã£o",
     "changes": [
       "Migration V11: detecta e adiciona team_members ausentes em todos os ambientes",
-      "Migration V7 corrigida: não pula mais o seed inteiro quando alguns membros já existem — agora verifica membro a membro",
-      "Export de SEED_MEMBERS do V7 para reutilização no V11",
-      "Correção do members_count das equipes após adicionar membros ausentes",
-      "Variáveis CSS ausentes adicionadas: --dark, --light-card, --light-alt"
+      "Migration V7 corrigida: nÃ£o pula mais o seed inteiro quando alguns membros jÃ¡ existem â€” agora verifica membro a membro",
+      "Export de SEED_MEMBERS do V7 para reutilizaÃ§Ã£o no V11",
+      "CorreÃ§Ã£o do members_count das equipes apÃ³s adicionar membros ausentes",
+      "VariÃ¡veis CSS ausentes adicionadas: --dark, --light-card, --light-alt"
     ]
   },
   {
     "version": "1.44.2",
     "date": "2026-07-31",
-    "title": "Correção de Variáveis CSS Ausentes",
+    "title": "CorreÃ§Ã£o de VariÃ¡veis CSS Ausentes",
     "changes": [
-      "Adicionadas variáveis CSS faltantes: --dark, --light-card, --light-alt",
-      "Correção de chips de membros de equipes invisíveis por falta de background e cor"
+      "Adicionadas variÃ¡veis CSS faltantes: --dark, --light-card, --light-alt",
+      "CorreÃ§Ã£o de chips de membros de equipes invisÃ­veis por falta de background e cor"
     ]
   },
   {
     "version": "1.44.1",
     "date": "2026-07-31",
-    "title": "Correção do Filtro de Status do Checklist",
+    "title": "CorreÃ§Ã£o do Filtro de Status do Checklist",
     "changes": [
-      "Bug corrigido: filtro de status do checklist limpando sozinho após re-render",
-      "Adicionadas variáveis de estado: currentFilterStatus, currentFilterPriority, currentFilterTeam, currentFilterSearch",
-      "renderChecklist() agora restaura valores dos filtros após reconstruir o DOM",
-      "filterTasks() agora persiste valores dos filtros nas variáveis de estado"
+      "Bug corrigido: filtro de status do checklist limpando sozinho apÃ³s re-render",
+      "Adicionadas variÃ¡veis de estado: currentFilterStatus, currentFilterPriority, currentFilterTeam, currentFilterSearch",
+      "renderChecklist() agora restaura valores dos filtros apÃ³s reconstruir o DOM",
+      "filterTasks() agora persiste valores dos filtros nas variÃ¡veis de estado"
     ]
   },
   {
     "version": "1.44.0",
     "date": "2026-07-31",
-    "title": "Remoção da Abordagem Netlify",
+    "title": "RemoÃ§Ã£o da Abordagem Netlify",
     "changes": [
       "Removido netlify.toml e netlify/functions/server.js",
-      "Removida dependência serverless-http do package.json",
+      "Removida dependÃªncia serverless-http do package.json",
       "server.js revertido para modo standalone sem module.exports",
       "Removida entrada .netlify do .gitignore"
     ]
@@ -243,46 +272,46 @@
   {
     "version": "1.43.0",
     "date": "2026-07-31",
-    "title": "Refatoração do Módulo de Lembretes",
+    "title": "RefatoraÃ§Ã£o do MÃ³dulo de Lembretes",
     "changes": [
-      "Nova dropdown de ordenação: Vencimento, Título, Prioridade, Status, Categoria",
-      "Seção automática colapsável com header clicável e ícone de chevron animado",
-      "Destaque visual de vencimento: atrasado (vermelho), vence hoje (amarelo), próximo (azul)",
-      "Contador de resultados e botão Limpar filtros em ambas as seções",
-      "Cards melhores com hover, concluídos com borda verde e título riscado",
-      "Confirmação ao excluir via showConfirmDialog em vez de confirm() nativo",
-      "Stat card de atrasados com animação de pulse vermelho",
-      "Busca ampliada incluindo categoria além de título e descrição"
+      "Nova dropdown de ordenaÃ§Ã£o: Vencimento, TÃ­tulo, Prioridade, Status, Categoria",
+      "SeÃ§Ã£o automÃ¡tica colapsÃ¡vel com header clicÃ¡vel e Ã­cone de chevron animado",
+      "Destaque visual de vencimento: atrasado (vermelho), vence hoje (amarelo), prÃ³ximo (azul)",
+      "Contador de resultados e botÃ£o Limpar filtros em ambas as seÃ§Ãµes",
+      "Cards melhores com hover, concluÃ­dos com borda verde e tÃ­tulo riscado",
+      "ConfirmaÃ§Ã£o ao excluir via showConfirmDialog em vez de confirm() nativo",
+      "Stat card de atrasados com animaÃ§Ã£o de pulse vermelho",
+      "Busca ampliada incluindo categoria alÃ©m de tÃ­tulo e descriÃ§Ã£o"
     ]
   },
   {
     "version": "1.42.0",
     "date": "2026-07-31",
-    "title": "Refatoração do Módulo de Equipes",
+    "title": "RefatoraÃ§Ã£o do MÃ³dulo de Equipes",
     "changes": [
-      "Filtros interativos: busca por nome/descrição/membro, filtro de progresso, ordenação",
-      "Modos de visualização: grid e lista",
+      "Filtros interativos: busca por nome/descriÃ§Ã£o/membro, filtro de progresso, ordenaÃ§Ã£o",
+      "Modos de visualizaÃ§Ã£o: grid e lista",
       "Membros com avatares circulares (inicial do nome), role e telefone",
-      "Confirmação de remoção via showConfirmDialog",
-      "Cards expansíveis com detalhes sob demanda"
+      "ConfirmaÃ§Ã£o de remoÃ§Ã£o via showConfirmDialog",
+      "Cards expansÃ­veis com detalhes sob demanda"
     ]
   },
   {
     "version": "1.41.1",
     "date": "2026-07-31",
-    "title": "Correção de Membros de Equipes Não Exibidos",
+    "title": "CorreÃ§Ã£o de Membros de Equipes NÃ£o Exibidos",
     "changes": [
       "Cache-control na API e fetch para evitar dados stale",
-      "Correção de membros de equipes não aparecendo na tela"
+      "CorreÃ§Ã£o de membros de equipes nÃ£o aparecendo na tela"
     ]
   },
   {
     "version": "1.41.0",
     "date": "2026-07-31",
-    "title": "Relatório de Tarefas Atribuídas por MO's e Equipes",
+    "title": "RelatÃ³rio de Tarefas AtribuÃ­das por MO's e Equipes",
     "changes": [
-      "Novo relatório PDF de tarefas atribuídas por MO's e equipes",
-      "Endpoint /reports/assigned-tasks para geração do PDF"
+      "Novo relatÃ³rio PDF de tarefas atribuÃ­das por MO's e equipes",
+      "Endpoint /reports/assigned-tasks para geraÃ§Ã£o do PDF"
     ]
   },
   {
@@ -290,17 +319,17 @@
     "date": "2026-07-31",
     "title": "Loading Spinner ao Trocar de Tela",
     "changes": [
-      "Spinner de loading exibido ao trocar de tela até a renderização completar",
-      "Melhor feedback visual durante carregamento assíncrono"
+      "Spinner de loading exibido ao trocar de tela atÃ© a renderizaÃ§Ã£o completar",
+      "Melhor feedback visual durante carregamento assÃ­ncrono"
     ]
   },
   {
     "version": "1.39.0",
     "date": "2026-07-31",
-    "title": "Refatoração do Módulo Kit MPs",
+    "title": "RefatoraÃ§Ã£o do MÃ³dulo Kit MPs",
     "changes": [
-      "Módulo Kit das Matérias-Primas mais interativo e menos poluído",
-      "Melhoria na apresentação e usabilidade dos dados"
+      "MÃ³dulo Kit das MatÃ©rias-Primas mais interativo e menos poluÃ­do",
+      "Melhoria na apresentaÃ§Ã£o e usabilidade dos dados"
     ]
   },
   {
@@ -348,30 +377,30 @@
     "date": "2026-07-31",
     "title": "Cadastro de Tarefas Mais Intuitivo e Interativo",
     "changes": [
-      "Botões visuais (pills) para Fase, Prioridade e Status — clique para selecionar em vez de dropdown",
-      "Prioridade com cores semânticas: baixa (cinza), média (amarelo), alta (vermelho)",
-      "Categoria com autocomplete (datalist) — sugestões padrão + categorias já existentes",
-      "Equipe com autocomplete — sugestões de equipes existentes + MO's",
-      "Campo Prazo agora é type=date (date picker nativo) em vez de texto livre",
-      "Validação de título obrigatório com toast e foco no campo",
-      "Foco automático no campo Título ao abrir o modal",
-      "Labels com ícones e formatação uppercase para melhor escaneabilidade",
+      "BotÃµes visuais (pills) para Fase, Prioridade e Status â€” clique para selecionar em vez de dropdown",
+      "Prioridade com cores semÃ¢nticas: baixa (cinza), mÃ©dia (amarelo), alta (vermelho)",
+      "Categoria com autocomplete (datalist) â€” sugestÃµes padrÃ£o + categorias jÃ¡ existentes",
+      "Equipe com autocomplete â€” sugestÃµes de equipes existentes + MO's",
+      "Campo Prazo agora Ã© type=date (date picker nativo) em vez de texto livre",
+      "ValidaÃ§Ã£o de tÃ­tulo obrigatÃ³rio com toast e foco no campo",
+      "Foco automÃ¡tico no campo TÃ­tulo ao abrir o modal",
+      "Labels com Ã­cones e formataÃ§Ã£o uppercase para melhor escaneabilidade",
       "Layout em grid responsivo (2 colunas no desktop, 1 no mobile)",
-      "Header do modal com botão de fechar (✕) além do overlay click"
+      "Header do modal com botÃ£o de fechar (âœ•) alÃ©m do overlay click"
     ]
   },
   {
     "version": "1.34.0",
     "date": "2026-07-31",
-    "title": "Correção Crítica: Reload Constante das Telas",
+    "title": "CorreÃ§Ã£o CrÃ­tica: Reload Constante das Telas",
     "changes": [
-      "renderPage() não substitui mais todo o conteúdo por LOADING_HTML a cada chamada — só mostra spinner se a tela está vazia",
+      "renderPage() nÃ£o substitui mais todo o conteÃºdo por LOADING_HTML a cada chamada â€” sÃ³ mostra spinner se a tela estÃ¡ vazia",
       "resize/orientationchange agora chamam refreshCurrentPage() (sem blanking) em vez de renderPage() (com blanking)",
       "Debounce de resize aumentado de 300ms para 400ms",
-      "Guard lastRenderedPage: resize só re-renderiza se a página não mudou desde a última renderização",
-      "api() agora verifica res.ok e lança erro em vez de retornar undefined silenciosamente",
-      "renderPage() envolve render fn em try/catch — erro mostra mensagem + botão 'Tentar novamente' em vez de spinner preso",
-      "dashboardInterval limpo ao trocar de página (acumulação de intervalos causava re-renders fantasma)",
+      "Guard lastRenderedPage: resize sÃ³ re-renderiza se a pÃ¡gina nÃ£o mudou desde a Ãºltima renderizaÃ§Ã£o",
+      "api() agora verifica res.ok e lanÃ§a erro em vez de retornar undefined silenciosamente",
+      "renderPage() envolve render fn em try/catch â€” erro mostra mensagem + botÃ£o 'Tentar novamente' em vez de spinner preso",
+      "dashboardInterval limpo ao trocar de pÃ¡gina (acumulaÃ§Ã£o de intervalos causava re-renders fantasma)",
       "goToEquipesFromChecklist agora usa navigateTo() (hash routing) em vez de renderPage() direto",
       "PAGE_RENDERERS lookup table substitui cadeia if/else de 20+ branches"
     ]
@@ -379,64 +408,64 @@
   {
     "version": "1.33.0",
     "date": "2026-07-30",
-    "title": "Refatoração da Tela de Relatórios",
+    "title": "RefatoraÃ§Ã£o da Tela de RelatÃ³rios",
     "changes": [
-      "Relatórios agora data-driven: definições em array RELATORIO_REPORTS em vez de HTML hardcoded",
-      "Função reportCardHTML reutilizável para renderizar cards de relatório",
-      "Removidos filtros mortos (5 dropdowns que não afetavam nada) e card de filtros",
-      "Removidas funções mortas: clearRelatorioFilters, getFilteredRelatorioData, renderRelatorioCategoryReports",
-      "Removidas variáveis mortas: relatorioFilterPhase, relatorioFilterCategory, relatorioFilterTeam, relatorioFilterStatus, relatorioFilterPriority, relatorioDataCache, relatorioTeamsCache",
-      "API calls reduzidas de 6 para 4 (removidas /teams e /lembrancinhas que só alimentavam filtros mortos)",
+      "RelatÃ³rios agora data-driven: definiÃ§Ãµes em array RELATORIO_REPORTS em vez de HTML hardcoded",
+      "FunÃ§Ã£o reportCardHTML reutilizÃ¡vel para renderizar cards de relatÃ³rio",
+      "Removidos filtros mortos (5 dropdowns que nÃ£o afetavam nada) e card de filtros",
+      "Removidas funÃ§Ãµes mortas: clearRelatorioFilters, getFilteredRelatorioData, renderRelatorioCategoryReports",
+      "Removidas variÃ¡veis mortas: relatorioFilterPhase, relatorioFilterCategory, relatorioFilterTeam, relatorioFilterStatus, relatorioFilterPriority, relatorioDataCache, relatorioTeamsCache",
+      "API calls reduzidas de 6 para 4 (removidas /teams e /lembrancinhas que sÃ³ alimentavam filtros mortos)",
       "Cards de resumo reduzidos de 6 para 5 (removido card Pendentes redundante)",
-      "Card Concluídas agora mostra percentual de progresso",
+      "Card ConcluÃ­das agora mostra percentual de progresso",
       "CSS limpo: removidos estilos de .relatorio-filters-card, .relatorio-filters, .filter-group, .filter-label, .relatorio-data-wrapper, .rel-data-card, .rdc-top"
     ]
   },
   {
     "version": "1.32.0",
     "date": "2026-07-30",
-    "title": "Limpeza da Tela de Relatórios",
+    "title": "Limpeza da Tela de RelatÃ³rios",
     "changes": [
-      "Removida seção 'Dados Filtrados' (tabela + cards) que poluía a tela de relatórios",
-      "Removidas funções applyRelatorioFilters e renderRelatorioDataTable",
-      "Filtros agora são apenas para seleção — PDFs são gerados com os filtros aplicados no backend",
-      "Tutorial atualizado para remover menção à tabela on-screen"
+      "Removida seÃ§Ã£o 'Dados Filtrados' (tabela + cards) que poluÃ­a a tela de relatÃ³rios",
+      "Removidas funÃ§Ãµes applyRelatorioFilters e renderRelatorioDataTable",
+      "Filtros agora sÃ£o apenas para seleÃ§Ã£o â€” PDFs sÃ£o gerados com os filtros aplicados no backend",
+      "Tutorial atualizado para remover menÃ§Ã£o Ã  tabela on-screen"
     ]
   },
   {
     "version": "1.31.0",
     "date": "2026-07-30",
-    "title": "Correção de Flickering/Piscagem nas Telas",
+    "title": "CorreÃ§Ã£o de Flickering/Piscagem nas Telas",
     "changes": [
       "renderPage() agora exibe spinner de loading em vez de tela branca durante chamadas async",
-      "Equipes: separação entre fetch de dados (renderEquipes) e renderização (renderEquipesGrid) — filtros e expand/collapse não re-buscam API",
+      "Equipes: separaÃ§Ã£o entre fetch de dados (renderEquipes) e renderizaÃ§Ã£o (renderEquipesGrid) â€” filtros e expand/collapse nÃ£o re-buscam API",
       "Equipes: busca textual com debounce 250ms em vez de re-fetch a cada tecla",
-      "Cronograma: dados de schedule cacheados em cronogramaCache — filtros não re-buscam API",
-      "Cronograma: filterSchedule agora é síncrono (filtragem client-side em vez de API call)",
-      "Filter cards: seletores escopados por ID de container (elimina interferência entre módulos)",
-      "Kit: adicionada função selectKitFilter que estava faltando (erro de runtime ao clicar nos filtros)",
+      "Cronograma: dados de schedule cacheados em cronogramaCache â€” filtros nÃ£o re-buscam API",
+      "Cronograma: filterSchedule agora Ã© sÃ­ncrono (filtragem client-side em vez de API call)",
+      "Filter cards: seletores escopados por ID de container (elimina interferÃªncia entre mÃ³dulos)",
+      "Kit: adicionada funÃ§Ã£o selectKitFilter que estava faltando (erro de runtime ao clicar nos filtros)",
       "Checklist e Inscritos: busca textual com debounce 250ms",
       "CSS: adicionado .loading-overlay e .loading-spinner para feedback visual durante carregamento",
-      "db.update: normalização de team_id para Number em team_members (consistência com db.insert)"
+      "db.update: normalizaÃ§Ã£o de team_id para Number em team_members (consistÃªncia com db.insert)"
     ]
   },
   {
     "version": "1.30.0",
     "date": "2026-07-30",
-    "title": "Cards de Filtro Interativos em Todos os Módulos",
+    "title": "Cards de Filtro Interativos em Todos os MÃ³dulos",
     "changes": [
-      "CSS genérico reutilizável .filter-card-grid e .filter-card para todos os módulos",
-      "Inscritos: cards Todos/Pagos/Pendentes/Presentes com contagens dinâmicas",
-      "Lembrancinhas: cards Todas/Prontas/Em Produção/Não Iniciadas",
-      "Escolinhas: cards Todas/Agendadas/Concluídas/Canceladas",
-      "Alicerces: cards Todos/Alicerces/Alvenarias/Concluídos",
+      "CSS genÃ©rico reutilizÃ¡vel .filter-card-grid e .filter-card para todos os mÃ³dulos",
+      "Inscritos: cards Todos/Pagos/Pendentes/Presentes com contagens dinÃ¢micas",
+      "Lembrancinhas: cards Todas/Prontas/Em ProduÃ§Ã£o/NÃ£o Iniciadas",
+      "Escolinhas: cards Todas/Agendadas/ConcluÃ­das/Canceladas",
+      "Alicerces: cards Todos/Alicerces/Alvenarias/ConcluÃ­dos",
       "Fornecedores: cards Todos/Contatados/Pendentes/Contratados + filtro de categoria mantido",
-      "Padrinhos: cards Todos/Em Andamento/Concluídos/Sem Padrinho",
-      "Doações: cards Todas/Dinheiro/Materiais/Pendentes (substitui dropdown)",
-      "Avisos: cards Todos/Alta/Média/Baixa Prioridade",
-      "Cronograma: cards Todos os Dias/Sexta/Sábado/Domingo",
-      "Kit: cards Todos/Não Conferidos/Conferidos/Entregues",
-      "Cada card mostra ícone colorido, nome do filtro e contagem de itens",
+      "Padrinhos: cards Todos/Em Andamento/ConcluÃ­dos/Sem Padrinho",
+      "DoaÃ§Ãµes: cards Todas/Dinheiro/Materiais/Pendentes (substitui dropdown)",
+      "Avisos: cards Todos/Alta/MÃ©dia/Baixa Prioridade",
+      "Cronograma: cards Todos os Dias/Sexta/SÃ¡bado/Domingo",
+      "Kit: cards Todos/NÃ£o Conferidos/Conferidos/Entregues",
+      "Cada card mostra Ã­cone colorido, nome do filtro e contagem de itens",
       "Card ativo destacado com borda azul e sombra",
       "Grid responsivo: 2 colunas no tablet, 1 coluna no mobile"
     ]
@@ -444,30 +473,30 @@
   {
     "version": "1.29.0",
     "date": "2026-07-30",
-    "title": "Orçamento Interativo por Categorias",
+    "title": "OrÃ§amento Interativo por Categorias",
     "changes": [
-      "Grid de cards de categorias no topo (clicáveis, com ícone, contagem, total estimado e barra de progresso)",
-      "12 categorias com ícones e cores próprias: Alimentação, Limpeza, Decoração, Materiais, Logística, etc",
-      "Card 'Todas' mostra visão geral; clicar numa categoria filtra os itens",
-      "Barra de progresso geral (Gasto Geral) com cor dinâmica (verde/amarelo/vermelho)",
-      "Seções colapsáveis por categoria: header com ícone, nome, stats, totais e barra de progresso",
+      "Grid de cards de categorias no topo (clicÃ¡veis, com Ã­cone, contagem, total estimado e barra de progresso)",
+      "12 categorias com Ã­cones e cores prÃ³prias: AlimentaÃ§Ã£o, Limpeza, DecoraÃ§Ã£o, Materiais, LogÃ­stica, etc",
+      "Card 'Todas' mostra visÃ£o geral; clicar numa categoria filtra os itens",
+      "Barra de progresso geral (Gasto Geral) com cor dinÃ¢mica (verde/amarelo/vermelho)",
+      "SeÃ§Ãµes colapsÃ¡veis por categoria: header com Ã­cone, nome, stats, totais e barra de progresso",
       "Clique no header para expandir/recolher cada categoria",
-      "Botão '+ Adicionar item em [categoria]' dentro de cada seção",
+      "BotÃ£o '+ Adicionar item em [categoria]' dentro de cada seÃ§Ã£o",
       "Tabela dentro de cada categoria (desktop) com Item, Qtd, Custo Unit, Total, Custo Real, Status, Fornecedor",
       "Cards compactos no mobile (tabela escondida, cards exibidos)",
-      "Filtro de status mantido; filtro de categoria substituído pelos cards interativos",
-      "CSS responsivo: category grid 1 coluna, section header empilhado, table→cards no mobile"
+      "Filtro de status mantido; filtro de categoria substituÃ­do pelos cards interativos",
+      "CSS responsivo: category grid 1 coluna, section header empilhado, tableâ†’cards no mobile"
     ]
   },
   {
     "version": "1.28.0",
     "date": "2026-07-30",
-    "title": "Todos os Módulos Mobile",
+    "title": "Todos os MÃ³dulos Mobile",
     "changes": [
-      "Orçamento: tabela escondida no mobile, cards alternativos exibidos (budget-cards)",
-      "Doações: tabela escondida no mobile, cards alternativos exibidos (don-cards)",
+      "OrÃ§amento: tabela escondida no mobile, cards alternativos exibidos (budget-cards)",
+      "DoaÃ§Ãµes: tabela escondida no mobile, cards alternativos exibidos (don-cards)",
       "Kit das MPs: tabela escondida no mobile, cards com toggles Conferido/Squeeze/Entregue",
-      "Padrinhos: header empilhado verticalmente, steps em 2 colunas (1 col em ≤480px)",
+      "Padrinhos: header empilhado verticalmente, steps em 2 colunas (1 col em â‰¤480px)",
       "Escolinhas: items compactos com header empilhado no mobile",
       "Alicerces: cards empilhados verticalmente com actions em linha no mobile",
       "Lembrancinhas: barra de progresso compacta no mobile",
@@ -475,22 +504,22 @@
       "Fornecedores: cards compactos com fontes reduzidas no mobile",
       "Encontro: info items com fontes reduzidas no mobile",
       "Kit items list: wrapping com nome em linha completa no mobile",
-      "Resize/orientationchange agora re-renderiza qualquer página ativa (não só dashboard/financeiro)",
+      "Resize/orientationchange agora re-renderiza qualquer pÃ¡gina ativa (nÃ£o sÃ³ dashboard/financeiro)",
       "Budget/donation cards: padding compacto e wrapping no mobile"
     ]
   },
   {
     "version": "1.27.0",
     "date": "2026-07-30",
-    "title": "Módulo Tutorial do Sistema",
+    "title": "MÃ³dulo Tutorial do Sistema",
     "changes": [
-      "Nova página Tutorial no menu lateral com ícone de ajuda",
-      "Card de boas-vindas com gradiente verde explicando o propósito",
-      "7 guias interativos: Primeiros Passos, Equipes, Tarefas, Pessoas, Financeiro, Recursos, Relatórios",
+      "Nova pÃ¡gina Tutorial no menu lateral com Ã­cone de ajuda",
+      "Card de boas-vindas com gradiente verde explicando o propÃ³sito",
+      "7 guias interativos: Primeiros Passos, Equipes, Tarefas, Pessoas, Financeiro, Recursos, RelatÃ³rios",
       "Cada guia abre modal passo a passo com barra de progresso (dots)",
-      "Botão Abrir módulo em cada passo para navegar diretamente ao módulo",
-      "Navegação Anterior/Próximo/Concluir entre os passos",
-      "Seção Dicas Rápidas com 8 atalhos práticos do sistema",
+      "BotÃ£o Abrir mÃ³dulo em cada passo para navegar diretamente ao mÃ³dulo",
+      "NavegaÃ§Ã£o Anterior/PrÃ³ximo/Concluir entre os passos",
+      "SeÃ§Ã£o Dicas RÃ¡pidas com 8 atalhos prÃ¡ticos do sistema",
       "CSS responsivo: welcome card em coluna no mobile, guias em 1 coluna, footer empilhado"
     ]
   },
@@ -499,15 +528,15 @@
     "date": "2026-07-30",
     "title": "Detalhes da Equipe",
     "changes": [
-      "Botão Ver Detalhes em cada card de equipe abre modal completo",
-      "Modal de detalhes com 4 cards de estatísticas (membros, tarefas, cronograma, % concluído)",
-      "Barra de progresso das tarefas com breakdown por status (concluídas, em andamento, pendentes)",
+      "BotÃ£o Ver Detalhes em cada card de equipe abre modal completo",
+      "Modal de detalhes com 4 cards de estatÃ­sticas (membros, tarefas, cronograma, % concluÃ­do)",
+      "Barra de progresso das tarefas com breakdown por status (concluÃ­das, em andamento, pendentes)",
       "Lista de membros com avatares circulares (inicial do nome), role e telefone",
-      "Cronograma do encontro com dia, horário, atividade e indicador de conclusão",
-      "Lista de tarefas com número, título, prioridade, status e prazo (clicável → checklist)",
-      "Seções de Lembrancinhas e Alicerces com badges de status",
-      "Botão Editar Equipe no rodapé do modal",
-      "Modal responsivo: stats 2x2 no mobile, membros em coluna única, tasks com wrapping"
+      "Cronograma do encontro com dia, horÃ¡rio, atividade e indicador de conclusÃ£o",
+      "Lista de tarefas com nÃºmero, tÃ­tulo, prioridade, status e prazo (clicÃ¡vel â†’ checklist)",
+      "SeÃ§Ãµes de Lembrancinhas e Alicerces com badges de status",
+      "BotÃ£o Editar Equipe no rodapÃ© do modal",
+      "Modal responsivo: stats 2x2 no mobile, membros em coluna Ãºnica, tasks com wrapping"
     ]
   },
   {
@@ -516,51 +545,51 @@
     "title": "Financeiro Mobile",
     "changes": [
       "Tab bar compacta com scroll horizontal touch-friendly no mobile",
-      "Cards de sumário financeiro em grid 2 colunas no mobile (1 col em ≤480px)",
+      "Cards de sumÃ¡rio financeiro em grid 2 colunas no mobile (1 col em â‰¤480px)",
       "Charts com altura reduzida (180px) e padding compacto no mobile",
       "Listas Top 10 com wrapping e fontes reduzidas no mobile",
-      "Filtros empilhados verticalmente no mobile (selects e botão full-width)",
-      "Cards de lançamentos mais compactos no mobile",
+      "Filtros empilhados verticalmente no mobile (selects e botÃ£o full-width)",
+      "Cards de lanÃ§amentos mais compactos no mobile",
       "Cards de eventos compactos com stats em 2 colunas no mobile",
-      "Tabela de Categorias → cards mobile com cor, tipo, orçamento e ações",
-      "Tabela Orçamento vs Realizado → cards mobile com stats em grid 2x2",
-      "Tabela de Itens de Orçamento → cards mobile com valor e notas",
+      "Tabela de Categorias â†’ cards mobile com cor, tipo, orÃ§amento e aÃ§Ãµes",
+      "Tabela OrÃ§amento vs Realizado â†’ cards mobile com stats em grid 2x2",
+      "Tabela de Itens de OrÃ§amento â†’ cards mobile com valor e notas",
       "Modais com form-row empilhado verticalmente no mobile",
-      "Re-renderização automática ao rotacionar/redimensionar para financeiro"
+      "Re-renderizaÃ§Ã£o automÃ¡tica ao rotacionar/redimensionar para financeiro"
     ]
   },
   {
     "version": "1.24.0",
     "date": "2026-07-30",
-    "title": "Cardápio do Encontro + Lista de Compras da Cozinha",
+    "title": "CardÃ¡pio do Encontro + Lista de Compras da Cozinha",
     "changes": [
-      "Nova página Cardápio com timeline visual dos 3 dias (Sexta, Sábado, Domingo)",
-      "Refeições organizadas por dia e tipo (Café, Almoço, Lanche, Jantar) com ícones",
-      "CRUD completo: adicionar, editar e excluir refeições via modal",
-      "Lista de Compras da Cozinha com 51 itens alinhados ao cardápio do XV Compromisso",
-      "Itens da cozinha integrados ao Orçamento (budget_items, categoria Alimentação)",
-      "API CRUD /cardapio com ordenação por dia e tipo de refeição",
+      "Nova pÃ¡gina CardÃ¡pio com timeline visual dos 3 dias (Sexta, SÃ¡bado, Domingo)",
+      "RefeiÃ§Ãµes organizadas por dia e tipo (CafÃ©, AlmoÃ§o, Lanche, Jantar) com Ã­cones",
+      "CRUD completo: adicionar, editar e excluir refeiÃ§Ãµes via modal",
+      "Lista de Compras da Cozinha com 51 itens alinhados ao cardÃ¡pio do XV Compromisso",
+      "Itens da cozinha integrados ao OrÃ§amento (budget_items, categoria AlimentaÃ§Ã£o)",
+      "API CRUD /cardapio com ordenaÃ§Ã£o por dia e tipo de refeiÃ§Ã£o",
       "Tabela cardapio no banco de dados com migration V10",
-      "CSS responsivo: kitchen items grid 2 colunas no mobile, meals em coluna única",
-      "Item de navegação Cardápio adicionado ao menu lateral"
+      "CSS responsivo: kitchen items grid 2 colunas no mobile, meals em coluna Ãºnica",
+      "Item de navegaÃ§Ã£o CardÃ¡pio adicionado ao menu lateral"
     ]
   },
   {
     "version": "1.23.0",
     "date": "2026-07-30",
-    "title": "Relatórios Profissionais com Filtros",
+    "title": "RelatÃ³rios Profissionais com Filtros",
     "changes": [
-      "Redesign completo da página de Relatórios com visual profissional",
+      "Redesign completo da pÃ¡gina de RelatÃ³rios com visual profissional",
       "Painel de filtros: fase, categoria, equipe, status e prioridade",
-      "Tabela de dados filtrados visível on-screen antes de gerar PDF",
+      "Tabela de dados filtrados visÃ­vel on-screen antes de gerar PDF",
       "Cards de dados filtrados no mobile (table vira cards responsivos)",
-      "Sumário visual com 6 cards de estatísticas (tarefas, MP's, saldo)",
-      "Relatórios PDF organizados em 5 seções: Principais, Gerais, Equipes/MP's, Supervisão, por Categoria",
-      "Cards de relatório com hover effect, ícones coloridos e descrições",
-      "Relatórios por categoria gerados dinamicamente a partir das tarefas existentes",
-      "Botão Limpar Filtros para resetar todos os critérios",
+      "SumÃ¡rio visual com 6 cards de estatÃ­sticas (tarefas, MP's, saldo)",
+      "RelatÃ³rios PDF organizados em 5 seÃ§Ãµes: Principais, Gerais, Equipes/MP's, SupervisÃ£o, por Categoria",
+      "Cards de relatÃ³rio com hover effect, Ã­cones coloridos e descriÃ§Ãµes",
+      "RelatÃ³rios por categoria gerados dinamicamente a partir das tarefas existentes",
+      "BotÃ£o Limpar Filtros para resetar todos os critÃ©rios",
       "Contador de tarefas filtradas em tempo real",
-      "CSS responsivo: filtros em coluna no mobile, cards 1 por linha, sumário 2x2"
+      "CSS responsivo: filtros em coluna no mobile, cards 1 por linha, sumÃ¡rio 2x2"
     ]
   },
   {
@@ -568,31 +597,31 @@
     "date": "2026-07-30",
     "title": "Dashboard Mobile",
     "changes": [
-      "Dashboard responsivo para celular — stats grid 2x2 com cards compactos em linha",
-      "Abas de fase (Geral/Pré/Durante) com scroll horizontal touch-friendly",
-      "Charts em coluna única com altura reduzida no mobile",
-      "Contagem regressiva compacta com unidades flexíveis",
+      "Dashboard responsivo para celular â€” stats grid 2x2 com cards compactos em linha",
+      "Abas de fase (Geral/PrÃ©/Durante) com scroll horizontal touch-friendly",
+      "Charts em coluna Ãºnica com altura reduzida no mobile",
+      "Contagem regressiva compacta com unidades flexÃ­veis",
       "Barras de progresso mais finas e fontes reduzidas no mobile",
       "Cards de tarefas urgentes compactos no mobile",
-      "Re-renderização automática ao rotacionar tela ou redimensionar janela",
+      "Re-renderizaÃ§Ã£o automÃ¡tica ao rotacionar tela ou redimensionar janela",
       "Breakpoint em 480px: stats grid 1 coluna, charts ainda mais compactos"
     ]
   },
   {
     "version": "1.22.0",
     "date": "2026-07-30",
-    "title": "Orçamento e Doações",
+    "title": "OrÃ§amento e DoaÃ§Ãµes",
     "changes": [
-      "Módulo de Orçamento do Encontro — cadastre itens por categoria (alimentação, limpeza, decoração, materiais, logística, etc.)",
-      "Cada item tem quantidade, unidade, custo unitário estimado, custo real, fornecedor e status (orçado/comprado/recebido/cancelado)",
-      "Resumo financeiro consolidado — orçamento total, doações em dinheiro, receitas do financeiro, orçamento líquido, gasto real e saldo restante",
-      "Filtros por categoria e status na tabela de orçamento",
-      "Módulo de Doações — cadastre doações em dinheiro ou materiais",
-      "Consolidação automática: doações em dinheiro podem criar receita no Financeiro com checkbox",
-      "Doações de materiais podem ser vinculadas a itens do orçamento (status recebido)",
-      "Impacto das doações no orçamento exibido em tempo real",
-      "Cards de estatísticas em ambos os módulos",
-      "Seed inicial com 19 itens de orçamento e 3 doações de exemplo"
+      "MÃ³dulo de OrÃ§amento do Encontro â€” cadastre itens por categoria (alimentaÃ§Ã£o, limpeza, decoraÃ§Ã£o, materiais, logÃ­stica, etc.)",
+      "Cada item tem quantidade, unidade, custo unitÃ¡rio estimado, custo real, fornecedor e status (orÃ§ado/comprado/recebido/cancelado)",
+      "Resumo financeiro consolidado â€” orÃ§amento total, doaÃ§Ãµes em dinheiro, receitas do financeiro, orÃ§amento lÃ­quido, gasto real e saldo restante",
+      "Filtros por categoria e status na tabela de orÃ§amento",
+      "MÃ³dulo de DoaÃ§Ãµes â€” cadastre doaÃ§Ãµes em dinheiro ou materiais",
+      "ConsolidaÃ§Ã£o automÃ¡tica: doaÃ§Ãµes em dinheiro podem criar receita no Financeiro com checkbox",
+      "DoaÃ§Ãµes de materiais podem ser vinculadas a itens do orÃ§amento (status recebido)",
+      "Impacto das doaÃ§Ãµes no orÃ§amento exibido em tempo real",
+      "Cards de estatÃ­sticas em ambos os mÃ³dulos",
+      "Seed inicial com 19 itens de orÃ§amento e 3 doaÃ§Ãµes de exemplo"
     ]
   },
   {
@@ -600,33 +629,33 @@
     "date": "2026-07-30",
     "title": "Equipes Interativas",
     "changes": [
-      "Busca em tempo real por nome de equipe, descrição ou membro",
-      "Cards expansíveis/colapsáveis com botão toggle — detalhes sob demanda",
-      "Criar nova equipe diretamente da tela com modal (nome, descrição, responsável)",
-      "Editar equipe existente — nome, descrição e responsável",
-      "Excluir equipe com dialog de confirmação",
-      "Editar membro existente — nome, função, telefone e email",
-      "Membros clicáveis para edição rápida",
-      "Cards de estatísticas no topo — equipes, membros, tarefas atribuídas e concluídas",
-      "Tarefas clicáveis navegando para o checklist"
+      "Busca em tempo real por nome de equipe, descriÃ§Ã£o ou membro",
+      "Cards expansÃ­veis/colapsÃ¡veis com botÃ£o toggle â€” detalhes sob demanda",
+      "Criar nova equipe diretamente da tela com modal (nome, descriÃ§Ã£o, responsÃ¡vel)",
+      "Editar equipe existente â€” nome, descriÃ§Ã£o e responsÃ¡vel",
+      "Excluir equipe com dialog de confirmaÃ§Ã£o",
+      "Editar membro existente â€” nome, funÃ§Ã£o, telefone e email",
+      "Membros clicÃ¡veis para ediÃ§Ã£o rÃ¡pida",
+      "Cards de estatÃ­sticas no topo â€” equipes, membros, tarefas atribuÃ­das e concluÃ­das",
+      "Tarefas clicÃ¡veis navegando para o checklist"
     ]
   },
   {
     "version": "1.20.1",
     "date": "2026-07-30",
-    "title": "Correção do Dashboard",
+    "title": "CorreÃ§Ã£o do Dashboard",
     "changes": [
-      "Correção de crash no dashboard — endpoint /lembretes/auto retorna objeto { lembretes: [...] } e não array direto, causando erro ao chamar .filter() e .slice()"
+      "CorreÃ§Ã£o de crash no dashboard â€” endpoint /lembretes/auto retorna objeto { lembretes: [...] } e nÃ£o array direto, causando erro ao chamar .filter() e .slice()"
     ]
   },
   {
     "version": "1.20.0",
     "date": "2026-07-30",
-    "title": "Correção do Relatório de Preparação",
+    "title": "CorreÃ§Ã£o do RelatÃ³rio de PreparaÃ§Ã£o",
     "changes": [
-      "Correção de páginas em branco no relatório de preparação — page breaks condicionais evitam páginas vazias",
-      "Correção de numeração 'NaN' no rodapé — contador de páginas manual substitui doc.page.number inexistente no PDFKit",
-      "Correção aplicada globalmente em todos os relatórios PDF (createReportDoc compartilhado)"
+      "CorreÃ§Ã£o de pÃ¡ginas em branco no relatÃ³rio de preparaÃ§Ã£o â€” page breaks condicionais evitam pÃ¡ginas vazias",
+      "CorreÃ§Ã£o de numeraÃ§Ã£o 'NaN' no rodapÃ© â€” contador de pÃ¡ginas manual substitui doc.page.number inexistente no PDFKit",
+      "CorreÃ§Ã£o aplicada globalmente em todos os relatÃ³rios PDF (createReportDoc compartilhado)"
     ]
   },
   {
@@ -634,30 +663,30 @@
     "date": "2026-07-30",
     "title": "Dashboard Interativo",
     "changes": [
-      "Gráficos Chart.js no dashboard — pizza de status, barras por equipe, barras por categoria, pizza de prioridades",
-      "Cards de estatística clicáveis — navegam direto para a tela correspondente",
-      "Contagem regressiva ao vivo com segundos — atualiza a cada minuto",
-      "Filtros por fase — Geral, Pré-Encontro e Durante o Encontro",
-      "Lista de tarefas urgentes com acesso rápido aos detalhes",
-      "Gráficos responsivos que se adaptam a mobile"
+      "GrÃ¡ficos Chart.js no dashboard â€” pizza de status, barras por equipe, barras por categoria, pizza de prioridades",
+      "Cards de estatÃ­stica clicÃ¡veis â€” navegam direto para a tela correspondente",
+      "Contagem regressiva ao vivo com segundos â€” atualiza a cada minuto",
+      "Filtros por fase â€” Geral, PrÃ©-Encontro e Durante o Encontro",
+      "Lista de tarefas urgentes com acesso rÃ¡pido aos detalhes",
+      "GrÃ¡ficos responsivos que se adaptam a mobile"
     ]
   },
   {
     "version": "1.18.0",
     "date": "2026-07-30",
-    "title": "Dialog de Confirmação Aprimorado",
+    "title": "Dialog de ConfirmaÃ§Ã£o Aprimorado",
     "changes": [
-      "Dialog customizado e agradável ao concluir tarefas nos lembretes — substitui o confirm() nativo do navegador",
-      "Modal centralizado com ícone, título da tarefa e descrição da ação",
-      "Função showConfirmDialog reutilizável para futuras confirmações"
+      "Dialog customizado e agradÃ¡vel ao concluir tarefas nos lembretes â€” substitui o confirm() nativo do navegador",
+      "Modal centralizado com Ã­cone, tÃ­tulo da tarefa e descriÃ§Ã£o da aÃ§Ã£o",
+      "FunÃ§Ã£o showConfirmDialog reutilizÃ¡vel para futuras confirmaÃ§Ãµes"
     ]
   },
   {
     "version": "1.17.0",
     "date": "2026-07-30",
-    "title": "Correção de Membros de Equipes em Produção",
+    "title": "CorreÃ§Ã£o de Membros de Equipes em ProduÃ§Ã£o",
     "changes": [
-      "Correção de bug: team_members com team_id como string em produção causava membros invisíveis",
+      "CorreÃ§Ã£o de bug: team_members com team_id como string em produÃ§Ã£o causava membros invisÃ­veis",
       "Migration V8: converte team_id existentes de string para number e recalcula members_count",
       "Fix preventivo: db.insert agora faz cast de team_id para number em team_members"
     ]
@@ -665,21 +694,21 @@
   {
     "version": "1.16.0",
     "date": "2026-07-30",
-    "title": "Detalhes de Lembretes Automáticos",
+    "title": "Detalhes de Lembretes AutomÃ¡ticos",
     "changes": [
-      "Modal de detalhes para lembretes automáticos — mostra categoria, equipe, prazo, vencimento, status, prioridade e observações da tarefa vinculada",
-      "Botão de detalhes (ícone de olho) em cada lembrete automático",
-      "Ação de concluir tarefa diretamente do modal de detalhes"
+      "Modal de detalhes para lembretes automÃ¡ticos â€” mostra categoria, equipe, prazo, vencimento, status, prioridade e observaÃ§Ãµes da tarefa vinculada",
+      "BotÃ£o de detalhes (Ã­cone de olho) em cada lembrete automÃ¡tico",
+      "AÃ§Ã£o de concluir tarefa diretamente do modal de detalhes"
     ]
   },
   {
     "version": "1.15.0",
     "date": "2026-07-30",
-    "title": "Usuários Online e Avisos de Versão",
+    "title": "UsuÃ¡rios Online e Avisos de VersÃ£o",
     "changes": [
-      "Indicador de usuários online em tempo real — mostra quantos estão acessando o sistema agora",
-      "Aviso automático de nova versão — modal com changelog ao atualizar o sistema",
-      "Rotas URL (hash routing) para todas as telas — bookmark e compartilhamento"
+      "Indicador de usuÃ¡rios online em tempo real â€” mostra quantos estÃ£o acessando o sistema agora",
+      "Aviso automÃ¡tico de nova versÃ£o â€” modal com changelog ao atualizar o sistema",
+      "Rotas URL (hash routing) para todas as telas â€” bookmark e compartilhamento"
     ]
   },
   {
@@ -687,46 +716,46 @@
     "date": "2026-07-30",
     "title": "Rotas URL e Novas Funcionalidades",
     "changes": [
-      "Rotas URL (hash routing) para todas as telas — bookmark, back/forward e compartilhamento",
-      "Filtros para lembretes automáticos — urgência, categoria, equipe e busca textual",
-      "Modal de detalhes de tarefas e lembretes — visualização completa com vínculos",
-      "Relatório de lembretes com rows dinâmicas e sem páginas em branco",
-      "Row heights dinâmicas em todos os relatórios PDF",
-      "No-cache headers em arquivos estáticos para evitar cache stale",
-      "Migration V7 — garante seed de team_members em todos os ambientes",
-      "Integração bidirecional checklist × lembretes",
-      "UI/UX melhorado em todos os módulos"
+      "Rotas URL (hash routing) para todas as telas â€” bookmark, back/forward e compartilhamento",
+      "Filtros para lembretes automÃ¡ticos â€” urgÃªncia, categoria, equipe e busca textual",
+      "Modal de detalhes de tarefas e lembretes â€” visualizaÃ§Ã£o completa com vÃ­nculos",
+      "RelatÃ³rio de lembretes com rows dinÃ¢micas e sem pÃ¡ginas em branco",
+      "Row heights dinÃ¢micas em todos os relatÃ³rios PDF",
+      "No-cache headers em arquivos estÃ¡ticos para evitar cache stale",
+      "Migration V7 â€” garante seed de team_members em todos os ambientes",
+      "IntegraÃ§Ã£o bidirecional checklist Ã— lembretes",
+      "UI/UX melhorado em todos os mÃ³dulos"
     ]
   },
   {
     "version": "1.13.1",
     "date": "2026-07-30",
-    "title": "Correção de Sintaxe",
+    "title": "CorreÃ§Ã£o de Sintaxe",
     "changes": [
-      "Correção de erro de sintaxe em renderAutoLembretes que quebrava todas as telas"
+      "CorreÃ§Ã£o de erro de sintaxe em renderAutoLembretes que quebrava todas as telas"
     ]
   },
   {
     "version": "1.13.0",
     "date": "2026-07-30",
-    "title": "Filtros e Correções",
+    "title": "Filtros e CorreÃ§Ãµes",
     "changes": [
-      "Filtros para lembretes automáticos — urgência, categoria, equipe e busca",
-      "Relatório de lembretes com rows dinâmicas e sem páginas em branco",
-      "Migration V7 — garante seed de team_members",
-      "No-cache headers em arquivos estáticos"
+      "Filtros para lembretes automÃ¡ticos â€” urgÃªncia, categoria, equipe e busca",
+      "RelatÃ³rio de lembretes com rows dinÃ¢micas e sem pÃ¡ginas em branco",
+      "Migration V7 â€” garante seed de team_members",
+      "No-cache headers em arquivos estÃ¡ticos"
     ]
   },
   {
     "version": "1.12.0",
     "date": "2026-07-30",
-    "title": "Detalhes e Relatórios",
+    "title": "Detalhes e RelatÃ³rios",
     "changes": [
       "Modal de detalhes de tarefas e lembretes",
-      "Row heights dinâmicas em todos os relatórios PDF",
-      "Correção de layouts quebrados nos relatórios PDF",
-      "Integração bidirecional checklist × lembretes",
-      "UI/UX melhorado em todos os módulos"
+      "Row heights dinÃ¢micas em todos os relatÃ³rios PDF",
+      "CorreÃ§Ã£o de layouts quebrados nos relatÃ³rios PDF",
+      "IntegraÃ§Ã£o bidirecional checklist Ã— lembretes",
+      "UI/UX melhorado em todos os mÃ³dulos"
     ]
   }
 ]
