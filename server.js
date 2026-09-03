@@ -8,6 +8,7 @@ const {
   generateAssignedTasksReport, generateBudgetReport
 } = require('./routes/pdf');
 const apiRouter = require('./routes/api');
+const encountersRouter = require('./routes/encounters');
 const { router: whatsappRouter, rescheduleCron } = require('./routes/whatsapp');
 const { runMigrations } = require('./migrations/run');
 
@@ -26,6 +27,7 @@ app.use(express.static(path.join(__dirname, 'public'), {
 }));
 
 // API routes
+app.use('/api', encountersRouter);
 app.use('/api', apiRouter);
 app.use('/api/whatsapp', whatsappRouter);
 

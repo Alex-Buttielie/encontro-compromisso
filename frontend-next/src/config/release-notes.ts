@@ -5,9 +5,21 @@ export interface ReleaseNote {
   changes: string[];
 }
 
-export const CURRENT_VERSION = '1.63.0';
+export const CURRENT_VERSION = '1.64.0';
 
 export const RELEASE_NOTES: ReleaseNote[] = [
+  {
+    version: '1.64.0',
+    date: '2026-09-03',
+    title: 'Suporte a Múltiplos Encontros — I/2026, II/2027',
+    changes: [
+      'Sistema agora suporta múltiplos encontros: I (2026), II (2027) e assim por diante — edição (romano) + ano',
+      'Toda a operação é escopada por encontro: checklist, equipes, finanças, orçamento e mais 12 módulos',
+      'Seletor global de encontro no sidebar com troca instantânea',
+      'Tela Encontros com lista de edições, ativar, criar, clonar do padrão do manual e excluir',
+      'Nova API: /api/encounters, /api/encounters/active e /api/encounters/:id/activate',
+    ],
+  },
   {
     version: '1.63.0',
     date: '2026-08-06',

@@ -53,6 +53,29 @@ function findById(table, id) {
   return getTable(table).find(r => r.id === Number(id));
 }
 
+let _activeEncounterId = null;
+
+function getActiveEncounterId() {
+  if (_activeEncounterId !== null) return _activeEncounterId;
+  load();
+  const encs = data.encounters || [];
+  const active = encs.find(e => e.is_active) || (encs.length ? encs[encs.length - 1] : null);
+  _activeEncounterId = active ? active.id : null;
+  return _activeEncounterId;
+}
+
+function setActiveEncounterId(id) {
+  _activeEncounterId = id !== null && id !== undefined ? Number(id) : null;
+}
+
+function resolveEncounterId(query) {
+  if (query && query.encounter_id !== undefined && query.encounter_id !== '' && query.encounter_id !== 'all') {
+    const v = Number(query.encounter_id);
+    return isNaN(v) ? getActiveEncounterId() : v;
+  }
+  return getActiveEncounterId();
+}
+
 function filterBy(table, criteria) {
   return getTable(table).filter(r => {
     for (const [k, v] of Object.entries(criteria)) {
@@ -72,7 +95,9 @@ const db = {
   },
   pragma() {},
   exec() {},
-  // Generic helpers for new tables
+  getActiveEncounterId,
+  setActiveEncounterId,
+  resolveEncounterId,
   getAll(table) { load(); return getTable(table); },
   getById(table, id) { load(); return findById(table, id); },
   insert(table, obj) { load(); const id = nextId(table); obj.id = id; obj.created_at = new Date().toISOString(); if (table === 'team_members' && obj.team_id !== undefined) obj.team_id = Number(obj.team_id); getTable(table).push(obj); save(); return id; },
@@ -97,6 +122,10 @@ function queryAll(sql, params) {
   if (lower.startsWith('select') && lower.includes('from tasks') && lower.includes('where 1=1')) {
     let results = [...data.tasks];
     let paramIdx = 0;
+    if (lower.includes('and encounter_id = ?')) {
+      const v = params[paramIdx++];
+      results = results.filter(t => t.encounter_id === undefined || t.encounter_id === null || Number(t.encounter_id) === Number(v));
+    }
     if (lower.includes('and category = ?')) { const v = params[paramIdx++]; results = results.filter(t => t.category === v); }
     if (lower.includes('and status = ?')) { const v = params[paramIdx++]; results = results.filter(t => t.status === v); }
     if (lower.includes('and priority = ?')) { const v = params[paramIdx++]; results = results.filter(t => t.priority === v); }
@@ -166,10 +195,15 @@ function queryAll(sql, params) {
   }
   if (lower.startsWith('select * from schedule_items')) {
     let results = [...data.schedule];
-    if (lower.includes('where day = ?')) { results = results.filter(s => s.day === params[0]); }
+    let pIdx = 0;
+    if (lower.includes('and encounter_id = ?')) {
+      const eid = params[pIdx++];
+      results = results.filter(s => s.encounter_id === undefined || s.encounter_id === null || Number(s.encounter_id) === Number(eid));
+    }
+    if (lower.includes('where day = ?') || lower.includes('and day = ?')) { results = results.filter(s => s.day === params[pIdx++]); }
     if (lower.includes('responsible_team like ?')) {
-      const teamParam = params[lower.includes('where day = ?') ? 1 : 0];
-      const teamClean = teamParam.replace(/%/g, '');
+      const teamParam = params[pIdx];
+      const teamClean = String(teamParam).replace(/%/g, '');
       results = results.filter(s => (s.responsible_team || '').includes(teamClean));
     }
     const dayOrder = { 'Sexta-feira': 1, 'Sábado': 2, 'Domingo': 3 };

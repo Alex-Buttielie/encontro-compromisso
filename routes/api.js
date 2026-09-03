@@ -5,6 +5,19 @@ const path = require('path');
 
 const router = express.Router();
 
+
+function resolveEid(req) {
+  const q = req.query.encounter_id;
+  if (q !== undefined && q !== '' && String(q) !== 'all') { const v = Number(q); if (!isNaN(v)) return v; }
+  const b = req.body && req.body.encounter_id;
+  if (b !== undefined && b !== '' && String(b) !== 'all') { const v = Number(b); if (!isNaN(v)) return v; }
+  return db.getActiveEncounterId();
+}
+function filterByEid(list, eid) {
+  if (eid === null || eid === undefined) return list;
+  return list.filter(r => r.encounter_id === undefined || r.encounter_id === null || Number(r.encounter_id) === Number(eid));
+}
+
 router.use((req, res, next) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.setHeader('Pragma', 'no-cache');
@@ -51,8 +64,10 @@ router.get('/version', (req, res) => {
 
 router.get('/tasks', (req, res) => {
   const { category, status, priority, team, phase } = req.query;
+  const eid = resolveEid(req);
   let sql = 'SELECT * FROM tasks WHERE 1=1';
   const params = [];
+  if (eid !== null && eid !== undefined) { sql += ' AND encounter_id = ?'; params.push(eid); }
   if (category) { sql += ' AND category = ?'; params.push(category); }
   if (status) { sql += ' AND status = ?'; params.push(status); }
   if (priority) { sql += ' AND priority = ?'; params.push(priority); }
@@ -63,9 +78,10 @@ router.get('/tasks', (req, res) => {
 });
 
 router.post('/tasks', (req, res) => {
-  const { category, item_number, title, description, responsible_team, deadline, priority, status, notes, phase } = req.body;
-  const result = db.prepare(`INSERT INTO tasks (category, item_number, title, description, responsible_team, deadline, priority, status, notes, phase) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(category, item_number, title, description, responsible_team, deadline, priority, status || 'pendente', notes, phase || 'pre');
-  res.json({ id: result.lastInsertRowid });
+  const { category, item_number, title, description, responsible_team, deadline, priority, status, notes, phase, encounter_id } = req.body;
+  const eid = encounter_id ? Number(encounter_id) : resolveEid(req);
+  const result = db.insert('tasks', { category, item_number, title, description, responsible_team, deadline, priority, status: status || 'pendente', notes, phase: phase || 'pre', encounter_id: eid });
+  res.json({ id: result });
 });
 
 router.put('/tasks/:id', (req, res) => {
@@ -116,7 +132,9 @@ router.delete('/tasks/:id', (req, res) => {
 // ============ TEAMS ============
 
 router.get('/teams', (req, res) => {
-  const teams = db.prepare('SELECT * FROM teams ORDER BY name').all();
+  const eid = resolveEid(req);
+  let teams = db.prepare('SELECT * FROM teams ORDER BY name').all();
+  teams = filterByEid(teams, eid);
   for (const t of teams) {
     t.members = db.prepare('SELECT * FROM team_members WHERE team_id=?').all(t.id);
   }
@@ -125,8 +143,9 @@ router.get('/teams', (req, res) => {
 
 router.post('/teams', (req, res) => {
   const { name, description } = req.body;
-  const result = db.prepare('INSERT INTO teams (name, description) VALUES (?,?)').run(name, description);
-  res.json({ id: result.lastInsertRowid });
+  const eid = resolveEid(req);
+  const id = db.insert('teams', { name, description, members_count: 0, responsible: null, encounter_id: eid });
+  res.json({ id });
 });
 
 router.put('/teams/:id', (req, res) => {
@@ -170,8 +189,10 @@ router.put('/teams/:teamId/members/:memberId', (req, res) => {
 
 router.get('/schedule', (req, res) => {
   const { day, team } = req.query;
+  const eid = resolveEid(req);
   let sql = 'SELECT * FROM schedule_items WHERE 1=1';
   const params = [];
+  if (eid !== null && eid !== undefined) { sql += ' AND encounter_id = ?'; params.push(eid); }
   if (day) { sql += ' AND day = ?'; params.push(day); }
   if (team) { sql += ' AND responsible_team LIKE ?'; params.push(`%${team}%`); }
   sql += ' ORDER BY CASE day WHEN "Sexta-feira" THEN 1 WHEN "Sábado" THEN 2 WHEN "Domingo" THEN 3 END, time';
@@ -180,8 +201,9 @@ router.get('/schedule', (req, res) => {
 
 router.post('/schedule', (req, res) => {
   const { day, time, activity, location, responsible_team, notes } = req.body;
-  const result = db.prepare('INSERT INTO schedule_items (day, time, activity, location, responsible_team, notes) VALUES (?,?,?,?,?,?)').run(day, time, activity, location, responsible_team, notes);
-  res.json({ id: result.lastInsertRowid });
+  const eid = resolveEid(req);
+  const id = db.insert('schedule', { day, time, activity, location, responsible_team, notes, status: 'pendente', encounter_id: eid });
+  res.json({ id });
 });
 
 router.put('/schedule/:id', (req, res) => {
@@ -201,23 +223,43 @@ router.delete('/schedule/:id', (req, res) => {
   res.json({ success: true });
 });
 
-// ============ ENCOUNTER ============
+// ============ ENCOUNTER (legacy single - kept for backward compat) ============
 
 router.get('/encounter', (req, res) => {
+  const eid = db.resolveEncounterId(req.query);
+  if (req.query.encounter_id && String(req.query.encounter_id) !== 'all') {
+    const enc = db.getById('encounters', eid);
+    return res.json(enc || {});
+  }
   const encounter = db.prepare('SELECT * FROM encounters ORDER BY id DESC LIMIT 1').get();
   res.json(encounter || {});
 });
 
 router.put('/encounter/:id', (req, res) => {
-  const { name, start_date, end_date, location, theme, theme_song, status } = req.body;
-  db.prepare('UPDATE encounters SET name=?, start_date=?, end_date=?, location=?, theme=?, theme_song=?, status=? WHERE id=?').run(name, start_date, end_date, location, theme, theme_song, status, req.params.id);
+  const { name, start_date, end_date, location, theme, theme_song, status, edition, edition_number, year, is_active } = req.body;
+  const patch = { name, start_date, end_date, location, theme, theme_song, status };
+  if (edition !== undefined) patch.edition = String(edition);
+  if (edition_number !== undefined) patch.edition_number = parseInt(edition_number, 10);
+  if (year !== undefined) patch.year = parseInt(year, 10);
+  if (is_active !== undefined) patch.is_active = !!is_active;
+  const clean = {}; for (const [k, v] of Object.entries(patch)) if (v !== undefined) clean[k] = v;
+  db.prepare('UPDATE encounters SET name=?, start_date=?, end_date=?, location=?, theme=?, theme_song=?, status=? WHERE id=?').run(clean.name, clean.start_date, clean.end_date, clean.location, clean.theme, clean.theme_song, clean.status, req.params.id);
+  if (clean.edition !== undefined || clean.edition_number !== undefined || clean.year !== undefined) {
+    db.update('encounters', req.params.id, { ...(clean.edition !== undefined ? { edition: clean.edition } : {}), ...(clean.edition_number !== undefined ? { edition_number: clean.edition_number } : {}), ...(clean.year !== undefined ? { year: clean.year } : {}) });
+  }
+  if (clean.is_active) {
+    for (const e of db.getAll('encounters')) if (String(e.id) !== String(req.params.id) && e.is_active) db.update('encounters', e.id, { is_active: false });
+    db.setActiveEncounterId(Number(req.params.id));
+  }
   res.json({ success: true });
 });
 
 // ============ STATS ============
 
 router.get('/stats', (req, res) => {
-  const allTasks = db.getAll('tasks');
+  const eid = resolveEid(req);
+  let allTasks = db.getAll('tasks');
+  allTasks = filterByEid(allTasks, eid);
   const preTasks = allTasks.filter(t => (t.phase || 'pre') === 'pre');
   const duringTasks = allTasks.filter(t => t.phase === 'during');
   const total = allTasks.length;
@@ -246,7 +288,8 @@ router.get('/stats', (req, res) => {
 // ============ PARTICIPANTS (Matérias-primas) ============
 
 router.get('/participants', (req, res) => {
-  let list = db.getAll('participants');
+  const eid = resolveEid(req);
+  let list = filterByEid(db.getAll('participants'), eid);
   const { group, room, gender, status } = req.query;
   if (group) list = list.filter(p => p.group === group);
   if (room) list = list.filter(p => p.room === room);
@@ -262,13 +305,14 @@ router.post('/participants', (req, res) => {
     lives_with_parents, siblings, indicated_by, best_friends, friend_doing_encounter,
     church_group, previous_retreats, food_restriction, medication, special_needs,
     shirt_size, group, room, padrinho, status, notes } = req.body;
+  const eid = resolveEid(req);
   const id = db.insert('participants', {
     name, cracha_name, age, birth_date, gender, phone, email, whatsapp,
     school, course, work, father_name, father_phone, mother_name, mother_phone,
     lives_with_parents, siblings, indicated_by, best_friends, friend_doing_encounter,
     church_group, previous_retreats, food_restriction, medication, special_needs,
     shirt_size, group, room, padrinho, status: status || 'inscrito', notes,
-    paid: false, paid_date: null
+    paid: false, paid_date: null, encounter_id: eid
   });
   res.json({ id });
 });
@@ -307,7 +351,8 @@ router.delete('/participants/:id', (req, res) => {
 // ============ FINANCE ============
 
 router.get('/finance', (req, res) => {
-  let list = db.getAll('finance');
+  const eid = resolveEid(req);
+  let list = filterByEid(db.getAll('finance'), eid);
   const { type, category } = req.query;
   if (type) list = list.filter(f => f.type === type);
   if (category) list = list.filter(f => f.category === category);
@@ -317,10 +362,11 @@ router.get('/finance', (req, res) => {
 
 router.post('/finance', (req, res) => {
   const { type, category, description, amount, date, paid, responsible } = req.body;
+  const eid = resolveEid(req);
   const id = db.insert('finance', {
     type, category, description, amount: parseFloat(amount) || 0,
     date: date || new Date().toISOString().slice(0, 10),
-    paid: paid !== undefined ? paid : true, responsible
+    paid: paid !== undefined ? paid : true, responsible, encounter_id: eid
   });
   res.json({ id });
 });
@@ -336,7 +382,8 @@ router.delete('/finance/:id', (req, res) => {
 });
 
 router.get('/finance/summary', (req, res) => {
-  const items = db.getAll('finance');
+  const eid = resolveEid(req);
+  const items = filterByEid(db.getAll('finance'), eid);
   const income = items.filter(f => f.type === 'receita' && f.paid).reduce((s, f) => s + (f.amount || 0), 0);
   const expenses = items.filter(f => f.type === 'despesa' && f.paid).reduce((s, f) => s + (f.amount || 0), 0);
   const pendingIncome = items.filter(f => f.type === 'receita' && !f.paid).reduce((s, f) => s + (f.amount || 0), 0);
@@ -354,15 +401,17 @@ router.get('/finance/summary', (req, res) => {
 // ============ FINANCE CLOSINGS (FECHAMENTO DE CAIXA) ============
 
 router.get('/finance/closings', (req, res) => {
-  let list = db.getAll('finance_closings');
+  const eid = resolveEid(req);
+  let list = filterByEid(db.getAll('finance_closings'), eid);
   list.sort((a, b) => (b.period || '').localeCompare(a.period || ''));
   res.json(list);
 });
 
 router.get('/finance/closings/:period', (req, res) => {
   const period = req.params.period; // YYYY-MM
-  const closing = db.getAll('finance_closings').find(c => c.period === period);
-  const items = db.getAll('finance');
+  const eid = resolveEid(req);
+  const closing = filterByEid(db.getAll('finance_closings'), eid).find(c => c.period === period);
+  const items = filterByEid(db.getAll('finance'), eid);
   const monthItems = items.filter(f => (f.date || '').startsWith(period));
 
   const receitas = monthItems.filter(f => f.type === 'receita');
@@ -403,12 +452,13 @@ router.post('/finance/closings', (req, res) => {
     return res.status(400).json({ error: 'Período inválido. Use o formato YYYY-MM.' });
   }
 
-  const existing = db.getAll('finance_closings').find(c => c.period === period);
+  const eid = resolveEid(req);
+  const existing = filterByEid(db.getAll('finance_closings'), eid).find(c => c.period === period);
   if (existing) {
     return res.status(400).json({ error: 'Este mês já está fechado.' });
   }
 
-  const items = db.getAll('finance');
+  const items = filterByEid(db.getAll('finance'), eid);
   const monthItems = items.filter(f => (f.date || '').startsWith(period));
   const totalReceitas = monthItems.filter(f => f.type === 'receita' && f.paid).reduce((s, f) => s + (f.amount || 0), 0);
   const totalDespesas = monthItems.filter(f => f.type === 'despesa' && f.paid).reduce((s, f) => s + (f.amount || 0), 0);
@@ -422,6 +472,7 @@ router.post('/finance/closings', (req, res) => {
     saldo: totalReceitas - totalDespesas,
     item_count: monthItems.length,
     notes: notes || '',
+    encounter_id: eid,
   });
   res.json({ id });
 });
@@ -439,16 +490,18 @@ router.delete('/finance/closings/:id', (req, res) => {
 // ============ FINANCE CATEGORIES ============
 
 router.get('/finance/categories', (req, res) => {
-  const list = db.getAll('finance_categories');
+  const eid = resolveEid(req);
+  const list = filterByEid(db.getAll('finance_categories'), eid);
   list.sort((a, b) => (a.type || '').localeCompare(a.type || '') || (a.name || '').localeCompare(b.name || ''));
   res.json(list);
 });
 
 router.post('/finance/categories', (req, res) => {
   const { name, type, color, budget_limit, description } = req.body;
+  const eid = resolveEid(req);
   const id = db.insert('finance_categories', {
     name, type: type || 'despesa', color: color || '#c0392b',
-    budget_limit: parseFloat(budget_limit) || 0, description: description || ''
+    budget_limit: parseFloat(budget_limit) || 0, description: description || '', encounter_id: eid
   });
   res.json({ id });
 });
@@ -466,7 +519,8 @@ router.delete('/finance/categories/:id', (req, res) => {
 // ============ FINANCE EVENTS ============
 
 router.get('/finance/events', (req, res) => {
-  let list = db.getAll('finance_events');
+  const eid = resolveEid(req);
+  let list = filterByEid(db.getAll('finance_events'), eid);
   const { status } = req.query;
   if (status) list = list.filter(e => e.status === status);
   list.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
@@ -475,12 +529,13 @@ router.get('/finance/events', (req, res) => {
 
 router.post('/finance/events', (req, res) => {
   const { name, type, date, description, expected_revenue, actual_revenue, expected_expense, actual_expense, status, location } = req.body;
+  const eid = resolveEid(req);
   const id = db.insert('finance_events', {
     name, type: type || 'evento', date: date || new Date().toISOString().slice(0, 10),
     description: description || '',
     expected_revenue: parseFloat(expected_revenue) || 0, actual_revenue: parseFloat(actual_revenue) || 0,
     expected_expense: parseFloat(expected_expense) || 0, actual_expense: parseFloat(actual_expense) || 0,
-    status: status || 'planejado', location: location || ''
+    status: status || 'planejado', location: location || '', encounter_id: eid
   });
   res.json({ id });
 });
@@ -498,16 +553,18 @@ router.delete('/finance/events/:id', (req, res) => {
 // ============ FINANCE BUDGET ============
 
 router.get('/finance/budget', (req, res) => {
-  const list = db.getAll('finance_budget');
+  const eid = resolveEid(req);
+  const list = filterByEid(db.getAll('finance_budget'), eid);
   list.sort((a, b) => (a.category || '').localeCompare(b.category || ''));
   res.json(list);
 });
 
 router.post('/finance/budget', (req, res) => {
   const { category, type, planned_amount, notes } = req.body;
+  const eid = resolveEid(req);
   const id = db.insert('finance_budget', {
     category, type: type || 'despesa',
-    planned_amount: parseFloat(planned_amount) || 0, notes: notes || ''
+    planned_amount: parseFloat(planned_amount) || 0, notes: notes || '', encounter_id: eid
   });
   res.json({ id });
 });
@@ -525,9 +582,10 @@ router.delete('/finance/budget/:id', (req, res) => {
 // ============ FINANCE ANALYTICS ============
 
 router.get('/finance/analytics', (req, res) => {
-  const items = db.getAll('finance');
-  const events = db.getAll('finance_events');
-  const budget = db.getAll('finance_budget');
+  const eid = resolveEid(req);
+  const items = filterByEid(db.getAll('finance'), eid);
+  const events = filterByEid(db.getAll('finance_events'), eid);
+  const budget = filterByEid(db.getAll('finance_budget'), eid);
 
   // Monthly breakdown
   const monthly = {};
@@ -610,7 +668,8 @@ router.get('/finance/analytics', (req, res) => {
 // ============ LEMBRANCINHAS ============
 
 router.get('/lembrancinhas', (req, res) => {
-  let list = db.getAll('lembrancinhas');
+  const eid = resolveEid(req);
+  let list = filterByEid(db.getAll('lembrancinhas'), eid);
   const { team, status } = req.query;
   if (team) list = list.filter(l => l.team === team);
   if (status) list = list.filter(l => l.status === status);
@@ -620,10 +679,11 @@ router.get('/lembrancinhas', (req, res) => {
 
 router.post('/lembrancinhas', (req, res) => {
   const { team, item_name, description, quantity_needed, quantity_ready, status, delivery_date, notes } = req.body;
+  const eid = resolveEid(req);
   const id = db.insert('lembrancinhas', {
     team, item_name, description, quantity_needed: parseInt(quantity_needed) || 0,
     quantity_ready: parseInt(quantity_ready) || 0, status: status || 'nao_iniciado',
-    delivery_date, notes
+    delivery_date, notes, encounter_id: eid
   });
   res.json({ id });
 });
@@ -646,7 +706,8 @@ router.delete('/lembrancinhas/:id', (req, res) => {
 // ============ ESCOLINHAS ============
 
 router.get('/escolinhas', (req, res) => {
-  let list = db.getAll('escolinhas');
+  const eid = resolveEid(req);
+  let list = filterByEid(db.getAll('escolinhas'), eid);
   const { type, status } = req.query;
   if (type) list = list.filter(e => e.type === type);
   if (status) list = list.filter(e => e.status === status);
@@ -656,9 +717,10 @@ router.get('/escolinhas', (req, res) => {
 
 router.post('/escolinhas', (req, res) => {
   const { name, type, date, time, location, description, target_audience, status, attendance } = req.body;
+  const eid = resolveEid(req);
   const id = db.insert('escolinhas', {
     name, type, date, time, location, description, target_audience,
-    status: status || 'agendada', attendance: attendance || []
+    status: status || 'agendada', attendance: attendance || [], encounter_id: eid
   });
   res.json({ id });
 });
@@ -681,7 +743,8 @@ router.delete('/escolinhas/:id', (req, res) => {
 // ============ ALICERCES & ALVENARIAS ============
 
 router.get('/alicerces', (req, res) => {
-  let list = db.getAll('alicerces');
+  const eid = resolveEid(req);
+  let list = filterByEid(db.getAll('alicerces'), eid);
   const { type, status } = req.query;
   if (type) list = list.filter(a => a.type === type);
   if (status) list = list.filter(a => a.status === status);
@@ -691,9 +754,10 @@ router.get('/alicerces', (req, res) => {
 
 router.post('/alicerces', (req, res) => {
   const { type, title, constructor_name, description, schedule_day, schedule_time, status, notes } = req.body;
+  const eid = resolveEid(req);
   const id = db.insert('alicerces', {
     type, title, constructor_name, description, schedule_day, schedule_time,
-    status: status || 'nao_atribuido', notes
+    status: status || 'nao_atribuido', notes, encounter_id: eid
   });
   res.json({ id });
 });
@@ -716,7 +780,8 @@ router.delete('/alicerces/:id', (req, res) => {
 // ============ LEMBRETES ============
 
 router.get('/lembretes', (req, res) => {
-  let list = db.getAll('lembretes');
+  const eid = resolveEid(req);
+  let list = filterByEid(db.getAll('lembretes'), eid);
   const { status, priority, category } = req.query;
   if (status) list = list.filter(l => l.status === status);
   if (priority) list = list.filter(l => l.priority === priority);
@@ -734,19 +799,14 @@ router.get('/lembretes', (req, res) => {
 
 router.post('/lembretes', (req, res) => {
   const { title, description, due_date, priority, related_task_id, status, category } = req.body;
+  const eid = resolveEid(req);
   let linkedTaskId = related_task_id || null;
-
-  // If no related_task_id, create a linked task automatically
   if (!linkedTaskId) {
-    const taskResult = db.prepare(`INSERT INTO tasks (category, item_number, title, description, responsible_team, deadline, priority, status, notes, phase) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(
-      category || 'Geral MOs', 'L', title, description || '', "MO's", due_date || '', priority || 'media', status || 'pendente', 'Lembrete vinculado', 'pre'
-    );
-    linkedTaskId = taskResult.lastInsertRowid;
+    linkedTaskId = db.insert('tasks', { category: category || 'Geral MOs', item_number: 'L', title, description: description || '', responsible_team: "MO's", deadline: due_date || '', priority: priority || 'media', status: status || 'pendente', notes: 'Lembrete vinculado', phase: 'pre', encounter_id: eid });
   }
-
   const id = db.insert('lembretes', {
     title, description, due_date, priority: priority || 'media',
-    related_task_id: linkedTaskId, status: status || 'pendente', category: category || 'Geral MOs'
+    related_task_id: linkedTaskId, status: status || 'pendente', category: category || 'Geral MOs', encounter_id: eid
   });
   res.json({ id, related_task_id: linkedTaskId });
 });
@@ -821,9 +881,9 @@ router.post('/lembretes/sync', (req, res) => {
 });
 
 router.get('/lembretes/auto', (req, res) => {
-  const tasks = db.getAll('tasks');
-  const encounters = db.getAll('encounters');
-  const enc = encounters[encounters.length - 1];
+  const eid = resolveEid(req);
+  const tasks = filterByEid(db.getAll('tasks'), eid);
+  const enc = req.query.encounter_id && String(req.query.encounter_id) !== 'all' ? db.getById('encounters', Number(req.query.encounter_id)) : (db.getAll('encounters').find(e => Number(e.id) === Number(eid)) || db.getAll('encounters')[db.getAll('encounters').length - 1]);
   if (!enc || !enc.start_date) {
     res.json({ lembretes: [], message: 'Defina a data do Encontro para gerar lembretes automáticos.' });
     return;
@@ -864,7 +924,8 @@ router.get('/lembretes/auto', (req, res) => {
 // ============ PADRINHOS ============
 
 router.get('/padrinhos', (req, res) => {
-  let list = db.getAll('padrinhos');
+  const eid = resolveEid(req);
+  let list = filterByEid(db.getAll('padrinhos'), eid);
   const { participant_id, status } = req.query;
   if (participant_id) list = list.filter(p => p.participant_id === Number(participant_id));
   if (status) list = list.filter(p => p.status === status);
@@ -874,12 +935,13 @@ router.get('/padrinhos', (req, res) => {
 router.post('/padrinhos', (req, res) => {
   const { participant_id, padrinho_name, padrinho_phone, step1_contact, step2_invitation,
     step3_confirmation, step4_meeting, step5_acompanhamento, notes, status } = req.body;
+  const eid = resolveEid(req);
   const id = db.insert('padrinhos', {
     participant_id: Number(participant_id), padrinho_name, padrinho_phone,
     step1_contact: step1_contact || false, step2_invitation: step2_invitation || false,
     step3_confirmation: step3_confirmation || false, step4_meeting: step4_meeting || false,
     step5_acompanhamento: step5_acompanhamento || false,
-    notes, status: status || 'nao_atribuido'
+    notes, status: status || 'nao_atribuido', encounter_id: eid
   });
   res.json({ id });
 });
@@ -913,7 +975,8 @@ router.delete('/padrinhos/:id', (req, res) => {
 // ============ FORNECEDORES ============
 
 router.get('/fornecedores', (req, res) => {
-  let list = db.getAll('fornecedores');
+  const eid = resolveEid(req);
+  let list = filterByEid(db.getAll('fornecedores'), eid);
   const { category, status, type } = req.query;
   if (category) list = list.filter(f => f.category === category);
   if (status) list = list.filter(f => f.status === status);
@@ -924,11 +987,12 @@ router.get('/fornecedores', (req, res) => {
 
 router.post('/fornecedores', (req, res) => {
   const { name, category, service, phone, email, whatsapp, contact_person, status, notes, estimated_cost, actual_cost, type, mp_name, relationship } = req.body;
+  const eid = resolveEid(req);
   const id = db.insert('fornecedores', {
     name, category, service, phone, email, whatsapp, contact_person,
     status: status || 'contatado', notes, estimated_cost: parseFloat(estimated_cost) || 0,
     actual_cost: parseFloat(actual_cost) || 0,
-    type: type || 'fornecedor', mp_name: mp_name || '', relationship: relationship || ''
+    type: type || 'fornecedor', mp_name: mp_name || '', relationship: relationship || '', encounter_id: eid
   });
   res.json({ id });
 });
@@ -951,7 +1015,8 @@ router.delete('/fornecedores/:id', (req, res) => {
 // ============ AVISOS ============
 
 router.get('/avisos', (req, res) => {
-  let list = db.getAll('avisos');
+  const eid = resolveEid(req);
+  let list = filterByEid(db.getAll('avisos'), eid);
   const { target, priority } = req.query;
   if (target) list = list.filter(a => a.target === target || a.target === 'todos');
   if (priority) list = list.filter(a => a.priority === priority);
@@ -961,9 +1026,10 @@ router.get('/avisos', (req, res) => {
 
 router.post('/avisos', (req, res) => {
   const { title, content, target, priority, author } = req.body;
+  const eid = resolveEid(req);
   const id = db.insert('avisos', {
     title, content, target: target || 'todos', priority: priority || 'media',
-    author: author || 'Coordenador', pinned: false
+    author: author || 'Coordenador', pinned: false, encounter_id: eid
   });
   res.json({ id });
 });
@@ -986,7 +1052,8 @@ router.delete('/avisos/:id', (req, res) => {
 // ============ BUDGET (Orçamento do Encontro) ============
 
 router.get('/budget', (req, res) => {
-  let list = db.getAll('budget_items');
+  const eid = resolveEid(req);
+  let list = filterByEid(db.getAll('budget_items'), eid);
   const { category, status } = req.query;
   if (category) list = list.filter(b => b.category === category);
   if (status) list = list.filter(b => b.status === status);
@@ -996,6 +1063,7 @@ router.get('/budget', (req, res) => {
 
 router.post('/budget', (req, res) => {
   const { category, item_name, description, quantity, unit, estimated_unit_cost, actual_cost, status, supplier, notes } = req.body;
+  const eid = resolveEid(req);
   const id = db.insert('budget_items', {
     category: category || 'Diversos',
     item_name: item_name || '',
@@ -1006,7 +1074,7 @@ router.post('/budget', (req, res) => {
     actual_cost: parseFloat(actual_cost) || 0,
     status: status || 'orcado',
     supplier: supplier || '',
-    notes: notes || ''
+    notes: notes || '', encounter_id: eid
   });
   res.json({ id });
 });
@@ -1022,9 +1090,10 @@ router.delete('/budget/:id', (req, res) => {
 });
 
 router.get('/budget/summary', (req, res) => {
-  const items = db.getAll('budget_items');
-  const donations = db.getAll('donations');
-  const finance = db.getAll('finance');
+  const eid = resolveEid(req);
+  const items = filterByEid(db.getAll('budget_items'), eid);
+  const donations = filterByEid(db.getAll('donations'), eid);
+  const finance = filterByEid(db.getAll('finance'), eid);
 
   const totalEstimated = items.reduce((s, b) => s + ((b.quantity || 0) * (b.estimated_unit_cost || 0)), 0);
   const totalActual = items.reduce((s, b) => s + (b.actual_cost || 0), 0);
@@ -1066,7 +1135,8 @@ router.get('/budget/summary', (req, res) => {
 // ============ DONATIONS (Doações) ============
 
 router.get('/donations', (req, res) => {
-  let list = db.getAll('donations');
+  const eid = resolveEid(req);
+  let list = filterByEid(db.getAll('donations'), eid);
   const { type } = req.query;
   if (type) list = list.filter(d => d.type === type);
   list.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
@@ -1075,6 +1145,7 @@ router.get('/donations', (req, res) => {
 
 router.post('/donations', (req, res) => {
   const { donor_name, type, description, value, date, category, linked_budget_item, consolidate_finance } = req.body;
+  const eid = resolveEid(req);
   const id = db.insert('donations', {
     donor_name: donor_name || 'Anônimo',
     type: type || 'dinheiro',
@@ -1083,7 +1154,7 @@ router.post('/donations', (req, res) => {
     date: date || new Date().toISOString().slice(0, 10),
     category: category || 'Geral',
     linked_budget_item: linked_budget_item || null,
-    consolidated: false
+    consolidated: false, encounter_id: eid
   });
 
   if (consolidate_finance && type === 'dinheiro' && parseFloat(value) > 0) {
@@ -1094,7 +1165,7 @@ router.post('/donations', (req, res) => {
       amount: parseFloat(value) || 0,
       date: date || new Date().toISOString().slice(0, 10),
       paid: true,
-      responsible: 'Sistema (Doação)'
+      responsible: 'Sistema (Doação)', encounter_id: eid
     });
     db.update('donations', id, { consolidated: true });
   }
@@ -1119,7 +1190,8 @@ router.delete('/donations/:id', (req, res) => {
 // ============ CARDÁPIO (Menu do Encontro) ============
 
 router.get('/cardapio', (req, res) => {
-  let list = db.getAll('cardapio');
+  const eid = resolveEid(req);
+  let list = filterByEid(db.getAll('cardapio'), eid);
   const { day } = req.query;
   if (day) list = list.filter(c => c.day === day);
   const dayOrder = { 'Sexta-feira': 0, 'Sábado': 1, 'Domingo': 2 };
@@ -1130,11 +1202,12 @@ router.get('/cardapio', (req, res) => {
 
 router.post('/cardapio', (req, res) => {
   const { day, meal, items, notes } = req.body;
+  const eid = resolveEid(req);
   const id = db.insert('cardapio', {
     day: day || '',
     meal: meal || '',
     items: items || [],
-    notes: notes || ''
+    notes: notes || '', encounter_id: eid
   });
   res.json({ id });
 });

@@ -1,5 +1,23 @@
 [
   {
+    "version": "1.64.0",
+    "date": "2026-09-03",
+    "title": "Suporte a Multiplos Encontros - I/2026, II/2027",
+    "changes": [
+      "Sistema agora suporta multiplos encontros: I Compromisso Trin (2026), II (2027) e assim por diante - edicao (romano) + ano",
+      "Nova entidade Encontros com edicao, ano e encontro ativo (ex: 2026=I, 2027=II)",
+      "Todos os dados sao escopados por encontro: tasks, teams, schedule, financeiro, orcamento, doacoes e mais 12 modulos",
+      "Todos os endpoints GET/POST agora aceitam e injetam encounter_id automaticamente (ativo por padrao)",
+      "Nova API CRUD dedicada: GET/POST /api/encounters, GET /api/encounters/active, PATCH /api/encounters/:id/activate",
+      "Criar encontro com clonar do anterior: copia checklist, equipes+cargos e 11 tabelas do padrao do manual",
+      "Frontend: seletor global de encontro no sidebar com troca instantanea + persistencia localStorage",
+      "Tela Encontros reformulada: listar todas edicoes, ativar, editar, clonar e excluir (com protecao do ativo)",
+      "Migration V14: upgrade de encontros legados com edicao/ano/is_active e backfill de encounter_id",
+      "PDFs passam a usar encontro ativo por padrao (getEncounter com encounterId)",
+      "Historico permanece consultavel e editavel - projetos vizinhos e migracoes mantidas"
+    ]
+  },
+  {
     "version": "1.63.0",
     "date": "2026-08-06",
     "title": "Navegacao em 5 Etapas - Manual dos Mestres de Obras",

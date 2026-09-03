@@ -1,5 +1,8 @@
 const API = '/api';
 let currentPage = 'dashboard';
+let activeEncounterId = null;
+let activeEncounter = null;
+let encountersList = [];
 let tasksCache = [];
 let teamsCache = [];
 
@@ -14,7 +17,15 @@ function debounce(fn, ms = 300) {
 }
 
 async function api(path, opts = {}) {
-  const res = await fetch(`${API}${path}`, {
+  const eid = activeEncounterId;
+  const inject = !path.includes('encounter') && !path.includes('version') && !path.includes('heartbeat') && !path.includes('active-users');
+  let url = `${API}${path}`;
+  if (inject && eid) {
+    const sep = url.includes('?') ? '&' : '?';
+    if (!url.includes('encounter_id=')) url += `${sep}encounter_id=${eid}`;
+  }
+  if (path.startsWith('/encounters')) url = `${API}${path}`;
+  const res = await fetch(url, {
     headers: { 'Content-Type': 'application/json' },
     cache: 'no-cache',
     ...opts
@@ -25,6 +36,44 @@ async function api(path, opts = {}) {
     throw new Error(msg);
   }
   return res.json();
+}
+
+
+function toRoman(num) {
+  if (!num || num < 1) return String(num || 1);
+  const map = [[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];
+  let n=parseInt(num,10); let r='';
+  for (const [v,s] of map) { while(n>=v){ r+=s; n-=v; } }
+  return r;
+}
+function encounterLabel(e){ if(!e) return ''; const n=e.edition_number||parseInt(e.edition)||1; const y=e.year?' - '+e.year:''; return toRoman(n)+' Compromisso Trin'+y; }
+async function loadEncounters(){
+  try{ const list = await fetch(`${API}/encounters`,{cache:'no-cache'}).then(r=>r.json()); encountersList = Array.isArray(list)?list:[]; } catch{ encountersList=[]; }
+  if(!encountersList.length){ activeEncounter=null; activeEncounterId=null; renderEncounterSwitcher(); return; }
+  const active = encountersList.find(e=>e.is_active) || encountersList[encountersList.length-1];
+  activeEncounterId = active ? active.id : null; activeEncounter = active || null;
+  if(activeEncounterId) localStorage.setItem('activeEncounterId', String(activeEncounterId));
+  else localStorage.removeItem('activeEncounterId');
+  renderEncounterSwitcher();
+}
+function renderEncounterSwitcher(){
+  const el = document.getElementById('encounter-switcher');
+  if(!el) return;
+  if(!encountersList.length){
+    el.innerHTML = '<button class="btn btn-secondary btn-sm" onclick="openNewEncounterModal()" style="width:100%">+ Novo Encontro</button>';
+    return;
+  }
+  const opts = encountersList.map(e=>`<option value="${e.id}" ${String(e.id)===String(activeEncounterId)?'selected':''}>${encounterLabel(e)}${e.is_active?' *':''}</option>`).join('');
+  el.innerHTML = `<select id="encounter-select" onchange="setActiveEncounter(this.value)" style="width:100%;padding:6px 8px;border-radius:8px;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.15);color:#fff;font-size:12px"><option value="" disabled>Selecione o Encontro</option>${opts}</select><div style="display:flex;gap:6px;margin-top:6px"><button class="btn btn-secondary btn-sm" style="flex:1;font-size:11px" onclick="openNewEncounterModal()">+ Novo</button><button class="btn btn-secondary btn-sm" style="flex:1;font-size:11px" onclick="navigateTo('encontro')">Gerir</button></div>`;
+  const sel = document.getElementById('encounter-select'); if(sel) sel.style.color='#fff';
+}
+
+async function setActiveEncounter(id){
+  await fetch(`${API}/encounters/${id}/activate`,{method:'PATCH',headers:{'Content-Type':'application/json'}});
+  activeEncounterId = Number(id);
+  localStorage.setItem('activeEncounterId', String(id));
+  await loadEncounters();
+  renderPage();
 }
 
 function toast(msg, type = '') {
@@ -1754,14 +1803,42 @@ async function removeMember(teamId, memberId) {
 
 // ============ ENCONTRO ============
 async function renderEncontro() {
-  const enc = await api('/encounter');
+  await loadEncounters();
   const main = document.getElementById('main-content');
+  const enc = activeEncounter || (encountersList[encountersList.length-1]||{});
+  const cards = encountersList.map(e=>{
+    const isActive = String(e.id)===String(activeEncounterId);
+    const dt = e.start_date ? new Date(e.start_date).toLocaleDateString('pt-BR') : '—';
+    const dt2 = e.end_date ? ' a ' + new Date(e.end_date).toLocaleDateString('pt-BR') : '';
+    return `<div class="card ${isActive?'card-featured':''}" style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+        <div>
+          <div style="font-weight:800;font-size:16px">${encounterLabel(e)} ${isActive?'⭐':''}</div>
+          <div style="font-size:12px;color:var(--text-light)">${e.name||''} · ${e.year||''} · ${e.status||''}</div>
+          <div style="font-size:12px;color:var(--text-light)">📅 ${dt}${dt2} · 📍 ${e.location||'—'} · 🎨 ${e.theme||'—'}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          ${!isActive?`<button class="btn btn-primary btn-sm" onclick="setActiveEncounter(${e.id})">Ativar</button>`:''}
+          <button class="btn btn-secondary btn-sm" onclick="editEncontro(${e.id})">✏️ Editar</button>
+          <button class="btn btn-secondary btn-sm" onclick="openCloneEncounterModal(${e.id})">📋 Clonar</button>
+          ${!isActive&&encountersList.length>1?`<button class="btn btn-danger btn-sm" onclick="deleteEncounter(${e.id})">🗑️</button>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
   main.innerHTML = `
-    <h1 class="page-title">Dados do Encontro</h1>
-    <p class="page-subtitle">Informações gerais do Encontro Compromisso Trin</p>
-    <div class="card">
+    <h1 class="page-title">Encontros</h1>
+    <p class="page-subtitle">Gerencie edições — ex: I/2026 (2026) e II/2027 (2027). Troque o encontro ativo, crie novo ou clone o padrão do manual.</p>
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="openNewEncounterModal()">+ Novo Encontro</button>
+      <button class="btn btn-secondary" onclick="renderEncontro()">🔄 Atualizar</button>
+    </div>
+    <div class="card ${enc.id?'':''}" style="${enc.id?'':'display:none'}">
+      <div class="card-title">Encontro Ativo: ${encounterLabel(enc)} ${enc.is_active?'⭐ Ativo':''}</div>
       <div class="encounter-info">
         <div class="info-item"><label>📛 Nome</label><div class="info-value">${enc.name || '—'}</div></div>
+        <div class="info-item"><label>🏷️ Edição</label><div class="info-value">${enc.edition_number?toRoman(enc.edition_number)+' ('+enc.edition_number+')':enc.edition||'—'}</div></div>
+        <div class="info-item"><label>📅 Ano</label><div class="info-value">${enc.year||'—'}</div></div>
         <div class="info-item"><label>📅 Data de Início</label><div class="info-value">${enc.start_date || '—'}</div></div>
         <div class="info-item"><label>🏁 Data de Fim</label><div class="info-value">${enc.end_date || '—'}</div></div>
         <div class="info-item"><label>📍 Local</label><div class="info-value">${enc.location || '—'}</div></div>
@@ -1769,29 +1846,69 @@ async function renderEncontro() {
         <div class="info-item"><label>🎵 Música Tema</label><div class="info-value">${enc.theme_song || '—'}</div></div>
         <div class="info-item"><label>📊 Status</label><div class="info-value">${statusLabel(enc.status || 'em_preparacao')}</div></div>
       </div>
-      <button class="btn btn-primary" onclick="editEncontro(${enc.id || 0})">✏️ Editar Dados</button>
+      <button class="btn btn-primary" onclick="editEncontro(${enc.id || 0})">✏️ Editar Ativo</button>
     </div>
+    <h3 style="margin:16px 0 8px">Todas as Edições (${encountersList.length})</h3>
+    ${cards || '<div class="empty-state">Nenhum encontro cadastrado. Crie o primeiro (ex: I / 2026).</div>'}
   `;
+  renderEncounterSwitcher();
 }
 
-function editEncontro(id) {
-  const enc = {};
+function openNewEncounterModal(){
+  const nextNum = (Math.max(0, ...encountersList.map(e=>parseInt(e.edition_number||e.edition||0)))||0)+1;
+  const nextYear = (Math.max(0, ...encountersList.map(e=>parseInt(e.year||0)))||2026)+1;
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay active';
   overlay.innerHTML = `<div class="modal">
-    <h3>Editar Encontro</h3>
-    <div class="form-group"><label>Nome</label><input id="e-name" placeholder="Ex: XXV Compromisso Trin"></div>
-    <div class="form-row">
-      <div class="form-group"><label>Data Início</label><input type="date" id="e-start"></div>
-      <div class="form-group"><label>Data Fim</label><input type="date" id="e-end"></div>
-    </div>
-    <div class="form-group"><label>Local (Canteiro de Obras)</label><input id="e-location"></div>
-    <div class="form-group"><label>Tema do Encontro</label><input id="e-theme"></div>
+    <h3>Novo Encontro</h3>
+    <div class="form-row"><div class="form-group"><label>Edição (número)</label><input id="e-edition" type="number" min="1" value="${nextNum}"></div><div class="form-group"><label>Ano</label><input id="e-year" type="number" value="${nextYear}"></div></div>
+    <div class="form-group"><label>Nome</label><input id="e-name" placeholder="Ex: II Compromisso Trin"></div>
+    <div class="form-row"><div class="form-group"><label>Data Início</label><input type="date" id="e-start"></div><div class="form-group"><label>Data Fim</label><input type="date" id="e-end"></div></div>
+    <div class="form-group"><label>Local</label><input id="e-location" value="Casa de cursilho"></div>
+    <div class="form-group"><label>Tema</label><input id="e-theme"></div>
     <div class="form-group"><label>Música Tema</label><input id="e-song"></div>
+    <div class="form-group"><label>Clonar dados do ano anterior?</label><select id="e-clone"><option value="">Não, começar com padrão do manual</option>${encountersList.map(e=>`<option value="${e.id}">${encounterLabel(e)} - ${e.name||''}</option>`).join('')}</select></div>
+    <div class="form-group"><label>Status</label><select id="e-status"><option value="em_preparacao">Em Preparação</option><option value="realizado">Realizado</option><option value="cancelado">Cancelado</option></select></div>
+    <div class="modal-actions"><button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancelar</button><button class="btn btn-primary" onclick="createEncontro(this)">Criar</button></div>
+  </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e=>{ if(e.target===overlay) overlay.remove(); });
+}
+async function createEncontro(btn){
+  const edition = document.getElementById('e-edition').value;
+  const year = document.getElementById('e-year').value;
+  const data = { name: document.getElementById('e-name').value, edition, edition_number: edition, year, start_date: document.getElementById('e-start').value || null, end_date: document.getElementById('e-end').value || null, location: document.getElementById('e-location').value, theme: document.getElementById('e-theme').value, theme_song: document.getElementById('e-song').value, status: document.getElementById('e-status').value, clone_from_id: document.getElementById('e-clone').value || null };
+  if(!edition || !year){ toast('Informe edição e ano','error'); return; }
+  try{ const r = await api('/encounters', { method:'POST', body: JSON.stringify(data) }); btn.closest('.modal-overlay').remove(); toast('Encontro criado!','success'); await loadEncounters(); renderEncounterSwitcher(); renderEncontro(); } catch(e){ toast(e.message,'error'); }
+}
+function openCloneEncounterModal(id){
+  const e = encountersList.find(x=>String(x.id)===String(id));
+  const nextNum = (parseInt(e.edition_number||e.edition||1)+1); const nextYear=(parseInt(e.year||2026)+1);
+  const overlay=document.createElement('div'); overlay.className='modal-overlay active';
+  overlay.innerHTML=`<div class="modal"><h3>Clonar ${encounterLabel(e)}</h3><div class="form-row"><div class="form-group"><label>Nova Edição</label><input id="c-edition" type="number" value="${nextNum}"></div><div class="form-group"><label>Novo Ano</label><input id="c-year" type="number" value="${nextYear}"></div></div><div class="modal-actions"><button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancelar</button><button class="btn btn-primary" onclick="cloneEncounter(${id}, this)">Clonar</button></div></div>`;
+  document.body.appendChild(overlay); overlay.addEventListener('click',ev=>{ if(ev.target===overlay) overlay.remove(); });
+}
+async function cloneEncounter(id, btn){ const ed=document.getElementById('c-edition').value; const yr=document.getElementById('c-year').value; try{ await api(`/encounters/${id}/clone`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({edition:ed, edition_number:ed, year:yr})}); btn.closest('.modal-overlay').remove(); toast('Encontro clonado com dados do manual!','success'); await loadEncounters(); renderEncounterSwitcher(); renderEncontro(); } catch(e){ toast(e.message,'error'); } }
+async function deleteEncounter(id){ showConfirmDialog({icon:'🗑️', title:'Excluir Encontro', message:'Tem certeza? Isso não apaga o encontro ativo.', confirmText:'Excluir', onConfirm: async()=>{ await api(`/encounters/${id}`,{method:'DELETE'}); toast('Encontro excluído','success'); await loadEncounters(); renderEncontro(); }}); }
+function editEncontro(id) {
+  const _enc = encountersList.find(e=>String(e.id)===String(id)) || {};
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay active';
+  overlay.innerHTML = `<div class="modal">
+    <h3>Editar Encontro ${encounterLabel(_enc)}</h3>
+    <div class="form-row"><div class="form-group"><label>Edição</label><input id="e-edition" type="number" value="${_enc.edition_number||_enc.edition||''}"></div><div class="form-group"><label>Ano</label><input id="e-year" type="number" value="${_enc.year||''}"></div></div>
+    <div class="form-group"><label>Nome</label><input id="e-name" value="${(_enc.name||'').replace(/"/g,'&quot;')}"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Data Início</label><input type="date" id="e-start" value="${_enc.start_date||''}"></div>
+      <div class="form-group"><label>Data Fim</label><input type="date" id="e-end" value="${_enc.end_date||''}"></div>
+    </div>
+    <div class="form-group"><label>Local (Canteiro de Obras)</label><input id="e-location" value="${(_enc.location||'').replace(/"/g,'&quot;')}"></div>
+    <div class="form-group"><label>Tema do Encontro</label><input id="e-theme" value="${(_enc.theme||'').replace(/"/g,'&quot;')}"></div>
+    <div class="form-group"><label>Música Tema</label><input id="e-song" value="${(_enc.theme_song||'').replace(/"/g,'&quot;')}"></div>
     <div class="form-group"><label>Status</label><select id="e-status">
-      <option value="em_preparacao">Em Preparação</option>
-      <option value="realizado">Realizado</option>
-      <option value="cancelado">Cancelado</option>
+      <option value="em_preparacao" ${_enc.status==='em_preparacao'?'selected':''}>Em Preparação</option>
+      <option value="realizado" ${_enc.status==='realizado'?'selected':''}>Realizado</option>
+      <option value="cancelado" ${_enc.status==='cancelado'?'selected':''}>Cancelado</option>
     </select></div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancelar</button>
@@ -1805,6 +1922,9 @@ function editEncontro(id) {
 async function saveEncontro(id, btn) {
   const data = {
     name: document.getElementById('e-name').value,
+    edition: document.getElementById('e-edition')?.value || undefined,
+    edition_number: document.getElementById('e-edition')?.value || undefined,
+    year: document.getElementById('e-year')?.value || undefined,
     start_date: document.getElementById('e-start').value,
     end_date: document.getElementById('e-end').value,
     location: document.getElementById('e-location').value,
@@ -1812,10 +1932,10 @@ async function saveEncontro(id, btn) {
     theme_song: document.getElementById('e-song').value,
     status: document.getElementById('e-status').value,
   };
-  if (id) await api(`/encounter/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+  if (id) await api(`/encounters/${id}`, { method: 'PUT', body: JSON.stringify(data) });
   btn.closest('.modal-overlay').remove();
   toast('Dados salvos!', 'success');
-  renderEncontro();
+  await loadEncounters(); renderEncounterSwitcher(); renderEncontro();
 }
 
 // ============ RELATÓRIOS ============
@@ -5389,9 +5509,13 @@ async function openLembreteDetails(id) {
 }
 
 // INIT
-currentPage = getPageFromHash();
-updateActiveNav();
-renderPage();
+(async () => {
+  const cached = localStorage.getItem('activeEncounterId'); if(cached) activeEncounterId = Number(cached);
+  await loadEncounters();
+  currentPage = getPageFromHash();
+  updateActiveNav();
+  renderPage();
+})();
 checkVersionUpdate();
 startActiveUsersTracking();
 

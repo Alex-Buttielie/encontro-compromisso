@@ -186,7 +186,15 @@ function priorityLabel(p) {
   return { alta: 'Alta', media: 'Media', baixa: 'Baixa' }[p] || p;
 }
 
-function getEncounter() {
+function getEncounter(encounterId) {
+  if (encounterId) {
+    const e = db.getById('encounters', Number(encounterId));
+    if (e) return e;
+  }
+  if (db.getActiveEncounterId) {
+    const aid = db.getActiveEncounterId();
+    if (aid) { const ae = db.getById('encounters', aid); if (ae) return ae; }
+  }
   const encs = db.getAll('encounters');
   return encs.length > 0 ? encs[encs.length - 1] : {};
 }
