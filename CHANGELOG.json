@@ -1,5 +1,53 @@
 [
   {
+    "version": "1.60.0",
+    "date": "2026-08-05",
+    "title": "Navegacao em 5 Etapas - Manual dos Mestres de Obras",
+    "changes": [
+      "Nova arquitetura de navegacao em 5 Etapas: Fundacao -> Captacao -> Obra -> Acabamento -> Entrega (inspirada no Manual dos Mestres de Obras p.11-15)",
+      "Drawer reorganizado em etapas colapsaveis com agrupamento logico de 41 rotas em fluxo sequencial inconsciente",
+      "Stepper horizontal no AppBar com navegacao direta entre etapas e breadcrumb estrutural em todas as paginas",
+      "Busca rapida global (Ctrl+K / /) com Command Palette filtrando por nome, rota e descricao",
+      "Onboarding por etapa: tour contextualizado conforme a etapa ativa do usuario",
+      "PageHeader com chip de etapa + componente EmptyState com CTA de proxima acao",
+      "Correcao de ReleaseNotesDialog (X icon) e uiSlice com hydrateUi/startOnboarding por etapa",
+      "Testes Cypress atualizados para nova navegacao por etapas"
+    ]
+  },
+  {
+    "version": "1.59.0",
+    "date": "2026-08-05",
+    "title": "Dialog de Notas de Versao Automatico",
+    "changes": [
+      "Dialog automatico de notas de versao exibido quando ha nova versao",
+      "Armazenamento da ultima versao vista no localStorage",
+      "Historico de versoes com data, titulo e lista de mudancas"
+    ]
+  },
+  {
+    "version": "1.58.0",
+    "date": "2026-08-05",
+    "title": "Correcao do modulo de Estoque/Orcamento",
+    "changes": [
+      "Corrigida incompatibilidade de campos entre frontend e backend no modulo de estoque",
+      "Tipo InventoryItem atualizado para refletir os campos reais do Product (currentStock, minStock, category, unit, belowMinimum)",
+      "Adicionado filtro por categoria e busca por nome na pagina de estoque",
+      "Total estimado dos itens exibido em tempo real conforme filtros",
+      "Formulario de criacao agora inclui campos de categoria e unidade"
+    ]
+  },
+  {
+    "version": "1.57.0",
+    "date": "2026-08-05",
+    "title": "Carga de orcamento do XV Compromisso Trin",
+    "changes": [
+      "Script de seed com 98 itens da lista unificada de compras",
+      "11 categorias organizadas",
+      "44 itens com valor estimado R\\$ 13.885,00",
+      "54 itens sem valor para cotacoes"
+    ]
+  },
+  {
     "version": "1.56.0",
     "date": "2026-07-31",
     "title": "Correção de sincronização + Versão Mobile do Financeiro",

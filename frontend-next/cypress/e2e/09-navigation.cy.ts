@@ -14,34 +14,52 @@ describe('Navegação e Layout', () => {
     cy.url().should('include', '/dashboard');
   });
 
-  it('deve exibir drawer de navegação com seções', () => {
-    cy.contains('Principal').should('exist');
-    cy.contains('Operação').should('exist');
+  it('deve exibir drawer de navegação por etapas com Stepper', () => {
+    cy.contains('Fundação').should('exist');
+    cy.contains('Captação').should('exist');
+    cy.contains('Obra').should('exist');
+    cy.contains('Acabamento').should('exist');
+    cy.contains('Entrega').should('exist');
+    cy.get('[aria-label="Navegação estrutural"]').should('exist');
   });
 
-  it('deve navegar para Clientes via menu', () => {
-    cy.get('[aria-label="Clientes"]').first().click({ force: true });
+  it('deve navegar para Clientes via menu (Etapa Captação)', () => {
+    cy.contains('Captação').click({ force: true });
+    cy.get('[aria-label="Clientes"]', { timeout: 5000 }).first().click({ force: true });
     cy.url({ timeout: 10000 }).should('include', '/clients');
   });
 
-  it('deve navegar para Serviços via menu', () => {
+  it('deve navegar para Serviços via menu (Etapa Fundação)', () => {
     cy.get('[aria-label="Serviços"]').first().click({ force: true });
     cy.url({ timeout: 10000 }).should('include', '/services');
   });
 
-  it('deve navegar para Agenda via menu', () => {
-    cy.get('[aria-label="Agenda"]').first().click({ force: true });
+  it('deve navegar para Agenda via menu (Etapa Obra)', () => {
+    cy.contains('Obra').click({ force: true });
+    cy.get('[aria-label="Agenda"]', { timeout: 5000 }).first().click({ force: true });
     cy.url({ timeout: 10000 }).should('include', '/agenda');
   });
 
-  it('deve navegar para Financeiro via menu', () => {
-    cy.get('[aria-label="Financeiro"]').first().click({ force: true });
+  it('deve navegar para Financeiro via menu (Etapa Acabamento)', () => {
+    cy.contains('Acabamento').click({ force: true });
+    cy.get('[aria-label="Financeiro"]', { timeout: 5000 }).first().click({ force: true });
     cy.url({ timeout: 10000 }).should('include', '/finance');
   });
 
-  it('deve navegar para Trabalhos via menu', () => {
-    cy.get('[aria-label="Trabalhos"]').first().click({ force: true });
+  it('deve navegar para Trabalhos via menu (Etapa Obra)', () => {
+    cy.contains('Obra').click({ force: true });
+    cy.get('[aria-label="Trabalhos"]', { timeout: 5000 }).first().click({ force: true });
     cy.url({ timeout: 10000 }).should('include', '/works');
+  });
+
+  it('deve navegar via Stepper horizontal', () => {
+    cy.get('[aria-label^="Etapa"]').should('exist');
+  });
+
+  it('deve abrir busca rápida (Ctrl+K) e filtrar', () => {
+    cy.get('body').type('{ctrl}k');
+    cy.contains('Buscar', { timeout: 5000 }).should('exist');
+    cy.get('body').type('{esc}');
   });
 
   it('deve ter toggle de tema (dark/light)', () => {

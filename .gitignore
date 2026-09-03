@@ -21,6 +21,19 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Build outputs
+frontend-next/.next/
+frontend-next/out/
+frontend-next/tsconfig.tsbuildinfo
+.next/
+out/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
 # Temp
 tmp/
 temp/

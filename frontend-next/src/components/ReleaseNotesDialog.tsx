@@ -5,7 +5,7 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, Typography, Box, Chip, IconButton, Divider, List, ListItem, ListItemIcon, ListItemText,
 } from '@mui/material';
-import { Close, CheckCircle2, Sparkles } from 'lucide-react';
+import { X as Close, CheckCircle2, Sparkles } from 'lucide-react';
 import { RELEASE_NOTES, CURRENT_VERSION } from '@/config/release-notes';
 
 const STORAGE_KEY = 'profissionalOS_seenVersion';

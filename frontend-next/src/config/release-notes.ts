@@ -5,9 +5,33 @@ export interface ReleaseNote {
   changes: string[];
 }
 
-export const CURRENT_VERSION = '1.58.0';
+export const CURRENT_VERSION = '1.60.0';
 
 export const RELEASE_NOTES: ReleaseNote[] = [
+  {
+    version: '1.60.0',
+    date: '2026-08-05',
+    title: 'Navegação em 5 Etapas — Manual dos Mestres de Obras',
+    changes: [
+      'Nova arquitetura de navegação em 5 Etapas: Fundação → Captação → Obra → Acabamento → Entrega (inspirada no Manual dos Mestres de Obras)',
+      'Drawer reorganizado em etapas colapsáveis com agrupamento lógico de 41 rotas em fluxo sequencial',
+      'Stepper horizontal no AppBar com navegação direta entre etapas e breadcrumb estrutural em todas as páginas',
+      'Busca rápida global (Ctrl+K / /) com Command Palette filtrando por nome, rota e descrição',
+      'Onboarding por etapa: tour contextualizado conforme a etapa ativa do usuário',
+      'PageHeader com chip de etapa e breadcrumb opcional + componente EmptyState com CTA de próxima ação',
+      'Testes Cypress atualizados para nova navegação por etapas',
+    ],
+  },
+  {
+    version: '1.59.0',
+    date: '2026-08-05',
+    title: 'Dialog de Notas de Versão Automático',
+    changes: [
+      'Dialog automático de notas de versão exibido quando há nova versão',
+      'Armazenamento da última versão vista no localStorage',
+      'Histórico de versões com data, título e lista de mudanças',
+    ],
+  },
   {
     version: '1.58.0',
     date: '2026-08-05',
