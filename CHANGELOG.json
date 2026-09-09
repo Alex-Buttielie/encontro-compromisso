@@ -1,5 +1,18 @@
 [
   {
+    "version": "1.65.0",
+    "date": "2026-09-09",
+    "title": "Template Padrão do Manual ao Criar Novo Compromisso",
+    "changes": [
+      "Novo Compromisso (POST /encounters e /:id/clone) inicia com template padrão do Manual: 92 tasks, 19 equipes, 71 cronograma, 10 escolinhas, 13 alicerces, 10 lembrancinhas, 9 cardápio, 114 insumos V13, 27 categorias financeiras e 21 fornecedores",
+      "Dados voláteis não clonados: participants, team_members, lembretes, finance, donations, padrinhos e avisos — novo retiro começa limpo",
+      "Reset de template: tasks pendente, teams 0 membros, alicerces sem construtor, escolinhas sem data, lembrancinhas zeradas, orçamento orcado",
+      "Escolinhas com data são deslocadas por delta de ano (2026→2027) via shiftYear",
+      "Cronograma e deadlines permanecem relativos ao start_date do encontro (lembretes auto)",
+      "Exclusão de encontro agora em cascata em 19 tabelas + team_members órfãos"
+    ]
+  },
+  {
     "version": "1.64.0",
     "date": "2026-09-03",
     "title": "Suporte a Multiplos Encontros - I/2026, II/2027",
